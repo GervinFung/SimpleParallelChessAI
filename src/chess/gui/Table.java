@@ -164,9 +164,8 @@ public final class Table {
         protected Move doInBackground(){
             try {
                 final MiniMax miniMax = new MiniMax(Table.get().getGameSetup().getSearchDepth());
-                //return best move
-                Table.get().getGameFrame().setEnabled(false);
                 bar.showProgress();
+                //return best move
                 return miniMax.execute(Table.get().getGameBoard());
 
             } catch (final Exception e){
@@ -190,7 +189,6 @@ public final class Table {
             } catch (final ExecutionException | InterruptedException e) {
                 e.printStackTrace();
             }
-            Table.get().getGameFrame().setEnabled(true);
         }
     }
 

@@ -1,40 +1,46 @@
 package chess.gui;
 
-import javax.swing.JPanel;
 import javax.swing.JFrame;
 import javax.swing.JProgressBar;
+import javax.swing.JDialog;
+import javax.swing.JPanel;
 
 import java.awt.Dimension;
 
-public class ProgressBar extends JPanel{
+public class ProgressBar extends JDialog{
 
     private final JProgressBar progressBar;
     private final Dimension dimension;
-    private final JFrame gameFrame, progressFrame;
+    private final JFrame gameFrame;
 
     public ProgressBar(final JFrame gameFrame) {
         // initialize Progress Bar
         this.progressBar = new JProgressBar();
-        this.dimension = new Dimension(300, 50);
+        this.dimension = new Dimension(300, 60);
         this.gameFrame = gameFrame;
-        this.progressFrame = new JFrame("AI is thinking");
-        // add to JPanel
+        // add to JDialog
         this.add(progressBar);
     }
 
     public void showProgress() {
-        this.progressFrame.setSize(this.dimension);
-        this.progressFrame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
-        this.progressFrame.setContentPane(this);
-        this.progressFrame.setLocationRelativeTo(this.gameFrame);
-        this.progressFrame.setResizable(false);
-        this.progressFrame.setVisible(true);
-
+        final JPanel panel = new JPanel();
+        this.setTitle("AI thinking");
+        this.setSize(this.dimension);
+        this.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+        this.setLocationRelativeTo(this.gameFrame);
+        this.setResizable(false);
+        this.setVisible(true);
+        this.getContentPane().add(panel);
+        panel.add(this.progressBar);
         this.progressBar.setVisible(true);
         this.progressBar.setIndeterminate(true);
+
+        this.setVisible(true);
+        this.validate();
+        this.repaint();
     }
 
     public void disposeFrame() {
-        this.progressFrame.dispose();
+        this.dispose();
     }
 }
