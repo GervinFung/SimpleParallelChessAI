@@ -1,4 +1,5 @@
 A simple 2 player chess AI that implemented minimax & alpha-beta pruning with a slightly different FEN file format
+
 I screwed up my previous chess game with bad design and without planning ahead
 
 **To play the Game**
