@@ -72,9 +72,10 @@ public final class Table {
     private static final Table INSTANCE = new Table();
 
     private final PropertyChangeSupport propertyChangeSupport;
+    private final JFrame gameFrame;
 
     private Table() {
-        JFrame gameFrame = new JFrame("Simple Chess");
+        this.gameFrame = new JFrame("Simple Chess");
         gameFrame.setResizable(false);
         gameFrame.setLayout(new BorderLayout());
         this.chessBoard = Board.createStandardBoard();
@@ -90,10 +91,10 @@ public final class Table {
         gameFrame.add(this.gameHistoryPanel, BorderLayout.EAST);
         gameFrame.setJMenuBar(tableMenuBar);
         gameFrame.setSize(OUTER_FRAME_DIMENSION);
-        gameFrame.setVisible(true);
         gameFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        gameFrame.setResizable(false);
         gameFrame.setLocationRelativeTo(null);
+        gameFrame.setResizable(false);
+        gameFrame.setVisible(true);
         gameEnded = false;
 
         //a property change listener for AI, as Observable is deprecated
@@ -101,10 +102,8 @@ public final class Table {
             if (Table.get().getGameSetup().isAIPlayer(Table.get().getGameBoard().currentPlayer()) &&
                     !Table.get().getGameBoard().currentPlayer().isInCheckmate() &&
                     !Table.get().getGameBoard().currentPlayer().isInStalemate()) {
-
                 final AIThinkTank thinkTank = new AIThinkTank();
                 thinkTank.execute();
-
             }
             displayEndGameMessage();
         };
@@ -145,41 +144,42 @@ public final class Table {
         Table.get().boardPanel.drawBoard(Table.get().getGameBoard());
     }
 
-    public static Table get() {
-        return INSTANCE;
-    }
+    public static Table get() { return INSTANCE; }
 
-    private GameSetup getGameSetup() {
-        return this.gameSetup;
-    }
+    private GameSetup getGameSetup() { return this.gameSetup; }
 
-    private Board getGameBoard() {
-        return this.chessBoard;
-    }
+    private Board getGameBoard() { return this.chessBoard; }
+
+    private JFrame getGameFrame() { return this.gameFrame; }
 
     private static final class AIThinkTank extends SwingWorker<Move ,String> {
 
+        private final ProgressBar bar;
 
-        private AIThinkTank() {}
+        private AIThinkTank() {
+            this.bar = new ProgressBar(Table.get().getGameFrame());
+        }
 
         @Override
         protected Move doInBackground(){
             try {
                 final MiniMax miniMax = new MiniMax(Table.get().getGameSetup().getSearchDepth());
                 //return best move
+                Table.get().getGameFrame().setEnabled(false);
+                bar.showProgress();
                 return miniMax.execute(Table.get().getGameBoard());
 
             } catch (final Exception e){
                 e.printStackTrace();
             }
-
             return null;
         }
 
         @Override
         public void done() {
+            this.bar.disposeFrame();
             try {
-                final Move bestMove = get();
+                final Move bestMove = this.get();
                 Table.get().updateGameBoard(Table.get().getGameBoard().currentPlayer().makeMove(bestMove).getBoard());
                 Table.get().getMoveLog().addMove(bestMove);
                 Table.get().getGameHistoryPanel().redo(Table.get().getGameBoard(), Table.get().getMoveLog());
@@ -190,6 +190,7 @@ public final class Table {
             } catch (final ExecutionException | InterruptedException e) {
                 e.printStackTrace();
             }
+            Table.get().getGameFrame().setEnabled(true);
         }
     }
 
@@ -517,9 +518,9 @@ public final class Table {
             final Color lightTileColor = Color.WHITE;
             final Color darkTileColor = Color.decode("#1D3D63");//Color.LIGHT_GRAY;
             if (BoardUtils.FIRST_ROW[this.tileID] ||
-                BoardUtils.THIRD_ROW[this.tileID] ||
-                BoardUtils.FIFTH_ROW[this.tileID] ||
-                BoardUtils.SEVENTH_ROW[this.tileID]) {
+                    BoardUtils.THIRD_ROW[this.tileID] ||
+                    BoardUtils.FIFTH_ROW[this.tileID] ||
+                    BoardUtils.SEVENTH_ROW[this.tileID]) {
                 this.setBackground(this.tileID % 2 == 0 ? lightTileColor : darkTileColor);
             }
             else {
