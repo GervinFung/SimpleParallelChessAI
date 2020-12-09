@@ -56,7 +56,7 @@ public final class Table {
 
     private static boolean gameEnded;
 
-    private boolean highlightLegalMoves;
+    private boolean highlightLegalMoves, showAIThinking;
     private final GameHistoryPanel gameHistoryPanel;
     private final TakenPiecePanel takenPiecePanel;
 
@@ -164,7 +164,9 @@ public final class Table {
         protected Move doInBackground(){
             try {
                 final MiniMax miniMax = new MiniMax(Table.get().getGameSetup().getSearchDepth());
-                bar.showProgress();
+                if (Table.get().showAIThinking) {
+                    bar.showProgress();
+                }
                 //return best move
                 return miniMax.execute(Table.get().getGameBoard());
 
@@ -176,7 +178,9 @@ public final class Table {
 
         @Override
         public void done() {
-            this.bar.disposeFrame();
+            if (Table.get().showAIThinking) {
+                this.bar.disposeFrame();
+            }
             try {
                 final Move bestMove = this.get();
                 Table.get().updateGameBoard(Table.get().getGameBoard().currentPlayer().makeMove(bestMove).getBoard());
@@ -226,10 +230,16 @@ public final class Table {
         preferenceMenu.addSeparator();
 
         final JCheckBoxMenuItem legalMoveHighlighterCheckBox = new JCheckBoxMenuItem("Highlight Legal Moves");
-        legalMoveHighlighterCheckBox.setState(true);
+        final JCheckBoxMenuItem AIThinkingProgressBarCheckBox = new JCheckBoxMenuItem("Show AI thinking");
 
-        legalMoveHighlighterCheckBox.addActionListener(actionEvent -> highlightLegalMoves = legalMoveHighlighterCheckBox.isSelected());
+        legalMoveHighlighterCheckBox.setState(true);
+        AIThinkingProgressBarCheckBox.setState(true);
+
+        legalMoveHighlighterCheckBox.addActionListener(actionEvent -> this.highlightLegalMoves = legalMoveHighlighterCheckBox.isSelected());
+        AIThinkingProgressBarCheckBox.addActionListener(actionEvent -> this.showAIThinking = AIThinkingProgressBarCheckBox.isSelected());
+
         preferenceMenu.add(legalMoveHighlighterCheckBox);
+        preferenceMenu.add(AIThinkingProgressBarCheckBox);
 
         return preferenceMenu;
     }
