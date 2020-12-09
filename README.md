@@ -19,3 +19,4 @@ I screwed up my previous chess game with bad design and without planning ahead
 5. Show move history
 6. Choose AI level from 1 to 5
 7. Show captured piece
+8. Show AI thinking progress bar
