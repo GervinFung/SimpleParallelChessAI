@@ -15,7 +15,6 @@ public abstract class Piece {
     protected final League league;
     private final boolean isFirstMove;
     private final int cachedHashCode;
-    private int pieceDisplayPosition;
 
     public Piece(final PieceType pieceType, final int piecePosition, final League pieceCOLOR, final boolean isFirstMove) {
         this.pieceType = pieceType;
@@ -23,19 +22,6 @@ public abstract class Piece {
         this.league = pieceCOLOR;
         this.isFirstMove = isFirstMove;
         this.cachedHashCode = computeCachedHasCode();
-        this.pieceDisplayPosition = this.piecePosition;
-    }
-
-    public void setPieceDisplayPosition(final int pieceDisplayPosition) {
-        this.pieceDisplayPosition = pieceDisplayPosition;
-    }
-
-    public int getPieceDisplayPosition() {
-        return this.pieceDisplayPosition;
-    }
-
-    public void resetPieceDisplayPosition() {
-        this.pieceDisplayPosition = this.piecePosition;
     }
 
     private int computeCachedHasCode() {

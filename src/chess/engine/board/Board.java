@@ -22,6 +22,7 @@ public final class Board{
     private final Player currentPlayer;
 
     private final Pawn enPassantPawn;
+    private final int moveCount;
 
     private Board(final Builder builder) {
         this.gameBoard = createGameBoard(builder);
@@ -36,7 +37,11 @@ public final class Board{
         this.blackPlayer = new BlackPlayer(this, whiteStandardLegalMoves, blackStandardLegalMoves);
 
         this.currentPlayer = builder.nextMoveMaker.choosePlayer(this.whitePlayer, this.blackPlayer);
+
+        this.moveCount = builder.moveCount();
     }
+
+    public int getMoveCount() { return this.moveCount; }
 
     public Player currentPlayer() {
         return this.currentPlayer;
@@ -106,7 +111,7 @@ public final class Board{
     }
 
     public static Board createStandardBoard() {
-        final Builder builder = new Builder();
+        final Builder builder = new Builder(0);
         // Black Layout
 
         builder.setPiece(new Rook(League.BLACK, 0));
@@ -143,9 +148,11 @@ public final class Board{
         private final HashMap<Integer, Piece> boardConfig;
         private League nextMoveMaker;
         private Pawn enPassantPawn;
+        private final int moveCount;
 
-        public Builder() {
+        public Builder(final int moveCount) {
             this.boardConfig = new HashMap<>();
+            this.moveCount = moveCount;
         }
 
         public Builder setPiece(final Piece piece) {
@@ -164,5 +171,7 @@ public final class Board{
         public void setEnPassantPawn(final Pawn movedPawn) {
             this.enPassantPawn = movedPawn;
         }
+
+        public int moveCount() { return this.moveCount; }
     }
 }

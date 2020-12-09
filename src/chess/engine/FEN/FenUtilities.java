@@ -45,7 +45,7 @@ public class FenUtilities {
                 calculateCurrentPlayerText(board) + " " +
                 calculateCastleText(board) + " " +
                 calculateEnPassantText(board) + " " +
-                "0 1";
+                "0 " + board.getMoveCount() / 2;
     }
 
     private static String calculateBoardText(final Board board) {
@@ -97,10 +97,8 @@ public class FenUtilities {
 
     private static Board parseFEN(final String fenString) {
         final String[] fenPartitions = fenString.trim().split(" ");
-        for (final String string : fenPartitions) {
-            System.out.println(string);
-        }
-        final Builder builder = new Builder();
+
+        final Builder builder = new Builder(Integer.parseInt(fenPartitions[fenPartitions.length - 1]));
 
         final boolean whiteKingleagueCastle = whiteKingleagueCastle(fenPartitions[2]);
         final boolean whiteQueenleagueCastle = whiteQueenleagueCastle(fenPartitions[2]);

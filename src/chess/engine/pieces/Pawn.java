@@ -35,10 +35,12 @@ public final class Pawn extends Piece {
 
                 if (this.league.isPawnPromotionSquare(candidateDestinationCoordinate) && this.isLegalMove(board, candidateDestinationCoordinate)) {
 
-                    legalMoves.add(new PawnPromotion(new PawnMove(board, this, candidateDestinationCoordinate), new Queen(this.league, candidateDestinationCoordinate, false)));
-                    legalMoves.add(new PawnPromotion(new PawnMove(board, this, candidateDestinationCoordinate), new Rook(this.league, candidateDestinationCoordinate, false)));
-                    legalMoves.add(new PawnPromotion(new PawnMove(board, this, candidateDestinationCoordinate), new Bishop(this.league, candidateDestinationCoordinate, false)));
-                    legalMoves.add(new PawnPromotion(new PawnMove(board, this, candidateDestinationCoordinate), new Knight(this.league, candidateDestinationCoordinate, false)));
+                    final PawnMove pawnMove = new PawnMove(board, this, candidateDestinationCoordinate);
+
+                    legalMoves.add(new PawnPromotion(pawnMove, new Queen(this.league, candidateDestinationCoordinate, false)));
+                    legalMoves.add(new PawnPromotion(pawnMove, new Rook(this.league, candidateDestinationCoordinate, false)));
+                    legalMoves.add(new PawnPromotion(pawnMove, new Bishop(this.league, candidateDestinationCoordinate, false)));
+                    legalMoves.add(new PawnPromotion(pawnMove, new Knight(this.league, candidateDestinationCoordinate, false)));
 
                 } else if (!this.league.isPawnPromotionSquare(candidateDestinationCoordinate) && this.isLegalMove(board, candidateDestinationCoordinate)){
                     legalMoves.add(new PawnMove(board, this, candidateDestinationCoordinate));
@@ -62,12 +64,15 @@ public final class Pawn extends Piece {
                     final Piece pieceDestination = board.getTile(candidateDestinationCoordinate).getPiece();
 
                     if (this.league != pieceDestination.getLeague() && this.isLegalMove(board, candidateDestinationCoordinate)) {
+
                         if (this.league.isPawnPromotionSquare(candidateDestinationCoordinate)) {
 
-                            legalMoves.add(new PawnPromotion(new PawnAttackMove(board, this, candidateDestinationCoordinate, pieceDestination), new Queen(this.league, candidateDestinationCoordinate, false)));
-                            legalMoves.add(new PawnPromotion(new PawnAttackMove(board, this, candidateDestinationCoordinate, pieceDestination), new Rook(this.league, candidateDestinationCoordinate, false)));
-                            legalMoves.add(new PawnPromotion(new PawnAttackMove(board, this, candidateDestinationCoordinate, pieceDestination), new Bishop(this.league, candidateDestinationCoordinate, false)));
-                            legalMoves.add(new PawnPromotion(new PawnAttackMove(board, this, candidateDestinationCoordinate, pieceDestination), new Knight(this.league, candidateDestinationCoordinate, false)));
+                            final PawnAttackMove pawnAttackMove = new PawnAttackMove(board, this, candidateDestinationCoordinate, pieceDestination);
+
+                            legalMoves.add(new PawnPromotion(pawnAttackMove, new Queen(this.league, candidateDestinationCoordinate, false)));
+                            legalMoves.add(new PawnPromotion(pawnAttackMove, new Rook(this.league, candidateDestinationCoordinate, false)));
+                            legalMoves.add(new PawnPromotion(pawnAttackMove, new Bishop(this.league, candidateDestinationCoordinate, false)));
+                            legalMoves.add(new PawnPromotion(pawnAttackMove, new Knight(this.league, candidateDestinationCoordinate, false)));
 
                         } else {
                             legalMoves.add(new PawnAttackMove(board, this, candidateDestinationCoordinate, pieceDestination));
@@ -96,10 +101,12 @@ public final class Pawn extends Piece {
 
                         if (this.league.isPawnPromotionSquare(candidateDestinationCoordinate)) {
 
-                            legalMoves.add(new PawnPromotion(new PawnAttackMove(board, this, candidateDestinationCoordinate, pieceDestination), new Queen(this.league, candidateDestinationCoordinate, false)));
-                            legalMoves.add(new PawnPromotion(new PawnAttackMove(board, this, candidateDestinationCoordinate, pieceDestination), new Rook(this.league, candidateDestinationCoordinate, false)));
-                            legalMoves.add(new PawnPromotion(new PawnAttackMove(board, this, candidateDestinationCoordinate, pieceDestination), new Bishop(this.league, candidateDestinationCoordinate, false)));
-                            legalMoves.add(new PawnPromotion(new PawnAttackMove(board, this, candidateDestinationCoordinate, pieceDestination), new Knight(this.league, candidateDestinationCoordinate, false)));
+                            final PawnAttackMove pawnAttackMove = new PawnAttackMove(board, this, candidateDestinationCoordinate, pieceDestination);
+
+                            legalMoves.add(new PawnPromotion(pawnAttackMove, new Queen(this.league, candidateDestinationCoordinate, false)));
+                            legalMoves.add(new PawnPromotion(pawnAttackMove, new Rook(this.league, candidateDestinationCoordinate, false)));
+                            legalMoves.add(new PawnPromotion(pawnAttackMove, new Bishop(this.league, candidateDestinationCoordinate, false)));
+                            legalMoves.add(new PawnPromotion(pawnAttackMove, new Knight(this.league, candidateDestinationCoordinate, false)));
 
                         } else {
                             legalMoves.add(new PawnAttackMove(board, this, candidateDestinationCoordinate, pieceDestination));
@@ -132,11 +139,6 @@ public final class Pawn extends Piece {
     }
 
     public List<Piece> getPromotionPieces(final int destinationCoordinate) {
-        final List<Piece> promotionPieces = new ArrayList<>();
-        promotionPieces.add(new Queen(this.league, destinationCoordinate, false));
-        promotionPieces.add(new Rook(this.league, destinationCoordinate, false));
-        promotionPieces.add(new Bishop(this.league, destinationCoordinate, false));
-        promotionPieces.add(new Knight(this.league, destinationCoordinate, false));
-        return Collections.unmodifiableList(promotionPieces);
+        return List.of(new Queen(this.league, destinationCoordinate, false), new Rook(this.league, destinationCoordinate, false), new Bishop(this.league, destinationCoordinate, false), new Knight(this.league, destinationCoordinate, false));
     }
 }

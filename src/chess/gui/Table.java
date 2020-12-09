@@ -129,17 +129,11 @@ public final class Table {
             gameEnded = true;
         }
 
-
         if (gameEnded) {
             JOptionPane.showMessageDialog(Table.get().getBoardPanel(),
                     "From Game Menu\n1. New Game to start a new game\n2. Exit Game to exit this game", "Game Over",
                     JOptionPane.INFORMATION_MESSAGE);
         }
-
-        else if (Table.get().getGameBoard().currentPlayer().isInCheck()) {
-            JOptionPane.showMessageDialog(Table.get().getBoardPanel(), Table.get().getGameBoard().currentPlayer() + " King is in check!\nPress OK to continue", "King In Check", JOptionPane.WARNING_MESSAGE);
-        }
-
         gameEnded = false;
     }
 
@@ -450,6 +444,9 @@ public final class Table {
 
         public void drawTile(final Board board) {
             this.assignTileColor();
+            if (board.currentPlayer().isInCheck()) {
+                this.highlightKingCheck(board.currentPlayer().getPlayerKing().getPiecePosition());
+            }
             this.assignTilePieceIcon(board);
             this.validate();
             this.repaint();
@@ -469,6 +466,12 @@ public final class Table {
                 } catch (final IOException e) {
                     System.err.println("Image path is invalid");
                 }
+            }
+        }
+
+        private void highlightKingCheck(final int kingCoordinate) {
+            if (kingCoordinate == this.tileID) {
+                this.setBackground(Color.RED);
             }
         }
 

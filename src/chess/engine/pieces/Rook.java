@@ -22,7 +22,7 @@ public final class Rook extends Piece{
     }
 
     public Rook(final League pieceCOLOR, final int piecePosition, final boolean isFirstMove) {
-        super(PieceType.BISHOP, piecePosition, pieceCOLOR, isFirstMove);
+        super(PieceType.ROOK, piecePosition, pieceCOLOR, isFirstMove);
     }
 
     @Override

@@ -96,7 +96,7 @@ public abstract class Move {
 
     public Board execute() {
 
-        final Builder builder = new Builder();
+        final Builder builder = new Builder(this.board.getMoveCount() + 1);
 
         this.board.currentPlayer().getActivePieces().stream().filter(piece -> !this.movePiece.equals(piece)).forEach(builder::setPiece);
         this.board.currentPlayer().getOpponent().getActivePieces().forEach(builder::setPiece);
@@ -105,22 +105,6 @@ public abstract class Move {
         builder.setMoveMaker(this.board.currentPlayer().getOpponent().getLeague());
 
         return builder.build();
-    }
-
-    public static final class MajorAttackMove extends AttackMove {
-        public MajorAttackMove(final Board board, final Piece piece, final int destinationCoordinate, final Piece pieceAttacked) {
-            super(board, piece, destinationCoordinate, pieceAttacked);
-        }
-
-        @Override
-        public boolean equals(final Object object) {
-            return this == object || object instanceof MajorAttackMove && super.equals(object);
-        }
-
-        @Override
-        public String toString() {
-            return getMovedPiece().getPieceType() + BoardUtils.getPositionAtCoordinate(this.destinationCoordinate) + "x" + this.getAttackedPiece();
-        }
     }
 
     public static final class MajorMove extends Move {
@@ -179,6 +163,22 @@ public abstract class Move {
         }
     }
 
+    public static final class MajorAttackMove extends AttackMove {
+        public MajorAttackMove(final Board board, final Piece piece, final int destinationCoordinate, final Piece pieceAttacked) {
+            super(board, piece, destinationCoordinate, pieceAttacked);
+        }
+
+        @Override
+        public boolean equals(final Object object) {
+            return this == object || object instanceof MajorAttackMove && super.equals(object);
+        }
+
+        @Override
+        public String toString() {
+            return getMovedPiece().getPieceType() + BoardUtils.getPositionAtCoordinate(this.destinationCoordinate) + "x" + this.getAttackedPiece();
+        }
+    }
+
     public static final class PawnMove extends Move {
 
         public PawnMove(final Board board, final Piece movePiece, final int destinationCoordinate) {
@@ -228,7 +228,7 @@ public abstract class Move {
 
         @Override
         public Board execute() {
-            final Builder builder = new Builder();
+            final Builder builder = new Builder(this.board.getMoveCount() + 1);
 
             this.board.currentPlayer().getActivePieces().stream().filter(piece -> !this.movePiece.equals(piece)).forEach(builder::setPiece);
             this.board.currentPlayer().getOpponent().getActivePieces().stream().filter(piece -> !piece.equals(this.getAttackedPiece())).forEach(builder::setPiece);
@@ -259,7 +259,7 @@ public abstract class Move {
         }
 
         public Board promotePawn(final Board board) {
-            final Builder builder = new Builder();
+            final Builder builder = new Builder(this.board.getMoveCount() + 1);
 
             board.currentPlayer().getActivePieces().stream().filter(piece -> !this.promotedPawn.equals(piece)).forEach(builder::setPiece);
             board.currentPlayer().getOpponent().getActivePieces().forEach(builder::setPiece);
@@ -275,7 +275,7 @@ public abstract class Move {
         public Board execute() {
 
             final Board pawnMoveBoard = this.decoratedMove.execute();
-            final Board.Builder builder = new Builder();
+            final Board.Builder builder = new Builder(this.board.getMoveCount() + 1);
 
             pawnMoveBoard.currentPlayer().getActivePieces().stream().filter(piece -> !this.promotedPawn.equals(piece)).forEach(builder::setPiece);
             pawnMoveBoard.currentPlayer().getOpponent().getActivePieces().forEach(builder::setPiece);
@@ -360,7 +360,7 @@ public abstract class Move {
 
         @Override
         public Board execute() {
-            final Builder builder = new Builder();
+            final Builder builder = new Builder(this.board.getMoveCount() + 1);
 
             this.board.currentPlayer().getActivePieces().stream().filter(piece -> !this.movePiece.equals(piece)).forEach(builder::setPiece);
             this.board.currentPlayer().getOpponent().getActivePieces().forEach(builder::setPiece);
@@ -406,7 +406,7 @@ public abstract class Move {
         @Override
         public Board execute() {
 
-            final Builder builder = new Builder();
+            final Builder builder = new Builder(this.board.getMoveCount() + 1);
 
             for (final Piece piece : this.board.getAllPieces()) {
                 if (!this.movePiece.equals(piece) && !this.castleRook.equals(piece)) {

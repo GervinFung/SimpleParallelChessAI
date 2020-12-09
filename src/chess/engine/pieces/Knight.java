@@ -22,7 +22,7 @@ public final class Knight extends Piece{
     }
 
     public Knight(final League pieceCOLOR, final int piecePosition, final boolean isFirstMove) {
-        super(PieceType.BISHOP, piecePosition, pieceCOLOR, isFirstMove);
+        super(PieceType.KNIGHT, piecePosition, pieceCOLOR, isFirstMove);
     }
 
     @Override
@@ -38,7 +38,7 @@ public final class Knight extends Piece{
                 if (isFirstColumnExclusion(this.piecePosition, currentCandidateOFFSET) ||
                     isSecondColumnExclusion(this.piecePosition, currentCandidateOFFSET) ||
                     isSeventhColumnExclusion(this.piecePosition, currentCandidateOFFSET) ||
-                    isEigthColumnExclusion(this.piecePosition, currentCandidateOFFSET)) {
+                    isEighthColumnExclusion(this.piecePosition, currentCandidateOFFSET)) {
                     continue;
                 }
 
@@ -79,7 +79,7 @@ public final class Knight extends Piece{
     private static boolean isSeventhColumnExclusion(final int currentPosition, final int candidateOFFSET) {
         return BoardUtils.SEVENTH_COLUMN[currentPosition] && (candidateOFFSET == -6 || candidateOFFSET == 10);
     }
-    private static boolean isEigthColumnExclusion(final int currentPosition, final int candidateOFFSET) {
+    private static boolean isEighthColumnExclusion(final int currentPosition, final int candidateOFFSET) {
         return BoardUtils.EIGHTH_COLUMN[currentPosition] && (candidateOFFSET == -15 || candidateOFFSET == -6 || candidateOFFSET == 10 || candidateOFFSET == 17);
     }
 
