@@ -1,13 +1,15 @@
 A simple 2 player chess AI that implemented minimax & alpha-beta pruning with a slightly different FEN file format
 I screwed up my previous chess game with bad design and without planning ahead
 
-#To play the Game
+**To play the Game**
 
 1. User can choose to play as white/black
 2. User can choose white/black as AI
 3. Or, user can watch AI play against itself
+4. Once the game started, press(not click) the piece you wish to move, drag and drop to the square you wish to place it
+5. And no, the piece wont move while you drag it
 
-#Game Features
+**Game Features**
 
 1. Restart new game
 2. Save game/ Load saved game
