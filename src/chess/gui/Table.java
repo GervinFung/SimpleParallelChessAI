@@ -124,7 +124,6 @@ public final class Table {
 
     private boolean getHighLightMovesEnabled() { return this.highlightLegalMoves; }
 
-
     private static void displayEndGameMessage() {
         boolean gameEnded = false;
         if (Table.get().getGameBoard().currentPlayer().isInCheckmate()) {
@@ -145,7 +144,6 @@ public final class Table {
             JOptionPane.showMessageDialog(Table.get().getBoardPanel(),
                     "From Game Menu\n1. New Game to start a new game\n2. Exit Game to exit this game", "Game Over",
                     JOptionPane.INFORMATION_MESSAGE);
-            Table.get().getBoardPanel().setEnabled(false);
         }
     }
 
@@ -179,7 +177,7 @@ public final class Table {
             try {
                 final MiniMax miniMax = new MiniMax(Table.get().getGameSetup().getSearchDepth());
                 if (Table.get().getShowAIThinking()) {
-                    bar.showProgress();
+                    this.bar.showProgress();
                 }
                 //return best move
                 return miniMax.execute(Table.get().getGameBoard());
@@ -291,6 +289,13 @@ public final class Table {
         final JMenuItem newGameMenuItem = new JMenuItem("New Game");
         newGameMenuItem.addActionListener(actionEvent -> {
             AIThinking = false;
+            if (!(Table.get().getGameBoard().currentPlayer().isInCheckmate() || Table.get().getGameBoard().currentPlayer().isInStalemate())) {
+                final int confirmedExit = JOptionPane.showConfirmDialog(this.boardPanel, "Are you sure you want to restart game without saving?", "Restart Game",
+                        JOptionPane.YES_NO_CANCEL_OPTION);
+                if (confirmedExit == JOptionPane.NO_OPTION) {
+                    FenUtilities.writeFENToFile(this.chessBoard);
+                }
+            }
             restartGame();
         });
 
