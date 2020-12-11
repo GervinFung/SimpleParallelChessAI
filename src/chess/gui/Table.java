@@ -72,6 +72,10 @@ public final class Table {
     private final PropertyChangeSupport propertyChangeSupport;
     private final JFrame gameFrame;
 
+
+    private Color darkTileColor;
+    private Color legalMovesLightTileColor, legalMovesDarkTileColor;
+
     private Table() {
         this.gameFrame = new JFrame("Simple Chess");
         gameFrame.setResizable(false);
@@ -109,6 +113,11 @@ public final class Table {
 
         this.propertyChangeSupport = new PropertyChangeSupport(propertyChangeListener);
         this.propertyChangeSupport.addPropertyChangeListener(propertyChangeListener);
+
+        this.darkTileColor = new Color(29 ,61 ,99);
+
+        this.legalMovesLightTileColor = Color.lightGray;
+        this.legalMovesDarkTileColor = new Color(100 ,100 ,93);
     }
 
     private void setAIThinking(final boolean AIThinking) { this.AIThinking = AIThinking; }
@@ -274,6 +283,7 @@ public final class Table {
         tableMenuBar.add(createFileMenu());
         tableMenuBar.add(createPreferencesMenu());
         tableMenuBar.add(createOptionMenu());
+        tableMenuBar.add(createBoardColorMenu());
         return tableMenuBar;
     }
 
@@ -283,11 +293,37 @@ public final class Table {
         this.show();
     }
 
+    private JMenu createBoardColorMenu() {
+        final JMenu gameMenu = new JMenu("Board Color");
+
+        final JMenuItem blueWhiteMenuItem = new JMenuItem("Blue & White");
+        blueWhiteMenuItem.addActionListener(e -> {
+            this.darkTileColor = new Color(29 ,61 ,99);
+            this.legalMovesLightTileColor = Color.lightGray;
+            this.legalMovesDarkTileColor = new Color(100 ,100 ,93);
+            Table.get().boardPanel.drawBoard(this.chessBoard);
+        });
+
+        final JMenuItem greyWhiteMenuItem = new JMenuItem("Grey & White");
+        greyWhiteMenuItem.addActionListener(e -> {
+            this.darkTileColor = Color.LIGHT_GRAY;
+            //rgb(255,255,102)
+            this.legalMovesLightTileColor = new Color(255, 255, 153);
+            this.legalMovesDarkTileColor = new Color(255, 255, 102);
+            Table.get().boardPanel.drawBoard(this.chessBoard);
+        });
+
+        gameMenu.add(blueWhiteMenuItem);
+        gameMenu.add(greyWhiteMenuItem);
+
+        return gameMenu;
+    }
+
     private JMenu createFileMenu() {
         final JMenu gameMenu = new JMenu("Game");
 
         final JMenuItem newGameMenuItem = new JMenuItem("New Game");
-        newGameMenuItem.addActionListener(actionEvent -> {
+        newGameMenuItem.addActionListener(e -> {
             AIThinking = false;
             if (!(Table.get().getGameBoard().currentPlayer().isInCheckmate() || Table.get().getGameBoard().currentPlayer().isInStalemate())) {
                 final int confirmedExit = JOptionPane.showConfirmDialog(this.boardPanel, "Are you sure you want to restart game without saving?", "Restart Game",
@@ -300,7 +336,7 @@ public final class Table {
         });
 
         final JMenuItem saveGameMenuItem = new JMenuItem("Save Game");
-        saveGameMenuItem.addActionListener(actionEvent -> FenUtilities.writeFENToFile(this.chessBoard));
+        saveGameMenuItem.addActionListener(e -> FenUtilities.writeFENToFile(this.chessBoard));
 
 
         final JMenuItem loadGameMenuItem = new JMenuItem("Load Saved Game");
@@ -513,10 +549,9 @@ public final class Table {
 
                     final int coordinate = move.getDestinationCoordinate();
 
-                    final Color lightTileColor = Color.lightGray;
-                    final Color darkTileColor = new Color(100 ,100 ,93);
+
                     Color tileColor;
-                    if (move instanceof MajorAttackMove || move instanceof PawnAttackMove) {
+                    if (move instanceof AttackMove) {
                         boardPanel.getBoardTiles().get(coordinate).setBackground(new Color(204, 0, 0));
                     }
                     else {
@@ -524,9 +559,9 @@ public final class Table {
                                 BoardUtils.THIRD_ROW[coordinate] ||
                                 BoardUtils.FIFTH_ROW[coordinate] ||
                                 BoardUtils.SEVENTH_ROW[coordinate]) {
-                            tileColor = (coordinate % 2 == 0 ? lightTileColor : darkTileColor);
+                            tileColor = (coordinate % 2 == 0 ? legalMovesLightTileColor : legalMovesDarkTileColor);
                         } else {
-                            tileColor = (coordinate % 2 != 0 ? lightTileColor : darkTileColor);
+                            tileColor = (coordinate % 2 != 0 ? legalMovesLightTileColor : legalMovesDarkTileColor);
                         }
                         boardPanel.getBoardTiles().get(coordinate).setBackground(tileColor);
                     }
@@ -543,7 +578,7 @@ public final class Table {
 
         private void assignTileColor() {
             final Color lightTileColor = Color.WHITE;
-            final Color darkTileColor = Color.decode("#1D3D63");//Color.LIGHT_GRAY;
+
             if (BoardUtils.FIRST_ROW[this.tileID] ||
                     BoardUtils.THIRD_ROW[this.tileID] ||
                     BoardUtils.FIFTH_ROW[this.tileID] ||

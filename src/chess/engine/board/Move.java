@@ -378,7 +378,7 @@ public abstract class Move {
         }
     }
 
-    static abstract class CastleMove extends Move {
+    private static abstract class CastleMove extends Move {
 
         protected final Rook castleRook;
 
