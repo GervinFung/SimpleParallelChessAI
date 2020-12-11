@@ -54,9 +54,7 @@ public final class Table {
     private final MoveLog moveLog;
     private final GameSetup gameSetup;
 
-    private static boolean gameEnded;
-
-    private boolean highlightLegalMoves, showAIThinking;
+    private boolean highlightLegalMoves, showAIThinking, AIThinking;
     private final GameHistoryPanel gameHistoryPanel;
     private final TakenPiecePanel takenPiecePanel;
 
@@ -95,10 +93,11 @@ public final class Table {
         gameFrame.setLocationRelativeTo(null);
         gameFrame.setResizable(false);
         gameFrame.setVisible(true);
-        gameEnded = false;
+        this.AIThinking = false;
+        this.showAIThinking = true;
 
         //a property change listener for AI, as Observable is deprecated
-        PropertyChangeListener propertyChangeListener = propertyChangeEvent -> {
+        final PropertyChangeListener propertyChangeListener = propertyChangeEvent -> {
             if (Table.get().getGameSetup().isAIPlayer(Table.get().getGameBoard().currentPlayer()) &&
                     !Table.get().getGameBoard().currentPlayer().isInCheckmate() &&
                     !Table.get().getGameBoard().currentPlayer().isInStalemate()) {
@@ -112,8 +111,22 @@ public final class Table {
         this.propertyChangeSupport.addPropertyChangeListener(propertyChangeListener);
     }
 
+    private void setAIThinking(final boolean AIThinking) { this.AIThinking = AIThinking; }
+
+    private boolean getAIThinking() { return this.AIThinking; }
+
+
+    private void setShowAIThinking(final boolean showAIThinking) { this.showAIThinking = showAIThinking; }
+
+    private boolean getShowAIThinking() { return this.showAIThinking; }
+
+    private void enableHighLightMoves(final boolean highlightLegalMoves) { this.highlightLegalMoves = highlightLegalMoves; }
+
+    private boolean getHighLightMovesEnabled() { return this.highlightLegalMoves; }
+
 
     private static void displayEndGameMessage() {
+        boolean gameEnded = false;
         if (Table.get().getGameBoard().currentPlayer().isInCheckmate()) {
             JOptionPane.showMessageDialog(Table.get().getBoardPanel(),
                     "Game Over: Player " + Table.get().getGameBoard().currentPlayer() + " is in checkmate!", "Game Over",
@@ -132,8 +145,8 @@ public final class Table {
             JOptionPane.showMessageDialog(Table.get().getBoardPanel(),
                     "From Game Menu\n1. New Game to start a new game\n2. Exit Game to exit this game", "Game Over",
                     JOptionPane.INFORMATION_MESSAGE);
+            Table.get().getBoardPanel().setEnabled(false);
         }
-        gameEnded = false;
     }
 
 
@@ -158,13 +171,14 @@ public final class Table {
 
         private AIThinkTank() {
             this.bar = new ProgressBar(Table.get().getGameFrame());
+            Table.get().setAIThinking(true);
         }
 
         @Override
         protected Move doInBackground(){
             try {
                 final MiniMax miniMax = new MiniMax(Table.get().getGameSetup().getSearchDepth());
-                if (Table.get().showAIThinking) {
+                if (Table.get().getShowAIThinking()) {
                     bar.showProgress();
                 }
                 //return best move
@@ -178,7 +192,7 @@ public final class Table {
 
         @Override
         public void done() {
-            if (Table.get().showAIThinking) {
+            if (Table.get().getShowAIThinking()) {
                 this.bar.disposeFrame();
             }
             try {
@@ -189,6 +203,7 @@ public final class Table {
                 Table.get().getTakenPiecesPanel().redo(Table.get().getMoveLog());
                 Table.get().boardPanel.drawBoard(Table.get().getGameBoard());
                 Table.get().moveMadeUpdate();
+                Table.get().setAIThinking(false);
 
             } catch (final ExecutionException | InterruptedException e) {
                 e.printStackTrace();
@@ -235,9 +250,8 @@ public final class Table {
         legalMoveHighlighterCheckBox.setState(true);
         AIThinkingProgressBarCheckBox.setState(true);
 
-        legalMoveHighlighterCheckBox.addActionListener(actionEvent -> this.highlightLegalMoves = legalMoveHighlighterCheckBox.isSelected());
-        AIThinkingProgressBarCheckBox.addActionListener(actionEvent -> this.showAIThinking = AIThinkingProgressBarCheckBox.isSelected());
-
+        legalMoveHighlighterCheckBox.addActionListener(actionEvent -> Table.get().enableHighLightMoves(legalMoveHighlighterCheckBox.isSelected()));
+        AIThinkingProgressBarCheckBox.addActionListener(actionEvent -> Table.get().setShowAIThinking(AIThinkingProgressBarCheckBox.isSelected()));
         preferenceMenu.add(legalMoveHighlighterCheckBox);
         preferenceMenu.add(AIThinkingProgressBarCheckBox);
 
@@ -276,7 +290,7 @@ public final class Table {
 
         final JMenuItem newGameMenuItem = new JMenuItem("New Game");
         newGameMenuItem.addActionListener(actionEvent -> {
-            gameEnded = false;
+            AIThinking = false;
             restartGame();
         });
 
@@ -404,7 +418,7 @@ public final class Table {
 
                 @Override
                 public void mousePressed(final MouseEvent mouseEvent) {
-                    if (isLeftMouseButton(mouseEvent) && !gameEnded) {
+                    if (isLeftMouseButton(mouseEvent) && !Table.get().getAIThinking()) {
                         mousePressedY = (int) Math.ceil(mouseEvent.getY() / 64.0);
                         mousePressedX = (int) Math.ceil(mouseEvent.getX() / 64.0);
                         if (sourceTile == null) {
@@ -417,7 +431,7 @@ public final class Table {
 
                 @Override
                 public void mouseReleased(final MouseEvent mouseEvent) {
-                    if (isLeftMouseButton(mouseEvent) && !gameEnded) {
+                    if (isLeftMouseButton(mouseEvent) && !Table.get().getAIThinking()) {
                         final int releasedX = (int) Math.ceil(mouseEvent.getX() / 64.0) - mousePressedX;
                         final int releasedY = ((int) Math.ceil(mouseEvent.getY() / 64.0) - mousePressedY) * 8;
                         if (humanMovePiece != null && humanMovePiece.getLeague() == chessBoard.currentPlayer().getLeague()) {
@@ -486,7 +500,7 @@ public final class Table {
 
         private void highlightLegals(final Board board) {
 
-            if (highlightLegalMoves) {
+            if (Table.get().getHighLightMovesEnabled()) {
 
                 final List<Move> legalMoves = new ArrayList<>(pieceLegalMoves(board));
 
