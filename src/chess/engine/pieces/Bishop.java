@@ -17,12 +17,12 @@ public final class Bishop extends Piece{
 
     private static final int[] MOVE_VECTOR_COORDINATE = {-9, -7, 7, 9};
 
-    public Bishop(final League pieceCOLOR, final int piecePosition) {
-        super(PieceType.BISHOP, piecePosition, pieceCOLOR, true);
+    public Bishop(final League league, final int piecePosition) {
+        super(PieceType.BISHOP, piecePosition, league, true);
     }
 
-    public Bishop(final League pieceCOLOR, final int piecePosition, final boolean isFirstMove) {
-        super(PieceType.BISHOP, piecePosition, pieceCOLOR, isFirstMove);
+    public Bishop(final League league, final int piecePosition, final boolean isFirstMove) {
+        super(PieceType.BISHOP, piecePosition, league, isFirstMove);
     }
 
     @Override

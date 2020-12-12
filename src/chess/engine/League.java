@@ -4,7 +4,7 @@ import chess.engine.board.BoardUtils;
 import chess.engine.player.BlackPlayer;
 import chess.engine.player.Player;
 import chess.engine.player.WhitePlayer;
-//change to league
+
 public enum League {
     WHITE {
         @Override

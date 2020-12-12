@@ -16,8 +16,8 @@ public final class Pawn extends Piece {
 
     private static final int[] MOVE_VECTOR_COORDINATE = {8, 16, 7, 9};
 
-    public Pawn(final League pieceCOLOR, final int piecePosition) {
-        super(PieceType.PAWN, piecePosition, pieceCOLOR, true);
+    public Pawn(final League league, final int piecePosition) {
+        super(PieceType.PAWN, piecePosition, league, true);
     }
 
     @Override

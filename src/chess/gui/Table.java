@@ -190,14 +190,16 @@ public final class Table {
                 this.dialog.add(this.bar);
                 this.dialog.setSize(300, 60);
                 this.dialog.setLocationRelativeTo(Table.get().getGameFrame());
+                this.dialog.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
                 this.dialog.setVisible(true);
                 this.dialog.setResizable(false);
+                this.max = Table.get().getGameBoard().currentPlayer().getLegalMoves().size();
             } else {
                 this.dialog = null;
                 this.bar = null;
+                this.max = 0;
             }
             Table.get().setAIThinking(true);
-            this.max = Table.get().getGameBoard().currentPlayer().getLegalMoves().size();
         }
 
         @Override
@@ -210,11 +212,14 @@ public final class Table {
                 final MiniMax miniMax = new MiniMax(Table.get().getGameSetup().getSearchDepth());
 
                 if (Table.get().getShowAIThinking()) {
+
+                    //progress is shown based on move count / total available moves ratio
                     final Thread displayProgress = new Thread(() -> {
                         while(running.get()) {
-                            final double progress = ((double)miniMax.getNumberOfMoves() / this.max) * 100;
+                            final double progress = ((double)miniMax.getMoveCount() / this.max) * 100;
                             this.publish((int)progress);//publish the progress
                         }
+                        //so 100% progress is shown
                         try {
                             sleep(100);
                             this.dialog.dispose();
@@ -225,6 +230,7 @@ public final class Table {
                 }
 
                 final Move bestMove = miniMax.execute(Table.get().getGameBoard());
+                //stop the loop in thread
                 running.lazySet(false);
                 return bestMove;
 

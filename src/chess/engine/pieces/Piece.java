@@ -16,10 +16,10 @@ public abstract class Piece {
     private final boolean isFirstMove;
     private final int cachedHashCode;
 
-    public Piece(final PieceType pieceType, final int piecePosition, final League pieceCOLOR, final boolean isFirstMove) {
+    public Piece(final PieceType pieceType, final int piecePosition, final League league, final boolean isFirstMove) {
         this.pieceType = pieceType;
         this.piecePosition = piecePosition;
-        this.league = pieceCOLOR;
+        this.league = league;
         this.isFirstMove = isFirstMove;
         this.cachedHashCode = computeCachedHasCode();
     }

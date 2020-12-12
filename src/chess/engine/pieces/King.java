@@ -21,15 +21,15 @@ public final class King extends Piece{
     private final boolean queenSideCastleCapable;
 
     private static final int[] MOVE_VECTOR_COORDINATE = {-9, -8, -7, -1, 1, 7, 8, 9};
-    public King(final League pieceCOLOR, final int piecePosition, final boolean isFirstMove,
+    public King(final League league, final int piecePosition, final boolean isFirstMove,
                 final boolean isCastled, final boolean kingSideCastleCapable, final boolean queenSideCastleCapable) {
-        super(PieceType.KING, piecePosition, pieceCOLOR, isFirstMove);
+        super(PieceType.KING, piecePosition, league, isFirstMove);
         this.isCastled = isCastled;
         this.kingSideCastleCapable = kingSideCastleCapable;
         this.queenSideCastleCapable = queenSideCastleCapable;
     }
-    public King(final League pieceCOLOR, final int piecePosition, final boolean kingSideCastleCapable, final boolean queenSideCastleCapable) {
-        super(PieceType.KING, piecePosition, pieceCOLOR, true);
+    public King(final League league, final int piecePosition, final boolean kingSideCastleCapable, final boolean queenSideCastleCapable) {
+        super(PieceType.KING, piecePosition, league, true);
         this.kingSideCastleCapable = kingSideCastleCapable;
         this.queenSideCastleCapable = queenSideCastleCapable;
         this.isCastled = false;
@@ -44,7 +44,7 @@ public final class King extends Piece{
         final List<Move> kingCastle = new ArrayList<>();
         if (this.isFirstMove() && !board.currentPlayer().isInCheck()) {
             if (this.kingSideCastleCapable) {
-                //king league castle
+                //king side
                 if (!board.getTile(this.getLeague().isWhite() ? 61 : 5).isTileOccupied() && !board.getTile(this.getLeague().isWhite() ? 62 : 6).isTileOccupied()) {
 
                     final Tile rookTile = board.getTile(this.getLeague().isWhite() ? 63 : 7);
@@ -60,7 +60,7 @@ public final class King extends Piece{
                 }
             }
             if (this.queenSideCastleCapable) {
-                //QUEEN league
+                //QUEEN side
                 if (!board.getTile(this.getLeague().isWhite() ? 57 : 1).isTileOccupied() && !board.getTile(this.getLeague().isWhite() ? 58 : 2).isTileOccupied() && !board.getTile(this.getLeague().isWhite() ? 59 : 3).isTileOccupied()) {
 
                     final Tile rookTile = board.getTile(this.getLeague().isWhite() ? 56 : 0);
@@ -101,9 +101,9 @@ public final class King extends Piece{
 
                 } else if (candidateDestinationTile.isTileOccupied()) {
                     final Piece pieceDestination = candidateDestinationTile.getPiece();
-                    final League pieceCOLOR = pieceDestination.getLeague();
+                    final League league = pieceDestination.getLeague();
 
-                    if (this.getLeague() != pieceCOLOR && this.isLegalMove(board, candidateDestinationCoordinate)) {
+                    if (this.getLeague() != league && this.isLegalMove(board, candidateDestinationCoordinate)) {
                         legalMoves.add(new MajorAttackMove(board, this, candidateDestinationCoordinate, pieceDestination));
                     }
                 }

@@ -8,12 +8,12 @@ public final class MiniMax{
 
     private final StandardBoardEvaluation boardEvaluation;
     private final int searchDepth;
-    private int numberOfMoves;
+    private int moveCount;
 
     public MiniMax(final int searchDepth) {
         this.boardEvaluation = new StandardBoardEvaluation();
         this.searchDepth = searchDepth;
-        this.numberOfMoves = 0;
+        this.moveCount = 0;
     }
 
     public Move execute(final Board board) {
@@ -28,7 +28,7 @@ public final class MiniMax{
 
         for (final Move move : board.currentPlayer().getLegalMoves()) {
 
-            this.numberOfMoves++;
+            this.moveCount++;
 
             final MoveTransition moveTransition = board.currentPlayer().makeMove(move);
             if (moveTransition.getMoveStatus().isDone()) {
@@ -52,8 +52,8 @@ public final class MiniMax{
         return bestMove;
     }
 
-    public int getNumberOfMoves() {
-        return this.numberOfMoves;
+    public int getMoveCount() {
+        return this.moveCount;
     }
 
     private static boolean isEndGameScenario(final Board board) {

@@ -17,12 +17,12 @@ public final class Knight extends Piece{
 
     private final static int[] MOVE_VECTOR_COORDINATE = {-17, -15, -10, -6, 6, 10, 15, 17};
 
-    public Knight(final League pieceCOLOR, final int piecePosition) {
-        super(PieceType.KNIGHT, piecePosition, pieceCOLOR, true);
+    public Knight(final League league, final int piecePosition) {
+        super(PieceType.KNIGHT, piecePosition, league, true);
     }
 
-    public Knight(final League pieceCOLOR, final int piecePosition, final boolean isFirstMove) {
-        super(PieceType.KNIGHT, piecePosition, pieceCOLOR, isFirstMove);
+    public Knight(final League league, final int piecePosition, final boolean isFirstMove) {
+        super(PieceType.KNIGHT, piecePosition, league, isFirstMove);
     }
 
     @Override
@@ -48,9 +48,9 @@ public final class Knight extends Piece{
 
                 } else if (candidateDestinationTile.isTileOccupied()) {
                     final Piece pieceDestination = candidateDestinationTile.getPiece();
-                    final League pieceCOLOR = pieceDestination.getLeague();
+                    final League league = pieceDestination.getLeague();
 
-                    if (this.getLeague() != pieceCOLOR && this.isLegalMove(board, candidateDestinationCoordinate)) {
+                    if (this.getLeague() != league && this.isLegalMove(board, candidateDestinationCoordinate)) {
                         legalMoves.add(new MajorAttackMove(board, this, candidateDestinationCoordinate, pieceDestination));
                     }
                 }

@@ -80,14 +80,14 @@ public final class Board{
         return Collections.unmodifiableList(legalMoves);
     }
 
-    private static Collection<Piece> calculateActivePieces(final List<Tile> gameBoard, final League COLOR) {
+    private static Collection<Piece> calculateActivePieces(final List<Tile> gameBoard, final League league) {
 
         final List<Piece> activePieces = new ArrayList<>();
 
         for (final Tile tile: gameBoard) {
             if (tile.isTileOccupied()) {
                 final Piece piece = tile.getPiece();
-                if (piece.getLeague() == COLOR) {
+                if (piece.getLeague() == league) {
                     activePieces.add(piece);
                 }
             }

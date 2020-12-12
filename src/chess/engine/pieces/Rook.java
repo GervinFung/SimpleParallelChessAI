@@ -17,12 +17,12 @@ public final class Rook extends Piece{
 
     private static final int[] MOVE_VECTOR_COORDINATE = {-8, -1, 1, 8};
 
-    public Rook(final League pieceCOLOR, final int piecePosition) {
-        super(PieceType.ROOK, piecePosition, pieceCOLOR, true);
+    public Rook(final League league, final int piecePosition) {
+        super(PieceType.ROOK, piecePosition, league, true);
     }
 
-    public Rook(final League pieceCOLOR, final int piecePosition, final boolean isFirstMove) {
-        super(PieceType.ROOK, piecePosition, pieceCOLOR, isFirstMove);
+    public Rook(final League league, final int piecePosition, final boolean isFirstMove) {
+        super(PieceType.ROOK, piecePosition, league, isFirstMove);
     }
 
     @Override
@@ -50,9 +50,9 @@ public final class Rook extends Piece{
 
                     } else if (candidateDestinationTile.isTileOccupied()){
                         final Piece pieceDestination = candidateDestinationTile.getPiece();
-                        final League pieceCOLOR = pieceDestination.getLeague();
+                        final League league = pieceDestination.getLeague();
 
-                        if (this.getLeague() != pieceCOLOR && this.isLegalMove(board, candidateDestinationCoordinate)) {
+                        if (this.getLeague() != league && this.isLegalMove(board, candidateDestinationCoordinate)) {
                             legalMoves.add(new MajorAttackMove(board, this, candidateDestinationCoordinate, pieceDestination));
                         }
                         break;

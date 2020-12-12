@@ -17,12 +17,12 @@ public final class Queen extends Piece{
 
     private static final int[] MOVE_VECTOR_COORDINATE = {-9, -8, -7, -1, 1, 7, 8, 9};
 
-    public Queen(final League pieceCOLOR, final int piecePosition) {
-        super(PieceType.QUEEN, piecePosition, pieceCOLOR, true);
+    public Queen(final League league, final int piecePosition) {
+        super(PieceType.QUEEN, piecePosition, league, true);
     }
 
-    public Queen(final League pieceCOLOR, final int piecePosition, final boolean isFirstMove) {
-        super(PieceType.QUEEN, piecePosition, pieceCOLOR, isFirstMove);
+    public Queen(final League league, final int piecePosition, final boolean isFirstMove) {
+        super(PieceType.QUEEN, piecePosition, league, isFirstMove);
     }
 
     @Override
@@ -50,9 +50,9 @@ public final class Queen extends Piece{
 
                     } else if (candidateDestinationTile.isTileOccupied()) {
                         final Piece pieceDestination = candidateDestinationTile.getPiece();
-                        final League pieceCOLOR = pieceDestination.getLeague();
+                        final League league = pieceDestination.getLeague();
 
-                        if (this.getLeague() != pieceCOLOR && this.isLegalMove(board, candidateDestinationCoordinate)) {
+                        if (this.getLeague() != league && this.isLegalMove(board, candidateDestinationCoordinate)) {
                             legalMoves.add(new MajorAttackMove(board, this, candidateDestinationCoordinate, pieceDestination));
                         }
                         break;
