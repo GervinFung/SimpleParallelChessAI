@@ -8,10 +8,12 @@ public final class MiniMax{
 
     private final StandardBoardEvaluation boardEvaluation;
     private final int searchDepth;
+    private int numberOfMoves;
 
     public MiniMax(final int searchDepth) {
         this.boardEvaluation = new StandardBoardEvaluation();
         this.searchDepth = searchDepth;
+        this.numberOfMoves = 0;
     }
 
     public Move execute(final Board board) {
@@ -25,6 +27,8 @@ public final class MiniMax{
         int currentValue;
 
         for (final Move move : board.currentPlayer().getLegalMoves()) {
+
+            this.numberOfMoves++;
 
             final MoveTransition moveTransition = board.currentPlayer().makeMove(move);
             if (moveTransition.getMoveStatus().isDone()) {
@@ -46,6 +50,10 @@ public final class MiniMax{
         final long executionTime = System.nanoTime() - startTime;
         System.out.println("Time taken to search best move: " + executionTime + " nanoseconds");
         return bestMove;
+    }
+
+    public int getNumberOfMoves() {
+        return this.numberOfMoves;
     }
 
     private static boolean isEndGameScenario(final Board board) {

@@ -26,6 +26,8 @@ import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import javax.swing.JLabel;
 import javax.swing.ImageIcon;
+import javax.swing.JProgressBar;
+import javax.swing.JDialog;
 
 import java.awt.Dimension;
 import java.awt.GridLayout;
@@ -34,7 +36,6 @@ import java.awt.GridBagLayout;
 import java.awt.BorderLayout;
 
 import java.awt.event.MouseListener;
-import java.awt.event.MouseMotionListener;
 import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
 
@@ -43,7 +44,9 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Collection;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.atomic.AtomicBoolean;
 
+import static java.lang.Thread.sleep;
 import static javax.swing.SwingUtilities.isLeftMouseButton;
 import static chess.engine.board.Move.*;
 
@@ -71,7 +74,6 @@ public final class Table {
 
     private final PropertyChangeSupport propertyChangeSupport;
     private final JFrame gameFrame;
-
 
     private Color darkTileColor;
     private Color legalMovesLightTileColor, legalMovesDarkTileColor;
@@ -144,7 +146,7 @@ public final class Table {
 
         if (Table.get().getGameBoard().currentPlayer().isInStalemate()) {
             JOptionPane.showMessageDialog(Table.get().getBoardPanel(),
-                    "Game Over: Player " + Table.get().getGameBoard().currentPlayer() + " is in checkmate!", "Game Over",
+                    "Game Over: Player " + Table.get().getGameBoard().currentPlayer() + " is in stalemate!", "Game Over",
                     JOptionPane.INFORMATION_MESSAGE);
             gameEnded = true;
         }
@@ -172,24 +174,59 @@ public final class Table {
 
     private JFrame getGameFrame() { return this.gameFrame; }
 
-    private static final class AIThinkTank extends SwingWorker<Move ,String> {
+    private static final class AIThinkTank extends SwingWorker<Move, Integer> {
 
-        private final ProgressBar bar;
+        private final JDialog dialog;
+        private final JProgressBar bar;
+        private final int max;
 
         private AIThinkTank() {
-            this.bar = new ProgressBar(Table.get().getGameFrame());
+            if (Table.get().getShowAIThinking()) {
+                this.dialog = new JDialog();
+                this.dialog.setTitle("AI Thinking...");
+                this.bar = new JProgressBar(0, 100);
+                this.bar.setStringPainted(true);
+                this.bar.setForeground(new Color(50, 205, 50));
+                this.dialog.add(this.bar);
+                this.dialog.setSize(300, 60);
+                this.dialog.setLocationRelativeTo(Table.get().getGameFrame());
+                this.dialog.setVisible(true);
+                this.dialog.setResizable(false);
+            } else {
+                this.dialog = null;
+                this.bar = null;
+            }
             Table.get().setAIThinking(true);
+            this.max = Table.get().getGameBoard().currentPlayer().getLegalMoves().size();
         }
+
+        @Override
+        protected void process(final List<Integer> chunks) { this.bar.setValue(chunks.get(chunks.size() - 1)); }
 
         @Override
         protected Move doInBackground(){
             try {
+                final AtomicBoolean running = new AtomicBoolean(true);
                 final MiniMax miniMax = new MiniMax(Table.get().getGameSetup().getSearchDepth());
+
                 if (Table.get().getShowAIThinking()) {
-                    this.bar.showProgress();
+                    final Thread displayProgress = new Thread(() -> {
+                        while(running.get()) {
+                            final double progress = ((double)miniMax.getNumberOfMoves() / this.max) * 100;
+                            this.publish((int)progress);//publish the progress
+                        }
+                        try {
+                            sleep(100);
+                            this.dialog.dispose();
+                        }
+                        catch (final InterruptedException e) { e.printStackTrace(); }
+                    });
+                    displayProgress.start();
                 }
-                //return best move
-                return miniMax.execute(Table.get().getGameBoard());
+
+                final Move bestMove = miniMax.execute(Table.get().getGameBoard());
+                running.lazySet(false);
+                return bestMove;
 
             } catch (final Exception e){
                 e.printStackTrace();
@@ -199,9 +236,6 @@ public final class Table {
 
         @Override
         public void done() {
-            if (Table.get().getShowAIThinking()) {
-                this.bar.disposeFrame();
-            }
             try {
                 final Move bestMove = this.get();
                 Table.get().updateGameBoard(Table.get().getGameBoard().currentPlayer().makeMove(bestMove).getBoard());
@@ -211,7 +245,6 @@ public final class Table {
                 Table.get().boardPanel.drawBoard(Table.get().getGameBoard());
                 Table.get().moveMadeUpdate();
                 Table.get().setAIThinking(false);
-
             } catch (final ExecutionException | InterruptedException e) {
                 e.printStackTrace();
             }
@@ -307,7 +340,6 @@ public final class Table {
         final JMenuItem greyWhiteMenuItem = new JMenuItem("Grey & White");
         greyWhiteMenuItem.addActionListener(e -> {
             this.darkTileColor = Color.LIGHT_GRAY;
-            //rgb(255,255,102)
             this.legalMovesLightTileColor = new Color(255, 255, 153);
             this.legalMovesDarkTileColor = new Color(255, 255, 102);
             Table.get().boardPanel.drawBoard(this.chessBoard);
@@ -440,14 +472,6 @@ public final class Table {
             this.tileID = tileID;
             this.setPreferredSize(TILE_PANEL_DIMENSION);
             this.validate();
-
-            this.addMouseMotionListener(new MouseMotionListener() {
-                @Deprecated
-                public void mouseMoved(final MouseEvent mouseEvent) {}
-
-                @Override
-                public void mouseDragged(final MouseEvent mouseEvent) {}
-            });
 
             this.addMouseListener(new MouseListener() {
                 @Deprecated
