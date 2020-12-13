@@ -8,7 +8,9 @@ I screwed up my previous chess game with bad design and without planning ahead
 2. User can choose white/black as AI
 3. Or, user can watch AI play against itself
 4. Once the game started, press(not click) the piece you wish to move, drag and drop to the square you wish to place it
-5. And no, the piece wont move while you drag it
+5. The piece will move as user drag
+
+NOTE**The image dragged is a bit low quality as image of piece is added to cursor**
 
 **Game Features**
 
