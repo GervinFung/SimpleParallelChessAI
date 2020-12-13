@@ -143,7 +143,7 @@ public final class Board{
         return builder.build();
     }
 
-    public static class Builder {
+    public static final class Builder {
 
         private final HashMap<Integer, Piece> boardConfig;
         private League nextMoveMaker;

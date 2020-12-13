@@ -65,7 +65,7 @@ public abstract class Move {
     }
 
 
-    public Board getBoard() {
+    public final Board getBoard() {
         return this.board;
     }
 
@@ -74,11 +74,11 @@ public abstract class Move {
         return this.getMovedPiece().getPiecePosition();
     }
 
-    public int getDestinationCoordinate() {
+    public final int getDestinationCoordinate() {
         return this.destinationCoordinate;
     }
 
-    public Piece getMovedPiece() {
+    public final Piece getMovedPiece() {
         return this.movePiece;
     }
 
@@ -86,9 +86,7 @@ public abstract class Move {
         return false;
     }
 
-    public boolean isCastlingMove() {
-        return false;
-    }
+    public boolean isCastlingMove() { return false; }
 
     public Piece getAttackedPiece() {
         return null;
@@ -441,7 +439,7 @@ public abstract class Move {
         }
     }
 
-    public static class KingSideCastleMove extends CastleMove {
+    public static final class KingSideCastleMove extends CastleMove {
 
         public KingSideCastleMove(final Board board, final Piece movePiece, final int destinationCoordinate,
                                   final Rook castleRook, final int castleRookStart, final int castleRookDestination) {
@@ -459,7 +457,7 @@ public abstract class Move {
         }
     }
 
-    public static class QueenSideCastleMove extends CastleMove {
+    public static final class QueenSideCastleMove extends CastleMove {
 
         public QueenSideCastleMove(final Board board, final Piece movePiece, final int destinationCoordinate,
                                    final Rook castleRook, final int castleRookStart, final int castleRookDestination) {
@@ -477,7 +475,7 @@ public abstract class Move {
         }
     }
 
-    public static class NullMove extends Move {
+    public static final class NullMove extends Move {
         public NullMove() {
             super(null, 65);
         }
@@ -493,7 +491,7 @@ public abstract class Move {
         }
     }
 
-    public static class MoveFactory {
+    public static final class MoveFactory {
 
         private MoveFactory() {
             throw new RuntimeException ("Not instantiatable");
