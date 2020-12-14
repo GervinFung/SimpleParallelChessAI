@@ -67,14 +67,12 @@ public final class Table {
 
     private Piece humanMovePiece;
 
-    private static final Dimension OUTER_FRAME_DIMENSION = new Dimension(700, 600);
-    private static final Dimension BOARD_PANEL_DIMENSION = new Dimension(400, 350);
+    private static final Dimension OUTER_FRAME_DIMENSION = new Dimension(720, 600);
+    private static final Dimension BOARD_PANEL_DIMENSION = new Dimension(400, 400);
     private static final Dimension TILE_PANEL_DIMENSION = new Dimension(10, 10);
 
     private static final Cursor WAIT_CURSOR = new Cursor(Cursor.WAIT_CURSOR);
     private static final Cursor MOVE_CURSOR = new Cursor(Cursor.MOVE_CURSOR);
-
-    private static final Table INSTANCE = new Table();
 
     private final PropertyChangeSupport propertyChangeSupport;
     private final JFrame gameFrame;
@@ -84,41 +82,38 @@ public final class Table {
 
     private boolean gameEnded;
 
-    private final Toolkit kit;
-
     private Table() {
         this.gameFrame = new JFrame("Simple Chess");
-        gameFrame.setResizable(false);
-        gameFrame.setLayout(new BorderLayout());
+        this.gameFrame.setResizable(false);
+        this.gameFrame.setLayout(new BorderLayout());
         this.chessBoard = Board.createStandardBoard();
         this.gameHistoryPanel = new GameHistoryPanel();
         this.takenPiecePanel = new TakenPiecePanel();
         this.boardPanel = new BoardPanel();
         this.moveLog = new MoveLog();
-        this.gameSetup = new GameSetup(gameFrame, true);
+        this.gameSetup = new GameSetup(this.gameFrame, true);
         this.highlightLegalMoves = true;
-        gameFrame.add(this.boardPanel, BorderLayout.CENTER);
+        this.gameFrame.add(this.boardPanel, BorderLayout.CENTER);
         final JMenuBar tableMenuBar = createTableMenuBar();
-        gameFrame.add(this.takenPiecePanel, BorderLayout.WEST);
-        gameFrame.add(this.gameHistoryPanel, BorderLayout.EAST);
-        gameFrame.setJMenuBar(tableMenuBar);
-        gameFrame.setSize(OUTER_FRAME_DIMENSION);
-        gameFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        gameFrame.setLocationRelativeTo(null);
-        gameFrame.setResizable(false);
-        gameFrame.setVisible(true);
+        this.gameFrame.add(this.takenPiecePanel, BorderLayout.WEST);
+        this.gameFrame.add(this.gameHistoryPanel, BorderLayout.EAST);
+        this.gameFrame.setJMenuBar(tableMenuBar);
+        this.gameFrame.setSize(OUTER_FRAME_DIMENSION);
+        this.gameFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        this.gameFrame.setLocationRelativeTo(null);
+        this.gameFrame.setResizable(false);
+        this.gameFrame.setVisible(true);
         this.AIThinking = false;
         this.showAIThinking = true;
-        this.kit = Toolkit.getDefaultToolkit();
-        gameFrame.setCursor(MOVE_CURSOR);
+        this.gameFrame.setCursor(MOVE_CURSOR);
         //a property change listener for AI, as Observable is deprecated
         final PropertyChangeListener propertyChangeListener = propertyChangeEvent -> {
-            if (Table.get().getGameSetup().isAIPlayer(Table.get().getGameBoard().currentPlayer()) &&
-                    !Table.get().getGameBoard().currentPlayer().isInCheckmate() &&
-                    !Table.get().getGameBoard().currentPlayer().isInStalemate()) {
-                new AIThinkTank().execute();
+            if (Table.this.getGameSetup().isAIPlayer(Table.this.getGameBoard().currentPlayer()) &&
+                    !Table.this.getGameBoard().currentPlayer().isInCheckmate() &&
+                    !Table.this.getGameBoard().currentPlayer().isInStalemate()) {
+                new AIThinkTank(this).execute();
             }
-            displayEndGameMessage();
+            this.displayEndGameMessage();
         };
 
         this.propertyChangeSupport = new PropertyChangeSupport(propertyChangeListener);
@@ -130,22 +125,26 @@ public final class Table {
         this.legalMovesDarkTileColor = new Color(100 ,100 ,93);
     }
 
+
+    //setter
     private void setAIThinking(final boolean AIThinking) { this.AIThinking = AIThinking; }
-
-    private boolean getAIThinking() { return this.AIThinking; }
-
 
     private void setShowAIThinking(final boolean showAIThinking) { this.showAIThinking = showAIThinking; }
 
-    private boolean getShowAIThinking() { return this.showAIThinking; }
-
     private void enableHighLightMoves(final boolean highlightLegalMoves) { this.highlightLegalMoves = highlightLegalMoves; }
+
+    private void updateGameBoard(final Board board) {
+        this.chessBoard = board;
+    }
+
+    //getter
+    private boolean getAIThinking() { return this.AIThinking; }
+
+    private boolean getShowAIThinking() { return this.showAIThinking; }
 
     private boolean getHighLightMovesEnabled() { return this.highlightLegalMoves; }
 
     private boolean isGameEnded() { return this.gameEnded; }
-
-    public static Table get() { return INSTANCE; }
 
     private GameSetup getGameSetup() { return this.gameSetup; }
 
@@ -153,133 +152,8 @@ public final class Table {
 
     private JFrame getGameFrame() { return this.gameFrame; }
 
-
-    private void displayEndGameMessage() {
-        if (Table.get().getGameBoard().currentPlayer().isInCheckmate()) {
-            JOptionPane.showMessageDialog(Table.get().getBoardPanel(),
-                    "Game Over: Player " + Table.get().getGameBoard().currentPlayer() + " is in checkmate!", "Game Over",
-                    JOptionPane.INFORMATION_MESSAGE);
-            this.gameEnded = true;
-        }
-
-        if (Table.get().getGameBoard().currentPlayer().isInStalemate()) {
-            JOptionPane.showMessageDialog(Table.get().getBoardPanel(),
-                    "Game Over: Player " + Table.get().getGameBoard().currentPlayer() + " is in stalemate!", "Game Over",
-                    JOptionPane.INFORMATION_MESSAGE);
-            this.gameEnded = true;
-        }
-
-        if (this.gameEnded) {
-            JOptionPane.showMessageDialog(Table.get().getBoardPanel(),
-                    "From Game Menu\n1. New Game to start a new game\n2. Exit Game to exit this game", "Game Over",
-                    JOptionPane.INFORMATION_MESSAGE);
-        }
-    }
-
-
-    public void show() {
-        Table.get().getMoveLog().clear();
-        Table.get().getGameHistoryPanel().redo(Table.get().getGameBoard(), Table.get().getMoveLog());
-        Table.get().getTakenPiecesPanel().redo(Table.get().getMoveLog());
-        Table.get().getBoardPanel().drawBoard(Table.get().getGameBoard());
-    }
-
-    private static final class AIThinkTank extends SwingWorker<Move, Integer> {
-
-        private final JDialog dialog;
-        private final JProgressBar bar;
-        private final int max;
-
-        private AIThinkTank() {
-            if (Table.get().getShowAIThinking()) {
-                this.dialog = new JDialog();
-                this.dialog.setTitle("AI Thinking...");
-                this.bar = new JProgressBar(0, 100);
-                this.bar.setStringPainted(true);
-                this.bar.setForeground(new Color(50, 205, 50));
-                this.dialog.add(this.bar);
-                this.dialog.setSize(300, 60);
-                this.dialog.setLocationRelativeTo(Table.get().getGameFrame());
-                this.dialog.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
-                this.dialog.setVisible(true);
-                this.dialog.setResizable(false);
-                this.max = Table.get().getGameBoard().currentPlayer().getLegalMoves().size();
-            } else {
-                this.dialog = null;
-                this.bar = null;
-                this.max = 0;
-            }
-            Table.get().setAIThinking(true);
-        }
-
-        @Override
-        protected void process(final List<Integer> chunks) { this.bar.setValue(chunks.get(chunks.size() - 1)); }
-
-        @Override
-        protected Move doInBackground(){
-            try {
-                final AtomicBoolean running = new AtomicBoolean(true);
-                final MiniMax miniMax = new MiniMax(Table.get().getGameSetup().getSearchDepth());
-
-                if (Table.get().getShowAIThinking()) {
-
-                    //progress is shown based on move count / total available moves ratio
-                    final Thread displayProgress = new Thread(() -> {
-                        Table.get().getBoardPanel().setCursor(WAIT_CURSOR);
-                        this.dialog.setCursor(WAIT_CURSOR);
-                        while(running.get()) {
-                            final double progress = ((double)miniMax.getMoveCount() / this.max) * 100;
-                            this.publish((int)progress);//publish the progress
-                        }
-                        //so 100% progress is shown
-                        try {
-                            sleep(100);
-                            this.dialog.dispose();
-                            Table.get().getBoardPanel().setCursor(MOVE_CURSOR);
-                        }
-                        catch (final InterruptedException e) { e.printStackTrace(); }
-                    });
-                    displayProgress.start();
-                }
-
-                final Move bestMove = miniMax.execute(Table.get().getGameBoard());
-                //stop the loop in thread
-                running.lazySet(false);
-                return bestMove;
-
-            } catch (final Exception e){
-                e.printStackTrace();
-            }
-            return null;
-        }
-
-        @Override
-        public void done() {
-            try {
-                final Move bestMove = this.get();
-                Table.get().updateGameBoard(Table.get().getGameBoard().currentPlayer().makeMove(bestMove).getBoard());
-                Table.get().getMoveLog().addMove(bestMove);
-                Table.get().getGameHistoryPanel().redo(Table.get().getGameBoard(), Table.get().getMoveLog());
-                Table.get().getTakenPiecesPanel().redo(Table.get().getMoveLog());
-                Table.get().getBoardPanel().drawBoard(Table.get().getGameBoard());
-                Table.get().moveMadeUpdate();
-                Table.get().setAIThinking(false);
-            } catch (final ExecutionException | InterruptedException e) {
-                e.printStackTrace();
-            }
-        }
-    }
-
-    public final BoardPanel getBoardPanel() {
+    private BoardPanel getBoardPanel() {
         return this.boardPanel;
-    }
-
-    private void moveMadeUpdate() {
-        this.propertyChangeSupport.firePropertyChange("moveMadeUpdate", PlayerType.COMPUTER, PlayerType.HUMAN);
-    }
-
-    private void setupUpdate(final GameSetup gameSetup) {
-        this.propertyChangeSupport.firePropertyChange("setupUpdate", null, gameSetup);
     }
 
     private MoveLog getMoveLog() {
@@ -294,8 +168,137 @@ public final class Table {
         return this.takenPiecePanel;
     }
 
-    private void updateGameBoard(final Board board) {
-        this.chessBoard = board;
+    //singleton
+    public static Table getSingletonInstance() { return SingleTon.INSTANCE; }
+
+    private static class SingleTon {
+        private static final Table INSTANCE = new Table();
+    }
+
+    private void displayEndGameMessage() {
+        if (this.getGameBoard().currentPlayer().isInCheckmate()) {
+            JOptionPane.showMessageDialog(this.getBoardPanel(),
+                    "Game Over: Player " + this.getGameBoard().currentPlayer() + " is in checkmate!", "Game Over",
+                    JOptionPane.INFORMATION_MESSAGE);
+            this.gameEnded = true;
+        }
+
+        if (this.getGameBoard().currentPlayer().isInStalemate()) {
+            JOptionPane.showMessageDialog(this.getBoardPanel(),
+                    "Game Over: Player " + this.getGameBoard().currentPlayer() + " is in stalemate!", "Game Over",
+                    JOptionPane.INFORMATION_MESSAGE);
+            this.gameEnded = true;
+        }
+
+        if (this.gameEnded) {
+            JOptionPane.showMessageDialog(this.getBoardPanel(),
+                    "From Game Menu\n1. New Game to start a new game\n2. Exit Game to exit this game", "Game Over",
+                    JOptionPane.INFORMATION_MESSAGE);
+        }
+    }
+
+
+    public void start() {
+        this.getMoveLog().clear();
+        this.getGameHistoryPanel().redo(this.getGameBoard(), this.getMoveLog());
+        this.getTakenPiecesPanel().redo(this.getMoveLog());
+        this.getBoardPanel().drawBoard(this.getGameBoard());
+    }
+
+    private static final class AIThinkTank extends SwingWorker<Move, Integer> {
+
+        private final JDialog dialog;
+        private final JProgressBar bar;
+        private final int max;
+        private final Table table;
+
+        private AIThinkTank(final Table table) {
+            this.table = table;
+            if (this.table.getShowAIThinking()) {
+                this.dialog = new JDialog();
+                this.dialog.setTitle("AI Thinking...");
+                this.bar = new JProgressBar(0, 100);
+                this.bar.setStringPainted(true);
+                this.bar.setForeground(new Color(50, 205, 50));
+                this.dialog.add(this.bar);
+                this.dialog.setSize(300, 60);
+                this.dialog.setLocationRelativeTo(this.table.getGameFrame());
+                this.dialog.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+                this.dialog.setVisible(true);
+                this.dialog.setResizable(false);
+                this.max = this.table.getGameBoard().currentPlayer().getLegalMoves().size();
+            } else {
+                this.dialog = null;
+                this.bar = null;
+                this.max = 0;
+            }
+            this.table.setAIThinking(true);
+        }
+
+        @Override
+        protected void process(final List<Integer> chunks) { this.bar.setValue(chunks.get(chunks.size() - 1)); }
+
+        @Override
+        protected Move doInBackground(){
+            try {
+                final AtomicBoolean running = new AtomicBoolean(true);
+                final MiniMax miniMax = new MiniMax(this.table.getGameSetup().getSearchDepth());
+
+                if (this.table.getShowAIThinking()) {
+
+                    //progress is shown based on move count / total available moves ratio
+                    final Thread displayProgress = new Thread(() -> {
+                        this.table.getBoardPanel().setCursor(Table.WAIT_CURSOR);
+                        this.dialog.setCursor(Table.WAIT_CURSOR);
+                        while(running.get()) {
+                            final double progress = ((double)miniMax.getMoveCount() / this.max) * 100;
+                            this.publish((int)progress);//publish the progress
+                        }
+                        //so 100% progress is shown
+                        try {
+                            sleep(100);
+                            this.dialog.dispose();
+                            this.table.getBoardPanel().setCursor(Table.MOVE_CURSOR);
+                        }
+                        catch (final InterruptedException e) { e.printStackTrace(); }
+                    });
+                    displayProgress.start();
+                }
+
+                final Move bestMove = miniMax.execute(this.table.getGameBoard());
+                //stop the loop in thread
+                running.lazySet(false);
+                return bestMove;
+
+            } catch (final Exception e){
+                e.printStackTrace();
+            }
+            return null;
+        }
+
+        @Override
+        public void done() {
+            try {
+                final Move bestMove = this.get();
+                this.table.updateGameBoard(this.table.getGameBoard().currentPlayer().makeMove(bestMove).getBoard());
+                this.table.getMoveLog().addMove(bestMove);
+                this.table.getGameHistoryPanel().redo(this.table.getGameBoard(), this.table.getMoveLog());
+                this.table.getTakenPiecesPanel().redo(this.table.getMoveLog());
+                this.table.getBoardPanel().drawBoard(this.table.getGameBoard());
+                this.table.moveMadeUpdate();
+                this.table.setAIThinking(false);
+            } catch (final ExecutionException | InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    private void moveMadeUpdate() {
+        this.propertyChangeSupport.firePropertyChange("moveMadeUpdate", PlayerType.COMPUTER, PlayerType.HUMAN);
+    }
+
+    private void setupUpdate(final GameSetup gameSetup) {
+        this.propertyChangeSupport.firePropertyChange("setupUpdate", null, gameSetup);
     }
 
     private JMenu createPreferencesMenu() {
@@ -309,8 +312,8 @@ public final class Table {
         legalMoveHighlighterCheckBox.setState(true);
         AIThinkingProgressBarCheckBox.setState(true);
 
-        legalMoveHighlighterCheckBox.addActionListener(actionEvent -> Table.get().enableHighLightMoves(legalMoveHighlighterCheckBox.isSelected()));
-        AIThinkingProgressBarCheckBox.addActionListener(actionEvent -> Table.get().setShowAIThinking(AIThinkingProgressBarCheckBox.isSelected()));
+        legalMoveHighlighterCheckBox.addActionListener(actionEvent -> this.enableHighLightMoves(legalMoveHighlighterCheckBox.isSelected()));
+        AIThinkingProgressBarCheckBox.addActionListener(actionEvent -> this.setShowAIThinking(AIThinkingProgressBarCheckBox.isSelected()));
         preferenceMenu.add(legalMoveHighlighterCheckBox);
         preferenceMenu.add(AIThinkingProgressBarCheckBox);
 
@@ -323,8 +326,8 @@ public final class Table {
 
         final JMenuItem setupGameMenuItem = new JMenuItem("Setup Game");
         setupGameMenuItem.addActionListener(actionEvent -> {
-            Table.get().getGameSetup().promptUser();
-            Table.get().setupUpdate(Table.get().getGameSetup());
+            this.getGameSetup().promptUser();
+            this.setupUpdate(this.getGameSetup());
         });
         optionMenu.add(setupGameMenuItem);
         return optionMenu;
@@ -340,9 +343,9 @@ public final class Table {
     }
 
     private void restartGame() {
-        this.chessBoard = Board.createStandardBoard();
-        gameHistoryPanel.redo(chessBoard, moveLog);
-        this.show();
+        this.updateGameBoard(Board.createStandardBoard());
+        gameHistoryPanel.redo(this.getGameBoard(), moveLog);
+        this.start();
     }
 
     private JMenu createBoardColorMenu() {
@@ -353,7 +356,7 @@ public final class Table {
             this.darkTileColor = new Color(29 ,61 ,99);
             this.legalMovesLightTileColor = Color.lightGray;
             this.legalMovesDarkTileColor = new Color(100 ,100 ,93);
-            Table.get().getBoardPanel().drawBoard(this.chessBoard);
+            this.getBoardPanel().drawBoard(this.getGameBoard());
         });
 
         final JMenuItem greyWhiteMenuItem = new JMenuItem("Grey & White");
@@ -361,7 +364,7 @@ public final class Table {
             this.darkTileColor = Color.LIGHT_GRAY;
             this.legalMovesLightTileColor = new Color(255, 255, 153);
             this.legalMovesDarkTileColor = new Color(255, 255, 102);
-            Table.get().getBoardPanel().drawBoard(this.chessBoard);
+            this.getBoardPanel().drawBoard(this.getGameBoard());
         });
 
         gameMenu.add(blueWhiteMenuItem);
@@ -377,28 +380,28 @@ public final class Table {
         newGameMenuItem.addActionListener(e -> {
             AIThinking = false;
             if (!this.isGameEnded()) {
-                final int confirmedExit = JOptionPane.showConfirmDialog(this.boardPanel, "Are you sure you want to restart game without saving?", "Restart Game",
+                final int confirmedExit = JOptionPane.showConfirmDialog(Table.this.getBoardPanel(), "Are you sure you want to restart game without saving?", "Restart Game",
                         JOptionPane.YES_NO_CANCEL_OPTION);
                 if (confirmedExit == JOptionPane.NO_OPTION) {
-                    FenUtilities.writeFENToFile(this.chessBoard);
+                    FenUtilities.writeFENToFile(this.getGameBoard());
                 }
             }
             restartGame();
         });
 
         final JMenuItem saveGameMenuItem = new JMenuItem("Save Game");
-        saveGameMenuItem.addActionListener(e -> FenUtilities.writeFENToFile(this.chessBoard));
+        saveGameMenuItem.addActionListener(e -> FenUtilities.writeFENToFile(this.getGameBoard()));
 
 
         final JMenuItem loadGameMenuItem = new JMenuItem("Load Saved Game");
         loadGameMenuItem.addActionListener(e -> {
-            chessBoard = FenUtilities.createGameFromFEN();
-            Table.get().getBoardPanel().drawBoard(chessBoard);
-            if (chessBoard.currentPlayer().getLeague().isBlack()) {
-                JOptionPane.showMessageDialog(this.boardPanel, "Black to move","Welcome",
+            this.updateGameBoard(FenUtilities.createGameFromFEN());
+            this.getBoardPanel().drawBoard(this.getGameBoard());
+            if (this.getGameBoard().currentPlayer().getLeague().isBlack()) {
+                JOptionPane.showMessageDialog(Table.this.getBoardPanel(), "Black to move","Welcome",
                         JOptionPane.INFORMATION_MESSAGE);
             } else {
-                JOptionPane.showMessageDialog(this.boardPanel, "White to move","Welcome",
+                JOptionPane.showMessageDialog(Table.this.getBoardPanel(), "White to move","Welcome",
                         JOptionPane.INFORMATION_MESSAGE);
             }
         });
@@ -406,12 +409,12 @@ public final class Table {
 
         final JMenuItem exitMenuItem = new JMenuItem("Exit game");
         exitMenuItem.addActionListener(actionEvent -> {
-            final int confirmedExit = JOptionPane.showConfirmDialog(this.boardPanel, "Are you sure you want to quit game without saving?","Exit Game",
+            final int confirmedExit = JOptionPane.showConfirmDialog(Table.this.getBoardPanel(), "Are you sure you want to quit game without saving?","Exit Game",
                     JOptionPane.YES_NO_CANCEL_OPTION);
             if (confirmedExit == JOptionPane.YES_OPTION) {
                 System.exit(0);
             } else if (confirmedExit == JOptionPane.NO_OPTION) {
-                FenUtilities.writeFENToFile(this.chessBoard);
+                FenUtilities.writeFENToFile(this.getGameBoard());
             }
         });
 
@@ -435,7 +438,7 @@ public final class Table {
                 this.boardTiles.add(tilePanel);
             }
             setPreferredSize(BOARD_PANEL_DIMENSION);
-            validate();
+            this.validate();
         }
 
         public List<TilePanel> getBoardTiles() {
@@ -447,8 +450,8 @@ public final class Table {
                 tilePanel.drawTile(board);
                 this.add(tilePanel);
             }
-            validate();
-            repaint();
+            this.validate();
+            this.repaint();
         }
     }
 
@@ -484,9 +487,11 @@ public final class Table {
     private final class TilePanel extends JPanel {
 
         private final int tileID;
+        private final BoardPanel boardPanel;
         private TilePanel(final BoardPanel boardPanel, final int tileID) {
             super(new GridBagLayout());
             this.tileID = tileID;
+            this.boardPanel = boardPanel;
             this.setPreferredSize(TILE_PANEL_DIMENSION);
             this.validate();
 
@@ -500,17 +505,24 @@ public final class Table {
 
                 @Override
                 public void mousePressed(final MouseEvent mouseEvent) {
-                    if (Table.get().isGameEnded() || Table.get().getAIThinking()) { return; }
+                    if (Table.this.isGameEnded() || Table.this.getAIThinking()) { return; }
                     if (isLeftMouseButton(mouseEvent)) {
                         mousePressedY = (int) Math.ceil(mouseEvent.getY() / 64.0);
                         mousePressedX = (int) Math.ceil(mouseEvent.getX() / 64.0);
-                        if (humanMovePiece == null) {
-                            humanMovePiece = chessBoard.getTile(tileID).getPiece();
-                            if (humanMovePiece != null && humanMovePiece.getLeague() == chessBoard.currentPlayer().getLeague()) {
-                                highlightLegals(chessBoard);
-                                final Image image = ((ImageIcon)((JLabel) boardPanel.getBoardTiles().get(tileID).getComponent(0)).getIcon()).getImage();
-                                Table.get().getBoardPanel().setCursor(kit.createCustomCursor(image, new Point(mouseEvent.getX(), mouseEvent.getY()), null));
-                                boardPanel.getBoardTiles().get(tileID).remove(0);
+                        if (Table.this.humanMovePiece == null) {
+
+                            Table.this.humanMovePiece = Table.this.getGameBoard().getTile(TilePanel.this.tileID).getPiece();
+
+                            if (Table.this.humanMovePiece != null && Table.this.humanMovePiece.getLeague() == Table.this.getGameBoard().currentPlayer().getLeague()) {
+
+                                highlightLegals(Table.this.getGameBoard());
+
+                                final Image image = ((ImageIcon)((JLabel) TilePanel.this.boardPanel.getBoardTiles().get(TilePanel.this.tileID).getComponent(0)).getIcon()).getImage();
+                                try {
+                                    boardPanel.setCursor(Toolkit.getDefaultToolkit().createCustomCursor(image, new Point(mouseEvent.getX(), mouseEvent.getY()), null));
+                                    boardPanel.getBoardTiles().get(TilePanel.this.tileID).remove(0);
+                                } catch (final IndexOutOfBoundsException ignored) {}
+
                                 validate();
                                 repaint();
                             }
@@ -521,33 +533,41 @@ public final class Table {
                 @Override
                 public void mouseReleased(final MouseEvent mouseEvent) {
                     if (isLeftMouseButton(mouseEvent)) {
-                        final int releasedX = (int) Math.ceil(mouseEvent.getX() / 64.0) - mousePressedX;
-                        final int releasedY = ((int) Math.ceil(mouseEvent.getY() / 64.0) - mousePressedY) * 8;
-                        if (humanMovePiece != null && humanMovePiece.getLeague() == Table.get().getGameBoard().currentPlayer().getLeague()) {
-                            final Move move = MoveFactory.createMove(Table.get().getGameBoard(), humanMovePiece, tileID, tileID + (releasedY + releasedX));
-                            final MoveTransition transition = Table.get().getGameBoard().currentPlayer().makeMove(move);
+                        final int releasedX = (int) Math.ceil(mouseEvent.getX() / 64.0) - Table.this.mousePressedX;
+                        final int releasedY = ((int) Math.ceil(mouseEvent.getY() / 64.0) - Table.this.mousePressedY) * 8;
+
+                        if (Table.this.humanMovePiece != null && Table.this.humanMovePiece.getLeague() == Table.this.getGameBoard().currentPlayer().getLeague()) {
+
+                            final Move move = MoveFactory.createMove(Table.this.getGameBoard(), Table.this.humanMovePiece, TilePanel.this.tileID,
+                                    TilePanel.this.tileID + (releasedY + releasedX));
+                            final MoveTransition transition = Table.this.getGameBoard().currentPlayer().makeMove(move);
+
                             if (transition.getMoveStatus().isDone()) {
-                                chessBoard = transition.getBoard();
+
+                                Table.this.updateGameBoard(transition.getBoard());
                                 if (move instanceof PawnPromotion) {
                                     //display pawn promotion interface
-                                    chessBoard = ((PawnPromotion)move).promotePawn(Table.get().getGameBoard());
+                                    TilePanel.this.boardPanel.setCursor(Table.MOVE_CURSOR);
+                                    Table.this.updateGameBoard(((PawnPromotion)move).promotePawn(Table.this.getGameBoard()));
                                 }
-                                moveLog.addMove(move);
+                                Table.this.getMoveLog().addMove(move);
                             }
-                            boardPanel.drawBoard(Table.get().getGameBoard());
+                            TilePanel.this.boardPanel.drawBoard(Table.this.getGameBoard());
                             SwingUtilities.invokeLater(() -> {
-                                gameHistoryPanel.redo(Table.get().getGameBoard(), moveLog);
-                                takenPiecePanel.redo(moveLog);
-                                if (!gameSetup.isAIPlayer(Table.get().getGameBoard().currentPlayer())) {
-                                    Table.get().displayEndGameMessage();
+
+                                Table.this.getGameHistoryPanel().redo(Table.this.getGameBoard(), Table.this.getMoveLog());
+                                Table.this.getTakenPiecesPanel().redo(Table.this.getMoveLog());
+
+                                if (!Table.this.getGameSetup().isAIPlayer(Table.this.getGameBoard().currentPlayer())) {
+                                    Table.this.displayEndGameMessage();
                                 }
-                                else if (gameSetup.isAIPlayer(Table.get().getGameBoard().currentPlayer())) {
-                                    Table.get().moveMadeUpdate();
+                                else if (Table.this.getGameSetup().isAIPlayer(Table.this.getGameBoard().currentPlayer())) {
+                                    Table.this.moveMadeUpdate();
                                 }
                             });
                         }
-                        Table.get().getBoardPanel().setCursor(MOVE_CURSOR);
-                        humanMovePiece = null;
+                        TilePanel.this.boardPanel.setCursor(Table.MOVE_CURSOR);
+                        Table.this.humanMovePiece = null;
                     }
                 }
             });
@@ -586,7 +606,7 @@ public final class Table {
 
         private void highlightLegals(final Board board) {
 
-            if (Table.get().getHighLightMovesEnabled()) {
+            if (Table.this.getHighLightMovesEnabled()) {
 
                 final List<Move> legalMoves = new ArrayList<>(pieceLegalMoves(board));
 
@@ -595,25 +615,25 @@ public final class Table {
                     final int coordinate = move.getDestinationCoordinate();
                     Color tileColor;
                     if (move instanceof AttackMove) {
-                        boardPanel.getBoardTiles().get(coordinate).setBackground(new Color(204, 0, 0));
+                        this.boardPanel.getBoardTiles().get(coordinate).setBackground(new Color(204, 0, 0));
                     } else {
                         if (BoardUtils.FIRST_ROW[coordinate] ||
                                 BoardUtils.THIRD_ROW[coordinate] ||
                                 BoardUtils.FIFTH_ROW[coordinate] ||
                                 BoardUtils.SEVENTH_ROW[coordinate]) {
-                            tileColor = (coordinate % 2 == 0 ? legalMovesLightTileColor : legalMovesDarkTileColor);
+                            tileColor = (coordinate % 2 == 0 ? Table.this.legalMovesLightTileColor : Table.this.legalMovesDarkTileColor);
                         } else {
-                            tileColor = (coordinate % 2 != 0 ? legalMovesLightTileColor : legalMovesDarkTileColor);
+                            tileColor = (coordinate % 2 != 0 ? Table.this.legalMovesLightTileColor : Table.this.legalMovesDarkTileColor);
                         }
-                        boardPanel.getBoardTiles().get(coordinate).setBackground(tileColor);
+                        this.boardPanel.getBoardTiles().get(coordinate).setBackground(tileColor);
                     }
                 }
             }
         }
 
         private Collection<Move> pieceLegalMoves(final Board board) {
-            if (humanMovePiece != null && humanMovePiece.getLeague() == board.currentPlayer().getLeague()){
-                return humanMovePiece.calculateLegalMoves(board);
+            if (Table.this.humanMovePiece != null && Table.this.humanMovePiece.getLeague() == board.currentPlayer().getLeague()){
+                return Table.this.humanMovePiece.calculateLegalMoves(board);
             }
             return Collections.emptyList();
         }
@@ -625,10 +645,10 @@ public final class Table {
                     BoardUtils.THIRD_ROW[this.tileID] ||
                     BoardUtils.FIFTH_ROW[this.tileID] ||
                     BoardUtils.SEVENTH_ROW[this.tileID]) {
-                this.setBackground(this.tileID % 2 == 0 ? lightTileColor : darkTileColor);
+                this.setBackground(this.tileID % 2 == 0 ? lightTileColor : Table.this.darkTileColor);
             }
             else {
-                this.setBackground(this.tileID % 2 != 0 ? lightTileColor : darkTileColor);
+                this.setBackground(this.tileID % 2 != 0 ? lightTileColor : Table.this.darkTileColor);
             }
         }
     }

@@ -30,7 +30,7 @@ public final class TakenPiecePanel extends JPanel {
 
     private final JPanel northPanel, southPanel;
 
-    private static final Dimension TAKEN_PIECE_DIMENSION = new Dimension(40, 80);
+    private static final Dimension TAKEN_PIECE_DIMENSION = new Dimension(60, 80);
 
     public TakenPiecePanel() {
         super(new BorderLayout());
@@ -69,33 +69,29 @@ public final class TakenPiecePanel extends JPanel {
 
         blackTakenPieces.sort(Comparator.comparingInt(Piece::getPieceValue));
 
+        final String defaultPieceIconPath = "image/chessPieceImages/";
 
-        String defaultPieceIconPath = "image/chessPieceImages/";
-        for (final Piece takenPiece : whiteTakenPieces) {
-            final String alliance = takenPiece.getLeague().toString().substring(0, 1);
-            final String pieceName = takenPiece.toString() + ".png";
-            try {
-                final BufferedImage image = ImageIO.read(new File(defaultPieceIconPath + alliance + pieceName));
-                final ImageIcon icon = new ImageIcon(image);
-                final JLabel imageLabel = new JLabel(new ImageIcon(resizeImage(icon)));
-                this.northPanel.add(imageLabel);
-            } catch (final IOException ignored) { }
-        }
+        this.addTakenPiece(whiteTakenPieces, this.northPanel, defaultPieceIconPath);
+        this.addTakenPiece(blackTakenPieces, this.southPanel, defaultPieceIconPath);
 
-        for (final Piece takenPiece : blackTakenPieces) {
-            final String alliance = takenPiece.getLeague().toString().substring(0, 1);
-            final String pieceName = takenPiece.toString() + ".png";
-            try {
-                final BufferedImage image = ImageIO.read(new File(defaultPieceIconPath + alliance + pieceName));
-                final ImageIcon icon = new ImageIcon(image);
-                final JLabel imageLabel = new JLabel(new ImageIcon(resizeImage(icon)));
-                this.southPanel.add(imageLabel);
-            } catch (final IOException ignored) { }
-        }
-        validate();
+        this.validate();
     }
 
+    private void addTakenPiece(final List<Piece> takenPieces, final JPanel takenPiecePanel, final String defaultPieceIconPath) {
+        for (final Piece takenPiece : takenPieces) {
+            final String alliance = takenPiece.getLeague().toString().substring(0, 1);
+            final String pieceName = takenPiece.toString() + ".png";
+            try {
+                final BufferedImage image = ImageIO.read(new File(defaultPieceIconPath + alliance + pieceName));
+                final ImageIcon icon = new ImageIcon(image);
+                final JLabel imageLabel = new JLabel(new ImageIcon(resizeImage(icon)));
+                takenPiecePanel.add(imageLabel);
+            } catch (final IOException ignored) { }
+        }
+    }
+
+
     private Image resizeImage(final ImageIcon icon) {
-        return icon.getImage().getScaledInstance(icon.getIconWidth() - 35, icon.getIconWidth() - 35, Image.SCALE_SMOOTH);
+        return icon.getImage().getScaledInstance(icon.getIconWidth() / 2, icon.getIconWidth() / 2, Image.SCALE_SMOOTH);
     }
 }

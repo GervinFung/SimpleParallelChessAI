@@ -5,6 +5,6 @@ import chess.gui.Table;
 public final class Main {
 
     public static void main(final String[] args) {
-        Table.get().show();
+        Table.getSingletonInstance().start();
     }
 }
