@@ -12,12 +12,17 @@ import java.util.concurrent.TimeUnit;
 public final class MiniMax{
 
     private final StandardBoardEvaluation boardEvaluation;
-    private final int searchDepth;
+    private final int searchDepth, nThreads;
     private int moveCount;
 
     public MiniMax(final int searchDepth) {
         this.boardEvaluation = new StandardBoardEvaluation();
-        this.searchDepth = searchDepth;
+        this.nThreads = Runtime.getRuntime().availableProcessors();
+        if (this.nThreads > 4) {
+            this.searchDepth = searchDepth + 1;
+        } else {
+            this.searchDepth = searchDepth;
+        }
         this.moveCount = 0;
     }
 
@@ -31,7 +36,7 @@ public final class MiniMax{
         final AtomicReference<Integer> lowestSeenValue = new AtomicReference<>(Integer.MAX_VALUE);
         final AtomicReference<Integer> currentValue = new AtomicReference<>(0);
 
-        final ExecutorService executorService = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+        final ExecutorService executorService = Executors.newFixedThreadPool(this.nThreads);
 
         for (final Move move : board.currentPlayer().getLegalMoves()) {
 
