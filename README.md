@@ -28,4 +28,6 @@ NOTE: **The image dragged is a bit low quality as image of piece is added to cur
 6. Choose AI level from 1 to 5
 7. Show captured piece
 8. Show AI thinking progress bar
-9. Undo previous move(if AI move is undo, press its piece so AI can move again)
+9. Undo previous move
+
+NOTE: **if AI move is undo, press its piece so AI can move again**
