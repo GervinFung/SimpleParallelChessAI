@@ -29,5 +29,6 @@ NOTE: **The image dragged is a bit low quality as image of piece is added to cur
 7. Show captured piece
 8. Show AI thinking progress bar
 9. Undo previous move
+10. Multithread feature depends on the number of cores of a pc, the greater the better/faster AI can think
 
 NOTE: **if AI move is undo, press its piece so AI can move again**
