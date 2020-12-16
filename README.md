@@ -2,7 +2,13 @@ A simple 2 player chess AI that implemented minimax & alpha-beta pruning with a 
 
 I screwed up my previous chess game with bad design and without planning ahead
 
-**To play the Game**
+## Folder Structure
+
+The workspace contains two folders by default, where:
+
+- `src`: the folder to maintain sources
+
+## To play the Game
 
 1. User can choose to play as white/black
 2. User can choose white/black as AI
@@ -12,7 +18,7 @@ I screwed up my previous chess game with bad design and without planning ahead
 
 NOTE: **The image dragged is a bit low quality as image of piece is added to cursor**
 
-**Game Features**
+## Game Features
 
 1. Restart new game
 2. Save game/ Load saved game
@@ -22,3 +28,4 @@ NOTE: **The image dragged is a bit low quality as image of piece is added to cur
 6. Choose AI level from 1 to 5
 7. Show captured piece
 8. Show AI thinking progress bar
+9. Undo previous move(if AI move is undo, press its piece so AI can move again)
