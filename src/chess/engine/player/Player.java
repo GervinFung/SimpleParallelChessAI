@@ -119,11 +119,15 @@ public abstract class Player {
             final List<Move> kingAttacks = Player.calculateAttacksOnTile(transitionBoard.currentPlayer().getOpponent().getPlayerKing().getPiecePosition(), currentPlayerLegals);
 
             if (!kingAttacks.isEmpty()) {
-                return new MoveTransition(this.board, MoveStatus.LEAVES_PLAYER_IN_CHECK);
+                return new MoveTransition(this.board, this.board, MoveStatus.LEAVES_PLAYER_IN_CHECK);
             }
 
-            return new MoveTransition(transitionBoard, MoveStatus.DONE);
+            return new MoveTransition(transitionBoard, this.board, MoveStatus.DONE);
         }
-        return new MoveTransition(null, MoveStatus.Illegal_Move);
+        return new MoveTransition(null, null, MoveStatus.Illegal_Move);
+    }
+
+    public MoveTransition undoMove(final Move move) {
+        return new MoveTransition(this.board, move.undo(), MoveStatus.DONE);
     }
 }

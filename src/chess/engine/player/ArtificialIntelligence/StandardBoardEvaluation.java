@@ -147,7 +147,7 @@ public final class StandardBoardEvaluation {
 
     private static List<Integer> getPiecePositionValue(final boolean isWhite, final Integer[] positionValue) {
         if (isWhite) {
-            return Collections.unmodifiableList(List.of(positionValue));
+            return List.of(positionValue);
         }
         return reversePositionEvaluation(positionValue);
     }

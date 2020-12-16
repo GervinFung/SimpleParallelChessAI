@@ -105,6 +105,13 @@ public abstract class Move {
         return builder.build();
     }
 
+    public Board undo() {
+        final Builder builder = new Builder(this.board.getMoveCount() - 1);
+        this.board.getAllPieces().forEach(builder::setPiece);
+        builder.setMoveMaker(this.board.currentPlayer().getLeague());
+        return builder.build();
+    }
+
     public static final class MajorMove extends Move {
 
         public MajorMove(final Board board, final Piece movePiece, final int destinationCoordinate) {
@@ -233,6 +240,15 @@ public abstract class Move {
 
             builder.setPiece(this.movePiece.movedPiece(this));
             builder.setMoveMaker(this.board.currentPlayer().getOpponent().getLeague());
+            return builder.build();
+        }
+
+        @Override
+        public Board undo() {
+            final Board.Builder builder = new Builder(this.board.getMoveCount() - 1);
+            this.board.getAllPieces().forEach(builder::setPiece);
+            builder.setEnPassantPawn((Pawn)this.getAttackedPiece());
+            builder.setMoveMaker(this.board.currentPlayer().getLeague());
             return builder.build();
         }
 

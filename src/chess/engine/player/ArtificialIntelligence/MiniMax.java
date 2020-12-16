@@ -4,6 +4,11 @@ import chess.engine.board.Board;
 import chess.engine.board.Move;
 import chess.engine.player.MoveTransition;
 
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.TimeUnit;
+
 public final class MiniMax{
 
     private final StandardBoardEvaluation boardEvaluation;
@@ -20,36 +25,46 @@ public final class MiniMax{
 
         final long startTime = System.nanoTime();
 
-        Move bestMove = null;
+        final AtomicReference<Move> bestMove = new AtomicReference<>();
 
-        int highestSeenValue = Integer.MIN_VALUE;
-        int lowestSeenValue = Integer.MAX_VALUE;
-        int currentValue;
+        final AtomicReference<Integer> highestSeenValue = new AtomicReference<>(Integer.MIN_VALUE);
+        final AtomicReference<Integer> lowestSeenValue = new AtomicReference<>(Integer.MAX_VALUE);
+        final AtomicReference<Integer> currentValue = new AtomicReference<>(0);
+
+        final ExecutorService executorService = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
 
         for (final Move move : board.currentPlayer().getLegalMoves()) {
 
-            this.moveCount++;
-
             final MoveTransition moveTransition = board.currentPlayer().makeMove(move);
-            if (moveTransition.getMoveStatus().isDone()) {
 
-                currentValue = board.currentPlayer().getLeague().isWhite() ? min(moveTransition.getBoard(), this.searchDepth, Integer.MIN_VALUE, Integer.MAX_VALUE) :
-                        max(moveTransition.getBoard(), this.searchDepth, Integer.MIN_VALUE, Integer.MAX_VALUE);
+            final Runnable run = () -> {
+                if (moveTransition.getMoveStatus().isDone()) {
 
-                if (board.currentPlayer().getLeague().isWhite() && currentValue > highestSeenValue) {
-                    highestSeenValue = currentValue;
-                    bestMove = move;
+                    final int currentVal = board.currentPlayer().getLeague().isWhite() ? min(moveTransition.getLatestBoard(), searchDepth, Integer.MIN_VALUE, Integer.MAX_VALUE) :
+                            max(moveTransition.getLatestBoard(), searchDepth, Integer.MIN_VALUE, Integer.MAX_VALUE);
+                    currentValue.set(currentVal);
+                    this.moveCount++;
+                    if (board.currentPlayer().getLeague().isWhite() && currentValue.get() > highestSeenValue.get()) {
+                        highestSeenValue.set(currentValue.get());
+                        bestMove.set(move);
 
-                } else if (board.currentPlayer().getLeague().isBlack() && currentValue < lowestSeenValue) {
-                    lowestSeenValue = currentValue;
-                    bestMove = move;
-
+                    } else if (board.currentPlayer().getLeague().isBlack() && currentValue.get() < lowestSeenValue.get()) {
+                        lowestSeenValue.set(currentValue.get());
+                        bestMove.set(move);
+                    }
                 }
-            }
+            };
+            executorService.execute(run);
+        }
+        executorService.shutdown();
+        try {
+            executorService.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
+        } catch (final InterruptedException e) {
+            e.printStackTrace();
         }
         final long executionTime = System.nanoTime() - startTime;
         System.out.println("Time taken to search best move: " + executionTime + " nanoseconds");
-        return bestMove;
+        return bestMove.get();
     }
 
     public int getMoveCount() {
@@ -61,7 +76,7 @@ public final class MiniMax{
                 board.currentPlayer().isInStalemate();
     }
 
-    public int min(final Board board, final int depth, final int alpha, int beta) {
+    private int min(final Board board, final int depth, final int alpha, int beta) {
 
         if(depth == 0 || isEndGameScenario(board)) {
             return this.boardEvaluation.evaluate(board, depth);
@@ -72,7 +87,7 @@ public final class MiniMax{
             final MoveTransition moveTransition = board.currentPlayer().makeMove(move);
 
             if (moveTransition.getMoveStatus().isDone()) {
-                final int currentValue = max(moveTransition.getBoard(), depth - 1, alpha, beta);
+                final int currentValue = max(moveTransition.getLatestBoard(), depth - 1, alpha, beta);
 
                 if (currentValue <= lowestSeenValue) {
                     lowestSeenValue = currentValue;
@@ -86,7 +101,7 @@ public final class MiniMax{
         return lowestSeenValue;
     }
 
-    public int max(final Board board, final int depth, int alpha, final int beta) {
+    private int max(final Board board, final int depth, int alpha, final int beta) {
 
         if(depth == 0  || isEndGameScenario(board)) {
             return this.boardEvaluation.evaluate(board, depth);
@@ -97,7 +112,7 @@ public final class MiniMax{
             final MoveTransition moveTransition = board.currentPlayer().makeMove(move);
 
             if (moveTransition.getMoveStatus().isDone()) {
-                final int currentValue = min(moveTransition.getBoard(), depth - 1, alpha, beta);
+                final int currentValue = min(moveTransition.getLatestBoard(), depth - 1, alpha, beta);
 
                 if (currentValue >= highestSeenValue) {
                     highestSeenValue = currentValue;

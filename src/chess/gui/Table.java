@@ -37,6 +37,8 @@ import java.awt.Point;
 
 import java.awt.event.MouseListener;
 import java.awt.event.MouseEvent;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 import java.awt.Toolkit;
 import java.awt.Cursor;
 import java.awt.Image;
@@ -211,10 +213,12 @@ public final class Table {
         private final JProgressBar bar;
         private final int max;
         private final Table table;
+        private final boolean showProgressbar;
 
         private AIThinkTank(final Table table) {
             this.table = table;
-            if (this.table.getShowAIThinking()) {
+            this.showProgressbar = this.table.getShowAIThinking();
+            if (this.showProgressbar) {
                 this.dialog = new JDialog();
                 this.dialog.setTitle("AI Thinking...");
                 this.bar = new JProgressBar(0, 100);
@@ -244,7 +248,7 @@ public final class Table {
                 final AtomicBoolean running = new AtomicBoolean(true);
                 final MiniMax miniMax = new MiniMax(this.table.getGameSetup().getSearchDepth());
 
-                if (this.table.getShowAIThinking()) {
+                if (this.showProgressbar) {
 
                     //progress is shown based on move count / total available moves ratio
                     final Thread displayProgress = new Thread(() -> {
@@ -280,7 +284,7 @@ public final class Table {
         public void done() {
             try {
                 final Move bestMove = this.get();
-                this.table.updateGameBoard(this.table.getGameBoard().currentPlayer().makeMove(bestMove).getBoard());
+                this.table.updateGameBoard(this.table.getGameBoard().currentPlayer().makeMove(bestMove).getLatestBoard());
                 this.table.getMoveLog().addMove(bestMove);
                 this.table.getGameHistoryPanel().redo(this.table.getGameBoard(), this.table.getMoveLog());
                 this.table.getTakenPiecesPanel().redo(this.table.getMoveLog());
@@ -301,6 +305,14 @@ public final class Table {
         this.propertyChangeSupport.firePropertyChange("setupUpdate", null, gameSetup);
     }
 
+    private void undoLastMove() {
+        final Move lastMove = this.getMoveLog().removeMove();
+        this.chessBoard = this.getGameBoard().currentPlayer().undoMove(lastMove).getPreviousBoard();
+        this.getGameHistoryPanel().redo(this.getGameBoard(), this.getMoveLog());
+        this.getTakenPiecesPanel().redo(this.getMoveLog());
+        this.getBoardPanel().drawBoard(this.getGameBoard());
+    }
+
     private JMenu createPreferencesMenu() {
         final JMenu preferenceMenu = new JMenu("Preferences");
 
@@ -314,6 +326,7 @@ public final class Table {
 
         legalMoveHighlighterCheckBox.addActionListener(actionEvent -> this.enableHighLightMoves(legalMoveHighlighterCheckBox.isSelected()));
         AIThinkingProgressBarCheckBox.addActionListener(actionEvent -> this.setShowAIThinking(AIThinkingProgressBarCheckBox.isSelected()));
+
         preferenceMenu.add(legalMoveHighlighterCheckBox);
         preferenceMenu.add(AIThinkingProgressBarCheckBox);
 
@@ -329,6 +342,14 @@ public final class Table {
             this.getGameSetup().promptUser();
             this.setupUpdate(this.getGameSetup());
         });
+
+        final JMenuItem undoMoveMenuItem = new JMenuItem("Undo last move");
+        undoMoveMenuItem.addActionListener(e -> {
+            if(this.getMoveLog().size() > 0) {
+                undoLastMove();
+            }
+        });
+        optionMenu.add(undoMoveMenuItem);
         optionMenu.add(setupGameMenuItem);
         return optionMenu;
     }
@@ -344,7 +365,7 @@ public final class Table {
 
     private void restartGame() {
         this.updateGameBoard(Board.createStandardBoard());
-        gameHistoryPanel.redo(this.getGameBoard(), moveLog);
+        this.getGameHistoryPanel().redo(this.getGameBoard(), this.getMoveLog());
         this.start();
     }
 
@@ -478,6 +499,8 @@ public final class Table {
         public void clear() {
             this.moves.clear();
         }
+
+        public Move removeMove() { return this.moves.remove(this.moves.size() - 1); }
     }
 
     enum PlayerType {
@@ -544,10 +567,10 @@ public final class Table {
 
                             if (transition.getMoveStatus().isDone()) {
 
-                                Table.this.updateGameBoard(transition.getBoard());
+                                Table.this.updateGameBoard(transition.getLatestBoard());
                                 if (move instanceof PawnPromotion) {
-                                    //display pawn promotion interface
                                     TilePanel.this.boardPanel.setCursor(Table.MOVE_CURSOR);
+                                    //display pawn promotion interface
                                     Table.this.updateGameBoard(((PawnPromotion)move).promotePawn(Table.this.getGameBoard()));
                                 }
                                 Table.this.getMoveLog().addMove(move);
