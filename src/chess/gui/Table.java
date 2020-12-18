@@ -311,7 +311,7 @@ public final class Table {
 
     private void undoLastMove() {
         final Move lastMove = this.getMoveLog().removeMove();
-        this.chessBoard = this.getGameBoard().currentPlayer().undoMove(lastMove).getPreviousBoard();
+        this.updateGameBoard(this.getGameBoard().currentPlayer().undoMove(lastMove).getPreviousBoard());
         this.getGameHistoryPanel().redo(this.getGameBoard(), this.getMoveLog());
         this.getTakenPiecesPanel().redo(this.getMoveLog());
         this.getBoardPanel().drawBoard(this.getGameBoard());
@@ -380,7 +380,9 @@ public final class Table {
         blueWhiteMenuItem.addActionListener(e -> {
             this.darkTileColor = new Color(29 ,61 ,99);
             this.lightTileColor = Color.white;
+            //light gray
             this.legalMovesLightTileColor = new Color(169, 169, 169);
+            //dark gray
             this.legalMovesDarkTileColor = new Color(105, 105, 105);
             this.getBoardPanel().drawBoard(this.getGameBoard());
         });
@@ -389,7 +391,9 @@ public final class Table {
         greyWhiteMenuItem.addActionListener(e -> {
             this.darkTileColor = new Color(105, 105, 105);
             this.lightTileColor = Color.white;
+            //light yellow
             this.legalMovesLightTileColor = new Color(255, 253, 156);
+            //yellow
             this.legalMovesDarkTileColor = new Color(255, 252, 84);
             this.getBoardPanel().drawBoard(this.getGameBoard());
         });
@@ -398,7 +402,9 @@ public final class Table {
         classicMenuItem.addActionListener(e -> {
             this.lightTileColor = new Color(240, 217, 181);
             this.darkTileColor = new Color(181, 136, 99);
+            //light gray
             this.legalMovesLightTileColor = new Color(169, 169, 169);
+            //dark gray
             this.legalMovesDarkTileColor = new Color(105, 105, 105);
             this.getBoardPanel().drawBoard(this.getGameBoard());
         });
@@ -417,38 +423,48 @@ public final class Table {
         newGameMenuItem.addActionListener(e -> {
             this.AIThinking = false;
             if (!this.isGameEnded()) {
-                final int confirmedExit = JOptionPane.showConfirmDialog(Table.this.getBoardPanel(), "Are you sure you want to restart game without saving?", "Restart Game",
-                        JOptionPane.YES_NO_CANCEL_OPTION);
-                if (confirmedExit == JOptionPane.NO_OPTION) {
+                final int confirmedRestart = JOptionPane.showConfirmDialog(Table.this.getBoardPanel(), "Are you sure you want to restart game without saving?", "Restart Game", JOptionPane.YES_NO_CANCEL_OPTION);
+                if (confirmedRestart == JOptionPane.NO_OPTION) {
                     FenUtilities.writeFENToFile(this.getGameBoard());
                 }
+                if (confirmedRestart != JOptionPane.CANCEL_OPTION) {
+                    this.gameEnded = false;
+                    restartGame();
+                }
             }
-            this.gameEnded = false;
-            restartGame();
         });
 
         final JMenuItem saveGameMenuItem = new JMenuItem("Save Game");
-        saveGameMenuItem.addActionListener(e -> FenUtilities.writeFENToFile(this.getGameBoard()));
+        saveGameMenuItem.addActionListener(e -> {
+            final int confirmSave = JOptionPane.showConfirmDialog(Table.this.getBoardPanel(), "Confirm to save this game?", "Save Game", JOptionPane.YES_NO_CANCEL_OPTION);
+            if (confirmSave == JOptionPane.YES_OPTION) {
+                FenUtilities.writeFENToFile(this.getGameBoard());
+                JOptionPane.showMessageDialog(this.getGameFrame(), "Game Saved!");
+            }
+        });
 
 
         final JMenuItem loadGameMenuItem = new JMenuItem("Load Saved Game");
         loadGameMenuItem.addActionListener(e -> {
-            this.updateGameBoard(FenUtilities.createGameFromFEN());
-            this.getBoardPanel().drawBoard(this.getGameBoard());
-            if (this.getGameBoard().currentPlayer().getLeague().isBlack()) {
-                JOptionPane.showMessageDialog(Table.this.getBoardPanel(), "Black to move","Welcome",
-                        JOptionPane.INFORMATION_MESSAGE);
-            } else {
-                JOptionPane.showMessageDialog(Table.this.getBoardPanel(), "White to move","Welcome",
-                        JOptionPane.INFORMATION_MESSAGE);
+            final int confirmLoadGame = JOptionPane.showConfirmDialog(Table.this.getBoardPanel(), "Confirm to load previous game?", "Load Game", JOptionPane.YES_NO_CANCEL_OPTION);
+
+            if(confirmLoadGame == JOptionPane.YES_OPTION) {
+
+                this.updateGameBoard(FenUtilities.createGameFromFEN());
+                this.getBoardPanel().drawBoard(this.getGameBoard());
+
+                if (this.getGameBoard().currentPlayer().getLeague().isBlack()) {
+                    JOptionPane.showMessageDialog(Table.this.getBoardPanel(), "Black to move", "Welcome", JOptionPane.INFORMATION_MESSAGE);
+                } else {
+                    JOptionPane.showMessageDialog(Table.this.getBoardPanel(), "White to move", "Welcome", JOptionPane.INFORMATION_MESSAGE);
+                }
             }
         });
 
 
         final JMenuItem exitMenuItem = new JMenuItem("Exit game");
         exitMenuItem.addActionListener(actionEvent -> {
-            final int confirmedExit = JOptionPane.showConfirmDialog(Table.this.getBoardPanel(), "Are you sure you want to quit game without saving?","Exit Game",
-                    JOptionPane.YES_NO_CANCEL_OPTION);
+            final int confirmedExit = JOptionPane.showConfirmDialog(Table.this.getBoardPanel(), "Are you sure you want to quit game without saving?","Exit Game", JOptionPane.YES_NO_CANCEL_OPTION);
             if (confirmedExit == JOptionPane.YES_OPTION) {
                 System.exit(0);
             } else if (confirmedExit == JOptionPane.NO_OPTION) {
@@ -663,6 +679,7 @@ public final class Table {
                     final int coordinate = move.getDestinationCoordinate();
                     Color tileColor;
                     if (move instanceof AttackMove) {
+                        //dark red
                         this.boardPanel.getBoardTiles().get(coordinate).setBackground(new Color(204, 0, 0));
                     } else {
                         if (BoardUtils.FIRST_ROW[coordinate] ||

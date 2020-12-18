@@ -64,13 +64,10 @@ public final class GameSetup extends JDialog {
         okButton.addActionListener(e -> {
             this.whitePlayerType = whiteComputerButton.isSelected() ? PlayerType.COMPUTER : PlayerType.HUMAN;
             this.blackPlayerType = blackComputerButton.isSelected() ? PlayerType.COMPUTER : PlayerType.HUMAN;
-            GameSetup.this.setVisible(false);
+            GameSetup.this.dispose();
         });
 
-        cancelButton.addActionListener(e -> {
-            System.out.println("Cancel");
-            GameSetup.this.setVisible(false);
-        });
+        cancelButton.addActionListener(e -> GameSetup.this.dispose());
 
         myPanel.add(okButton);
         myPanel.add(cancelButton);
@@ -93,16 +90,11 @@ public final class GameSetup extends JDialog {
         return getBlackPlayerType() == PlayerType.COMPUTER;
     }
 
-    PlayerType getWhitePlayerType() {
-        return this.whitePlayerType;
-    }
+    PlayerType getWhitePlayerType() { return this.whitePlayerType; }
 
-    PlayerType getBlackPlayerType() {
-        return this.blackPlayerType;
-    }
+    PlayerType getBlackPlayerType() { return this.blackPlayerType; }
 
-    private static JSpinner addLabeledSpinner(final Container c,
-                                              final SpinnerModel model) {
+    private static JSpinner addLabeledSpinner(final Container c, final SpinnerModel model) {
         final JLabel l = new JLabel("Select Level");
         c.add(l);
         final JSpinner spinner = new JSpinner(model);
@@ -111,7 +103,5 @@ public final class GameSetup extends JDialog {
         return spinner;
     }
 
-    int getSearchDepth() {
-        return (Integer)this.searchDepthSpinner.getValue();
-    }
+    public int getSearchDepth() { return (Integer)this.searchDepthSpinner.getValue(); }
 }

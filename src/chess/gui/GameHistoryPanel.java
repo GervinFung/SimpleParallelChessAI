@@ -79,7 +79,7 @@ public final class GameHistoryPanel extends JPanel {
         private final List<Row> values;
         private final static String [] NAMES = {"White", "Black"};
 
-        DataModel () {
+        private DataModel () {
             this.values = new ArrayList<>();
         }
 
@@ -142,6 +142,8 @@ public final class GameHistoryPanel extends JPanel {
     }
 
     private static class Row {
+
+        private Row() {}
 
         private String whiteMove, blackMove;
 

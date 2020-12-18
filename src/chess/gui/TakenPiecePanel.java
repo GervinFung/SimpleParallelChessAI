@@ -11,7 +11,10 @@ import java.util.List;
 import java.util.HashMap;
 import java.util.Comparator;
 
-import javax.swing.*;
+import javax.swing.JPanel;
+import javax.swing.JLabel;
+import javax.swing.ImageIcon;
+import javax.swing.SwingConstants;
 import javax.swing.border.EtchedBorder;
 
 import java.awt.Image;
