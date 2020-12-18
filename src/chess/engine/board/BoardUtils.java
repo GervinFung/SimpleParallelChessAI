@@ -1,8 +1,5 @@
 package chess.engine.board;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.List;
 
 public final class BoardUtils {
@@ -20,15 +17,6 @@ public final class BoardUtils {
     public static final boolean[] EIGHTH_ROW = initRow(56);
 
     public static final List<String> ALGEBRAIC_NOTATION = initializeAlgebraicNotation();
-    public static final Map<String, Integer> POSITION_TO_COORDINATE = initializePositionToCoordinateMap();
-
-    private static Map<String, Integer> initializePositionToCoordinateMap() {
-        final Map<String, Integer> positionToCoordinate = new HashMap<>();
-        for (int i = START_TILE_INDEX; i < NUM_TILES; i++) {
-            positionToCoordinate.put(ALGEBRAIC_NOTATION.get(i), i);
-        }
-        return Collections.unmodifiableMap(positionToCoordinate);
-    }
 
     private static List<String> initializeAlgebraicNotation() {
         return List.of(
@@ -45,7 +33,6 @@ public final class BoardUtils {
 
     public static final int NUM_TILES = 64;
     public static final int NUM_TILES_PER_ROW = 8;
-    public static final int START_TILE_INDEX = 0;
 
     private static boolean[] initColumn(int columnNumber) {
         final boolean[] column = new boolean[NUM_TILES];
@@ -71,10 +58,6 @@ public final class BoardUtils {
 
     public static boolean isValidTileCoordinate(final int coordinate) {
         return coordinate >= 0 && coordinate < NUM_TILES;
-    }
-
-    public static int getCoordinateAtPosition(final String position) {
-        return POSITION_TO_COORDINATE.get(position);
     }
 
     public static String getPositionAtCoordinate(final int destinationCoordinate) {

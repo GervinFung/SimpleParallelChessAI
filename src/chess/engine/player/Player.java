@@ -70,11 +70,11 @@ public abstract class Player {
     }
 
     public boolean isInCheckmate() {
-        return this.isInCheck && !hasEscapeMoves();
+        return this.isInCheck && noEscapeMoves();
     }
 
     public boolean isInStalemate() {
-        return !this.isInCheck && !hasEscapeMoves();
+        return !this.isInCheck && noEscapeMoves();
     }
 
     protected abstract Collection<Move> calculateKingCastles(final Collection<Move> opponentLegals);
@@ -99,16 +99,16 @@ public abstract class Player {
         return rookTile.getPiece().isFirstMove();
     }
 
-    protected boolean hasEscapeMoves() {
+    protected boolean noEscapeMoves() {
 
         for (final Move move : this.legalMoves) {
             final MoveTransition transition = makeMove(move);
 
             if (transition.getMoveStatus().isDone()) {
-                return true;
+                return false;
             }
         }
-        return false;
+        return true;
     }
 
     public MoveTransition makeMove(final Move move) {

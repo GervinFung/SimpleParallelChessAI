@@ -59,7 +59,7 @@ public final class Table {
     private final MoveLog moveLog;
     private final GameSetup gameSetup;
 
-    private boolean highlightLegalMoves, showAIThinking, AIThinking;
+    private boolean highlightLegalMoves, showAIThinking, AIThinking, mouseEnteredHighlightMoves;
     private final GameHistoryPanel gameHistoryPanel;
     private final TakenPiecePanel takenPiecePanel;
 
@@ -77,7 +77,7 @@ public final class Table {
     private final PropertyChangeSupport propertyChangeSupport;
     private final JFrame gameFrame;
 
-    private Color darkTileColor;
+    private Color darkTileColor, lightTileColor;
     private Color legalMovesLightTileColor, legalMovesDarkTileColor;
 
     private boolean gameEnded;
@@ -105,6 +105,7 @@ public final class Table {
         this.gameFrame.setVisible(true);
         this.AIThinking = false;
         this.showAIThinking = true;
+        this.mouseEnteredHighlightMoves = true;
         this.gameFrame.setCursor(MOVE_CURSOR);
         //a property change listener for AI, as Observable is deprecated
         final PropertyChangeListener propertyChangeListener = propertyChangeEvent -> {
@@ -120,14 +121,17 @@ public final class Table {
         this.propertyChangeSupport.addPropertyChangeListener(propertyChangeListener);
 
         this.darkTileColor = new Color(29 ,61 ,99);
+        this.lightTileColor = Color.white;
 
-        this.legalMovesLightTileColor = Color.lightGray;
-        this.legalMovesDarkTileColor = new Color(100 ,100 ,93);
+        this.legalMovesLightTileColor = new Color(169, 169, 169);
+        this.legalMovesDarkTileColor = new Color(105, 105, 105);
     }
 
 
     //setter
     private void setAIThinking(final boolean AIThinking) { this.AIThinking = AIThinking; }
+
+    private void setMouseEnteredHighlightMoves(final boolean mouseEnteredHighlightMoves) { this.mouseEnteredHighlightMoves = mouseEnteredHighlightMoves; }
 
     private void setShowAIThinking(final boolean showAIThinking) { this.showAIThinking = showAIThinking; }
 
@@ -139,6 +143,8 @@ public final class Table {
 
     //getter
     private boolean getAIThinking() { return this.AIThinking; }
+
+    private boolean getMouseEnteredHighlightMoves() { return this.mouseEnteredHighlightMoves; }
 
     private boolean getShowAIThinking() { return this.showAIThinking; }
 
@@ -373,20 +379,32 @@ public final class Table {
         final JMenuItem blueWhiteMenuItem = new JMenuItem("Blue & White");
         blueWhiteMenuItem.addActionListener(e -> {
             this.darkTileColor = new Color(29 ,61 ,99);
-            this.legalMovesLightTileColor = Color.lightGray;
-            this.legalMovesDarkTileColor = new Color(100 ,100 ,93);
+            this.lightTileColor = Color.white;
+            this.legalMovesLightTileColor = new Color(169, 169, 169);
+            this.legalMovesDarkTileColor = new Color(105, 105, 105);
             this.getBoardPanel().drawBoard(this.getGameBoard());
         });
 
         final JMenuItem greyWhiteMenuItem = new JMenuItem("Grey & White");
         greyWhiteMenuItem.addActionListener(e -> {
-            this.darkTileColor = Color.LIGHT_GRAY;
-            this.legalMovesLightTileColor = new Color(255, 255, 153);
-            this.legalMovesDarkTileColor = new Color(255, 255, 102);
+            this.darkTileColor = new Color(105, 105, 105);
+            this.lightTileColor = Color.white;
+            this.legalMovesLightTileColor = new Color(255, 253, 156);
+            this.legalMovesDarkTileColor = new Color(255, 252, 84);
+            this.getBoardPanel().drawBoard(this.getGameBoard());
+        });
+
+        final JMenuItem classicMenuItem = new JMenuItem("Classic Board");
+        classicMenuItem.addActionListener(e -> {
+            this.lightTileColor = new Color(240, 217, 181);
+            this.darkTileColor = new Color(181, 136, 99);
+            this.legalMovesLightTileColor = new Color(169, 169, 169);
+            this.legalMovesDarkTileColor = new Color(105, 105, 105);
             this.getBoardPanel().drawBoard(this.getGameBoard());
         });
 
         gameMenu.add(blueWhiteMenuItem);
+        gameMenu.add(classicMenuItem);
         gameMenu.add(greyWhiteMenuItem);
 
         return gameMenu;
@@ -397,7 +415,8 @@ public final class Table {
 
         final JMenuItem newGameMenuItem = new JMenuItem("New Game");
         newGameMenuItem.addActionListener(e -> {
-            AIThinking = false;
+            this.gameEnded = false;
+            this.AIThinking = false;
             if (!this.isGameEnded()) {
                 final int confirmedExit = JOptionPane.showConfirmDialog(Table.this.getBoardPanel(), "Are you sure you want to restart game without saving?", "Restart Game",
                         JOptionPane.YES_NO_CANCEL_OPTION);
@@ -520,33 +539,39 @@ public final class Table {
                 @Deprecated
                 public void mouseClicked(final MouseEvent mouseEvent) {}
                 @Deprecated
-                public void mouseEntered(final MouseEvent mouseEvent) {}
+                public void mouseEntered(final MouseEvent mouseEvent) {
+                    if (Table.this.getMouseEnteredHighlightMoves()) {
+                        Table.this.humanMovePiece = Table.this.getGameBoard().getTile(TilePanel.this.tileID).getPiece();
+                        highlightLegals(Table.this.getGameBoard());
+                    }
+                }
                 @Deprecated
-                public void mouseExited(final MouseEvent mouseEvent) {}
+                public void mouseExited(final MouseEvent mouseEvent) {
+                    if (Table.this.getMouseEnteredHighlightMoves() && Table.this.humanMovePiece != null) {
+                        Table.this.humanMovePiece = null;
+                        Table.this.getBoardPanel().drawBoard(Table.this.getGameBoard());
+                    }
+                }
 
                 @Override
                 public void mousePressed(final MouseEvent mouseEvent) {
                     if (Table.this.isGameEnded() || Table.this.getAIThinking()) { return; }
                     if (isLeftMouseButton(mouseEvent)) {
-                        mousePressedY = (int) Math.ceil(mouseEvent.getY() / 64.0);
-                        mousePressedX = (int) Math.ceil(mouseEvent.getX() / 64.0);
-                        if (Table.this.humanMovePiece == null) {
 
+                        if (Table.this.humanMovePiece != null && Table.this.humanMovePiece.getLeague() == Table.this.getGameBoard().currentPlayer().getLeague()) {
+
+                            Table.this.mousePressedY = (int) Math.ceil(mouseEvent.getY() / 64.0);
+                            Table.this.mousePressedX = (int) Math.ceil(mouseEvent.getX() / 64.0);
+
+                            Table.this.setMouseEnteredHighlightMoves(false);
                             Table.this.humanMovePiece = Table.this.getGameBoard().getTile(TilePanel.this.tileID).getPiece();
-
-                            if (Table.this.humanMovePiece != null && Table.this.humanMovePiece.getLeague() == Table.this.getGameBoard().currentPlayer().getLeague()) {
-
-                                highlightLegals(Table.this.getGameBoard());
-
-                                final Image image = ((ImageIcon)((JLabel) TilePanel.this.boardPanel.getBoardTiles().get(TilePanel.this.tileID).getComponent(0)).getIcon()).getImage();
-                                try {
-                                    boardPanel.setCursor(Toolkit.getDefaultToolkit().createCustomCursor(image, new Point(mouseEvent.getX(), mouseEvent.getY()), null));
-                                    boardPanel.getBoardTiles().get(TilePanel.this.tileID).remove(0);
-                                } catch (final IndexOutOfBoundsException ignored) {}
-
-                                validate();
-                                repaint();
-                            }
+                            final Image image = ((ImageIcon)((JLabel) TilePanel.this.boardPanel.getBoardTiles().get(TilePanel.this.tileID).getComponent(0)).getIcon()).getImage();
+                            try {
+                                boardPanel.setCursor(Toolkit.getDefaultToolkit().createCustomCursor(image, new Point(mouseEvent.getX(), mouseEvent.getY()), null));
+                                boardPanel.getBoardTiles().get(TilePanel.this.tileID).remove(0);
+                            } catch (final IndexOutOfBoundsException ignored) {}
+                            validate();
+                            repaint();
                         }
                     }
                 }
@@ -554,10 +579,11 @@ public final class Table {
                 @Override
                 public void mouseReleased(final MouseEvent mouseEvent) {
                     if (isLeftMouseButton(mouseEvent)) {
-                        final int releasedX = (int) Math.ceil(mouseEvent.getX() / 64.0) - Table.this.mousePressedX;
-                        final int releasedY = ((int) Math.ceil(mouseEvent.getY() / 64.0) - Table.this.mousePressedY) * 8;
 
                         if (Table.this.humanMovePiece != null && Table.this.humanMovePiece.getLeague() == Table.this.getGameBoard().currentPlayer().getLeague()) {
+
+                            final int releasedX = (int) Math.ceil(mouseEvent.getX() / 64.0) - Table.this.mousePressedX;
+                            final int releasedY = ((int) Math.ceil(mouseEvent.getY() / 64.0) - Table.this.mousePressedY) * 8;
 
                             final Move move = MoveFactory.createMove(Table.this.getGameBoard(), Table.this.humanMovePiece, TilePanel.this.tileID,
                                     TilePanel.this.tileID + (releasedY + releasedX));
@@ -590,6 +616,7 @@ public final class Table {
                         TilePanel.this.boardPanel.setCursor(Table.MOVE_CURSOR);
                         Table.this.humanMovePiece = null;
                     }
+                    Table.this.setMouseEnteredHighlightMoves(true);
                 }
             });
         }
@@ -660,16 +687,14 @@ public final class Table {
         }
 
         private void assignTileColor() {
-            final Color lightTileColor = Color.WHITE;
-
             if (BoardUtils.FIRST_ROW[this.tileID] ||
                     BoardUtils.THIRD_ROW[this.tileID] ||
                     BoardUtils.FIFTH_ROW[this.tileID] ||
                     BoardUtils.SEVENTH_ROW[this.tileID]) {
-                this.setBackground(this.tileID % 2 == 0 ? lightTileColor : Table.this.darkTileColor);
+                this.setBackground(this.tileID % 2 == 0 ? Table.this.lightTileColor : Table.this.darkTileColor);
             }
             else {
-                this.setBackground(this.tileID % 2 != 0 ? lightTileColor : Table.this.darkTileColor);
+                this.setBackground(this.tileID % 2 != 0 ? Table.this.lightTileColor : Table.this.darkTileColor);
             }
         }
     }

@@ -15,7 +15,6 @@ public abstract class Piece {
     protected final League league;
     private final boolean isFirstMove;
     private final int cachedHashCode;
-    private int display;
 
     public Piece(final PieceType pieceType, final int piecePosition, final League league, final boolean isFirstMove) {
         this.pieceType = pieceType;
@@ -23,15 +22,6 @@ public abstract class Piece {
         this.league = league;
         this.isFirstMove = isFirstMove;
         this.cachedHashCode = computeCachedHasCode();
-        this.display = piecePosition;
-    }
-
-    public int getDisplay() {
-        return this.display;
-    }
-
-    public void setDisplay(final int display) {
-        this.display = display;
     }
 
     private int computeCachedHasCode() {
