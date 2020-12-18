@@ -415,7 +415,6 @@ public final class Table {
 
         final JMenuItem newGameMenuItem = new JMenuItem("New Game");
         newGameMenuItem.addActionListener(e -> {
-            this.gameEnded = false;
             this.AIThinking = false;
             if (!this.isGameEnded()) {
                 final int confirmedExit = JOptionPane.showConfirmDialog(Table.this.getBoardPanel(), "Are you sure you want to restart game without saving?", "Restart Game",
@@ -424,6 +423,7 @@ public final class Table {
                     FenUtilities.writeFENToFile(this.getGameBoard());
                 }
             }
+            this.gameEnded = false;
             restartGame();
         });
 
