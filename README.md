@@ -9,26 +9,28 @@ The workspace contains two folders by default, where:
 - `src`: the folder to maintain sources
 
 ## To play the Game
-
-1. User can choose to play as white/black
-2. User can choose white/black as AI
-3. Or, user can watch AI play against itself
-4. Once the game started, press(not click) the piece you wish to move, drag and drop to the square you wish to place it
-5. The piece will move as user drag
-
 NOTE: **The image dragged is a bit low quality as image of piece is added to cursor**
+No. | Steps
+--- | ----
+1.| User can choose to play as white/black
+2.| User can choose white/black as AI
+3.| Or, user can watch AI play against itself
+4.| Once the game started, press(not click) the piece you wish to move, drag and drop to the square you wish to place it
+5.| The piece will move as user drag
 
 ## Game Features
 
-1. Restart new game
-2. Save game/ Load saved game
-3. Exit game
-4. Highlight legal moves
-5. Show move history
-6. Choose AI level from 1 to 5
-7. Show captured piece
-8. Show AI thinking progress bar
-9. Undo previous move
-10. Multithread feature depends on the number of cores of a pc, the greater the better/faster AI can think
-
 NOTE: **if AI move is undo, press its piece so AI can move again**
+
+No. | Features
+--- | ----
+1.| Restart new game
+2.| Save game/ Load saved game
+3.| Exit game
+4.| Highlight legal moves
+5.| Show move history
+6.| Choose AI level from 1 to 5
+7.| Show captured piece
+8.| Show AI thinking progress bar
+9.| Undo previous move
+10.| Multithread feature depends on the number of cores of a pc, the greater the better/faster AI can think
