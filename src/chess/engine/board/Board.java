@@ -64,7 +64,7 @@ public final class Board{
     public Collection<Piece> getAllPieces() {
         final List <Piece> allPieces = new ArrayList<>(this.whitePieces);
         allPieces.addAll(this.blackPieces);
-        return allPieces;
+        return Collections.unmodifiableList(allPieces);
     }
 
     public Pawn getEnPassantPawn() {
@@ -164,9 +164,7 @@ public final class Board{
             this.nextMoveMaker = nextMoveMaker;
         }
 
-        public Board build() {
-            return new Board(this);
-        }
+        public Board build() { return new Board(this); }
 
         public void setEnPassantPawn(final Pawn movedPawn) {
             this.enPassantPawn = movedPawn;

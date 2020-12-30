@@ -256,7 +256,7 @@ public final class Table {
 
                     //progress is shown based on move count / total available moves ratio
                     final Thread displayProgress = new Thread(() -> {
-                        this.table.getBoardPanel().setCursor(Table.WAIT_CURSOR);
+                        this.table.getBoardPanel().updateBoardPanelCursor(Table.WAIT_CURSOR);
                         this.dialog.setCursor(Table.WAIT_CURSOR);
                         while(running.get()) {
                             final double progress = ((double)miniMax.getMoveCount() / this.max) * 100;
@@ -266,7 +266,7 @@ public final class Table {
                         try {
                             sleep(100);
                             this.dialog.dispose();
-                            this.table.getBoardPanel().setCursor(Table.MOVE_CURSOR);
+                            this.table.getBoardPanel().updateBoardPanelCursor(Table.MOVE_CURSOR);
                         }
                         catch (final InterruptedException e) { e.printStackTrace(); }
                     });
@@ -507,6 +507,7 @@ public final class Table {
             this.validate();
             this.repaint();
         }
+        public void updateBoardPanelCursor(final Cursor cursor) { this.setCursor(cursor); }
     }
 
     public static final class MoveLog {
@@ -554,16 +555,16 @@ public final class Table {
             this.addMouseListener(new MouseListener() {
                 @Deprecated
                 public void mouseClicked(final MouseEvent mouseEvent) {}
-                @Deprecated
+                @Override
                 public void mouseEntered(final MouseEvent mouseEvent) {
-                    if (Table.this.getMouseEnteredHighlightMoves()) {
+                    if (!Table.this.getAIThinking() && Table.this.getMouseEnteredHighlightMoves()) {
                         Table.this.humanMovePiece = Table.this.getGameBoard().getTile(TilePanel.this.tileID).getPiece();
                         highlightLegals(Table.this.getGameBoard());
                     }
                 }
-                @Deprecated
+                @Override
                 public void mouseExited(final MouseEvent mouseEvent) {
-                    if (Table.this.getMouseEnteredHighlightMoves() && Table.this.humanMovePiece != null) {
+                    if (!Table.this.getAIThinking() && Table.this.getMouseEnteredHighlightMoves() && Table.this.humanMovePiece != null) {
                         Table.this.humanMovePiece = null;
                         Table.this.getBoardPanel().drawBoard(Table.this.getGameBoard());
                     }
@@ -583,8 +584,8 @@ public final class Table {
                             Table.this.humanMovePiece = Table.this.getGameBoard().getTile(TilePanel.this.tileID).getPiece();
                             final Image image = ((ImageIcon)((JLabel) TilePanel.this.boardPanel.getBoardTiles().get(TilePanel.this.tileID).getComponent(0)).getIcon()).getImage();
                             try {
-                                boardPanel.setCursor(Toolkit.getDefaultToolkit().createCustomCursor(image, new Point(mouseEvent.getX(), mouseEvent.getY()), null));
-                                boardPanel.getBoardTiles().get(TilePanel.this.tileID).remove(0);
+                                TilePanel.this.boardPanel.updateBoardPanelCursor(Toolkit.getDefaultToolkit().createCustomCursor(image, new Point(mouseEvent.getX(), mouseEvent.getY()), null));
+                                TilePanel.this.boardPanel.getBoardTiles().get(TilePanel.this.tileID).remove(0);
                             } catch (final IndexOutOfBoundsException ignored) {}
                             validate();
                             repaint();
@@ -594,7 +595,7 @@ public final class Table {
 
                 @Override
                 public void mouseReleased(final MouseEvent mouseEvent) {
-                    if (isLeftMouseButton(mouseEvent)) {
+                    if (!Table.this.getAIThinking() && isLeftMouseButton(mouseEvent)) {
 
                         if (Table.this.humanMovePiece != null && Table.this.humanMovePiece.getLeague() == Table.this.getGameBoard().currentPlayer().getLeague()) {
 
@@ -609,7 +610,7 @@ public final class Table {
 
                                 Table.this.updateGameBoard(transition.getLatestBoard());
                                 if (move instanceof PawnPromotion) {
-                                    TilePanel.this.boardPanel.setCursor(Table.MOVE_CURSOR);
+                                    TilePanel.this.boardPanel.updateBoardPanelCursor(Table.MOVE_CURSOR);
                                     //display pawn promotion interface
                                     Table.this.updateGameBoard(((PawnPromotion)move).promotePawn(Table.this.getGameBoard()));
                                 }
@@ -629,7 +630,7 @@ public final class Table {
                                 }
                             });
                         }
-                        TilePanel.this.boardPanel.setCursor(Table.MOVE_CURSOR);
+                        TilePanel.this.boardPanel.updateBoardPanelCursor(Table.MOVE_CURSOR);
                         Table.this.humanMovePiece = null;
                     }
                     Table.this.setMouseEnteredHighlightMoves(true);

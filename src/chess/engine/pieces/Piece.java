@@ -6,6 +6,8 @@ import chess.engine.board.Move;
 import chess.engine.player.MoveTransition;
 
 import java.util.Collection;
+import java.util.Objects;
+
 import static chess.engine.board.Move.*;
 
 public abstract class Piece {
@@ -14,39 +16,24 @@ public abstract class Piece {
     protected final int piecePosition;
     protected final League league;
     private final boolean isFirstMove;
-    private final int cachedHashCode;
 
     public Piece(final PieceType pieceType, final int piecePosition, final League league, final boolean isFirstMove) {
         this.pieceType = pieceType;
         this.piecePosition = piecePosition;
         this.league = league;
         this.isFirstMove = isFirstMove;
-        this.cachedHashCode = computeCachedHasCode();
     }
 
-    private int computeCachedHasCode() {
-        int result = pieceType.hashCode();
-        result = 31 * result + piecePosition;
-        result = 31 * result + league.hashCode();
-        result = 31 * result + (isFirstMove ? 1 : 0);
-        return result;
-    }
-
+    //prior to JDK 7, a manual hashCode is needed
     @Override
-    public int hashCode() {
-        return this.cachedHashCode;
-    }
+    public int hashCode() { return Objects.hash(pieceType.hashCode(), piecePosition, league.hashCode(), isFirstMove); }
 
     @Override
     public boolean equals(final Object object) {
 
-        if (this == object) {
-            return true;
-        }
+        if (this == object) { return true; }
 
-        if (!(object instanceof Piece)) {
-            return false;
-        }
+        if (!(object instanceof Piece)) { return false; }
 
         final Piece otherPiece = (Piece)object;
         return piecePosition == otherPiece.getPiecePosition() && pieceType == otherPiece.getPieceType() &&

@@ -56,11 +56,7 @@ public final class BoardUtils {
         throw new RuntimeException("You cannot instantiate me");
     }
 
-    public static boolean isValidTileCoordinate(final int coordinate) {
-        return coordinate >= 0 && coordinate < NUM_TILES;
-    }
+    public static boolean isValidTileCoordinate(final int coordinate) { return coordinate >= 0 && coordinate < NUM_TILES; }
 
-    public static String getPositionAtCoordinate(final int destinationCoordinate) {
-        return ALGEBRAIC_NOTATION.get(destinationCoordinate);
-    }
+    public static String getPositionAtCoordinate(final int destinationCoordinate) { return ALGEBRAIC_NOTATION.get(destinationCoordinate); }
 }

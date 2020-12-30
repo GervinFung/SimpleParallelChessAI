@@ -12,6 +12,7 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
+import java.util.Objects;
 
 import static chess.engine.board.Board.*;
 
@@ -36,27 +37,14 @@ public abstract class Move {
         this.isFirstMove = false;
     }
     @Override
-    public int hashCode() {
-
-        final int prime = 31;
-        int result = 1;
-        result = prime * result + this.destinationCoordinate;
-        result = prime * result + this.movePiece.hashCode();
-        result = prime * result + this.movePiece.getPiecePosition();
-
-        return result;
-    }
+    public int hashCode() { return Objects.hash(this.destinationCoordinate, this.movePiece.hashCode(), this.movePiece.getPiecePosition()); }
 
     @Override
     public boolean equals(final Object object) {
 
-        if (this == object) {
-            return true;
-        }
+        if (this == object) { return true; }
 
-        if (!(object instanceof Move)) {
-            return false;
-        }
+        if (!(object instanceof Move)) { return false; }
 
         final Move otherMove = (Move) object;
         return getCurrentCoordinate() == otherMove.getCurrentCoordinate() &&
@@ -68,7 +56,6 @@ public abstract class Move {
     public final Board getBoard() {
         return this.board;
     }
-
 
     public int getCurrentCoordinate() {
         return this.getMovedPiece().getPiecePosition();
@@ -119,14 +106,10 @@ public abstract class Move {
         }
 
         @Override
-        public boolean equals(final Object object) {
-            return this == object || object instanceof  MajorMove && super.equals(object);
-        }
+        public boolean equals(final Object object) { return this == object || object instanceof  MajorMove && super.equals(object); }
 
         @Override
-        public String toString() {
-            return getMovedPiece().getPieceType().toString() + BoardUtils.getPositionAtCoordinate(this.destinationCoordinate);
-        }
+        public String toString() { return getMovedPiece().getPieceType().toString() + BoardUtils.getPositionAtCoordinate(this.destinationCoordinate); }
     }
 
     public static class AttackMove extends Move {
@@ -139,9 +122,7 @@ public abstract class Move {
         }
 
         @Override
-        public int hashCode() {
-            return this.attackedPiece.hashCode() + super.hashCode();
-        }
+        public int hashCode() { return Objects.hash(this.attackedPiece.hashCode(), super.hashCode()); }
 
         @Override
         public boolean equals(final Object object) {
@@ -174,14 +155,10 @@ public abstract class Move {
         }
 
         @Override
-        public boolean equals(final Object object) {
-            return this == object || object instanceof MajorAttackMove && super.equals(object);
-        }
+        public boolean equals(final Object object) { return this == object || object instanceof MajorAttackMove && super.equals(object); }
 
         @Override
-        public String toString() {
-            return getMovedPiece().getPieceType() + BoardUtils.getPositionAtCoordinate(this.destinationCoordinate) + "x" + this.getAttackedPiece();
-        }
+        public String toString() { return getMovedPiece().getPieceType() + BoardUtils.getPositionAtCoordinate(this.destinationCoordinate) + "x" + this.getAttackedPiece(); }
     }
 
     public static final class PawnMove extends Move {
@@ -191,9 +168,7 @@ public abstract class Move {
         }
 
         @Override
-        public boolean equals(final Object object) {
-            return this == object || object instanceof  PawnMove && super.equals(object);
-        }
+        public boolean equals(final Object object) { return this == object || object instanceof  PawnMove && super.equals(object); }
 
         @Override
         public String toString() {
@@ -209,9 +184,7 @@ public abstract class Move {
         }
 
         @Override
-        public boolean equals(final Object object) {
-            return this == object || object instanceof  PawnAttackMove && super.equals(object);
-        }
+        public boolean equals(final Object object) { return this == object || object instanceof  PawnAttackMove && super.equals(object); }
 
         @Override
         public String toString() {
@@ -227,9 +200,7 @@ public abstract class Move {
         }
 
         @Override
-        public boolean equals(final Object object) {
-            return this == object || object instanceof PawnEnPassantAttackMove && super.equals(object);
-        }
+        public boolean equals(final Object object) { return this == object || object instanceof PawnEnPassantAttackMove && super.equals(object); }
 
         @Override
         public Board execute() {
@@ -351,19 +322,13 @@ public abstract class Move {
         }
 
         @Override
-        public String toString() {
-            return BoardUtils.getPositionAtCoordinate(destinationCoordinate) + "=" +this.promotedPiece.toString().charAt(0);
-        }
+        public String toString() { return BoardUtils.getPositionAtCoordinate(destinationCoordinate) + "=" +this.promotedPiece.toString().charAt(0); }
 
         @Override
-        public int hashCode() {
-            return decoratedMove.hashCode() + (31 * promotedPawn.hashCode());
-        }
+        public int hashCode() { return Objects.hash(decoratedMove.hashCode(), 31 * promotedPawn.hashCode()); }
 
         @Override
-        public boolean equals(final Object object) {
-            return this == object || object instanceof PawnPromotion && (super.equals(object));
-        }
+        public boolean equals(final Object object) { return this == object || object instanceof PawnPromotion && (super.equals(object)); }
     }
 
     public static final class PawnJump extends Move {
@@ -434,13 +399,7 @@ public abstract class Move {
         }
 
         @Override
-        public int hashCode() {
-            final int prime = 31;
-            int result = super.hashCode();
-            result = prime * result + this.castleRook.hashCode();
-            result = prime * result + this.castleRookDestination;
-            return result;
-        }
+        public int hashCode() { return Objects.hash(super.hashCode(), this.castleRook.hashCode(), this.castleRookDestination); }
 
         @Override
         public boolean equals(final Object object) {
@@ -463,9 +422,7 @@ public abstract class Move {
         }
 
         @Override
-        public boolean equals(final Object object) {
-            return this == object || object instanceof KingSideCastleMove && super.equals(object);
-        }
+        public boolean equals(final Object object) { return this == object || object instanceof KingSideCastleMove && super.equals(object); }
 
         @Override
         public String toString() {
@@ -481,9 +438,7 @@ public abstract class Move {
         }
 
         @Override
-        public boolean equals(final Object object) {
-            return this == object || object instanceof QueenSideCastleMove && super.equals(object);
-        }
+        public boolean equals(final Object object) { return this == object || object instanceof QueenSideCastleMove && super.equals(object); }
 
         @Override
         public String toString() {

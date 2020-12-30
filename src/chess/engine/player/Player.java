@@ -55,8 +55,8 @@ public abstract class Player {
                 return (King) piece;
             }
         }
-        //throw new RuntimeException("Invalid board");
-        return null;
+        throw new RuntimeException("Invalid board");
+        //return null;
     }
 
     public abstract Collection<Piece> getActivePieces();
@@ -127,7 +127,5 @@ public abstract class Player {
         return new MoveTransition(null, null, MoveStatus.Illegal_Move);
     }
 
-    public MoveTransition undoMove(final Move move) {
-        return new MoveTransition(this.board, move.undo(), MoveStatus.DONE);
-    }
+    public MoveTransition undoMove(final Move move) { return new MoveTransition(this.board, move.undo(), MoveStatus.DONE); }
 }

@@ -76,21 +76,9 @@ public class FenUtilities {
 
     }
 
-    private static boolean whiteKingSideCastle(final String fenCastleString) {
-        return fenCastleString.contains("K");
-    }
+    private static boolean kingSideCastle(final String fenCastleString, final boolean isWhite) { return isWhite ? fenCastleString.contains("K") : fenCastleString.contains("k"); }
 
-    private static boolean whiteQueenSideCastle(final String fenCastleString) {
-        return fenCastleString.contains("Q");
-    }
-
-    private static boolean blackKingSideCastle(final String fenCastleString) {
-        return fenCastleString.contains("k");
-    }
-
-    private static boolean blackQueenSideCastle(final String fenCastleString) {
-        return fenCastleString.contains("q");
-    }
+    private static boolean queenSideCastle(final String fenCastleString, final boolean isWhite) { return isWhite ? fenCastleString.contains("Q") : fenCastleString.contains("q"); }
 
     private static boolean enPassantPawnExist(final String fenEnPassantCoordinate) {
         return !"-".equals(fenEnPassantCoordinate);
@@ -101,10 +89,10 @@ public class FenUtilities {
 
         final Builder builder = new Builder(Integer.parseInt(fenPartitions[fenPartitions.length - 1]));
 
-        final boolean whiteKingSideCastle = whiteKingSideCastle(fenPartitions[2]);
-        final boolean whiteQueenSideCastle = whiteQueenSideCastle(fenPartitions[2]);
-        final boolean blackKingSideCastle = blackKingSideCastle(fenPartitions[2]);
-        final boolean blackQueenSideCastle = blackQueenSideCastle(fenPartitions[2]);
+        final boolean whiteKingSideCastle = kingSideCastle(fenPartitions[2], true);
+        final boolean whiteQueenSideCastle = queenSideCastle(fenPartitions[2], true);
+        final boolean blackKingSideCastle = kingSideCastle(fenPartitions[2], false);
+        final boolean blackQueenSideCastle = queenSideCastle(fenPartitions[2], false);
 
         if (enPassantPawnExist(fenPartitions[3])) {
             final int enPassantPawnPosition = Integer.parseInt(fenPartitions[3].substring(0, 2));

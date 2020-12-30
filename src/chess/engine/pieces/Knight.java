@@ -17,13 +17,9 @@ public final class Knight extends Piece{
 
     private final static int[] MOVE_VECTOR_COORDINATE = {-17, -15, -10, -6, 6, 10, 15, 17};
 
-    public Knight(final League league, final int piecePosition) {
-        super(PieceType.KNIGHT, piecePosition, league, true);
-    }
+    public Knight(final League league, final int piecePosition) { super(PieceType.KNIGHT, piecePosition, league, true); }
 
-    public Knight(final League league, final int piecePosition, final boolean isFirstMove) {
-        super(PieceType.KNIGHT, piecePosition, league, isFirstMove);
-    }
+    public Knight(final League league, final int piecePosition, final boolean isFirstMove) { super(PieceType.KNIGHT, piecePosition, league, isFirstMove); }
 
     @Override
     public Collection<Move> calculateLegalMoves(Board board) {
@@ -61,9 +57,7 @@ public final class Knight extends Piece{
     }
 
     @Override
-    public Knight movedPiece(Move move) {
-        return new Knight(move.getMovedPiece().getLeague(), move.getDestinationCoordinate(), false);
-    }
+    public Knight movedPiece(Move move) { return new Knight(move.getMovedPiece().getLeague(), move.getDestinationCoordinate(), false); }
 
     @Override
     public String toString() {
@@ -82,5 +76,4 @@ public final class Knight extends Piece{
     private static boolean isEighthColumnExclusion(final int currentPosition, final int candidateOFFSET) {
         return BoardUtils.EIGHTH_COLUMN[currentPosition] && (candidateOFFSET == -15 || candidateOFFSET == -6 || candidateOFFSET == 10 || candidateOFFSET == 17);
     }
-
 }

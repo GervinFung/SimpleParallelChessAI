@@ -21,9 +21,7 @@ public final class Queen extends Piece{
         super(PieceType.QUEEN, piecePosition, league, true);
     }
 
-    public Queen(final League league, final int piecePosition, final boolean isFirstMove) {
-        super(PieceType.QUEEN, piecePosition, league, isFirstMove);
-    }
+    public Queen(final League league, final int piecePosition, final boolean isFirstMove) { super(PieceType.QUEEN, piecePosition, league, isFirstMove); }
 
     @Override
     public Collection<Move> calculateLegalMoves(final Board board) {
@@ -65,9 +63,7 @@ public final class Queen extends Piece{
     }
 
     @Override
-    public Queen movedPiece(Move move) {
-        return new Queen(move.getMovedPiece().getLeague(), move.getDestinationCoordinate(), false);
-    }
+    public Queen movedPiece(Move move) { return new Queen(move.getMovedPiece().getLeague(), move.getDestinationCoordinate(), false); }
 
     @Override
     public String toString() {

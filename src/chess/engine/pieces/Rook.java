@@ -21,9 +21,7 @@ public final class Rook extends Piece{
         super(PieceType.ROOK, piecePosition, league, true);
     }
 
-    public Rook(final League league, final int piecePosition, final boolean isFirstMove) {
-        super(PieceType.ROOK, piecePosition, league, isFirstMove);
-    }
+    public Rook(final League league, final int piecePosition, final boolean isFirstMove) { super(PieceType.ROOK, piecePosition, league, isFirstMove); }
 
     @Override
     public Collection<Move> calculateLegalMoves(final Board board) {
@@ -64,9 +62,7 @@ public final class Rook extends Piece{
         return Collections.unmodifiableList(legalMoves);
     }
     @Override
-    public Rook movedPiece(Move move) {
-        return new Rook(move.getMovedPiece().getLeague(), move.getDestinationCoordinate(), false);
-    }
+    public Rook movedPiece(Move move) { return new Rook(move.getMovedPiece().getLeague(), move.getDestinationCoordinate(), false); }
 
     @Override
     public String toString() {

@@ -99,7 +99,6 @@ public final class TakenPiecePanel extends JPanel {
         }
     }
 
-
     private Image resizeImage(final Image image) {
         return image.getScaledInstance(image.getWidth(null) / 2, image.getHeight(null) / 2, Image.SCALE_SMOOTH);
     }

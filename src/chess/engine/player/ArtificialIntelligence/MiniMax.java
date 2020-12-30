@@ -42,7 +42,7 @@ public final class MiniMax{
 
             final MoveTransition moveTransition = board.currentPlayer().makeMove(move);
 
-            final Runnable run = () -> {
+            executorService.execute(() -> {
                 if (moveTransition.getMoveStatus().isDone()) {
 
                     final int currentVal = board.currentPlayer().getLeague().isWhite() ? min(moveTransition.getLatestBoard(), searchDepth, Integer.MIN_VALUE, Integer.MAX_VALUE) :
@@ -58,8 +58,7 @@ public final class MiniMax{
                         bestMove.set(move);
                     }
                 }
-            };
-            executorService.execute(run);
+            });
         }
         executorService.shutdown();
         try {
@@ -67,8 +66,7 @@ public final class MiniMax{
         } catch (final InterruptedException e) {
             e.printStackTrace();
         }
-        final long executionTime = System.nanoTime() - startTime;
-        System.out.println("Time taken to search best move: " + executionTime + " nanoseconds");
+        System.out.println("Time taken to search best move: " + (System.nanoTime() - startTime) + " nanoseconds");
         return bestMove.get();
     }
 

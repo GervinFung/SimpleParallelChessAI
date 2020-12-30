@@ -15,9 +15,8 @@ import java.util.List;
 import static chess.engine.board.Move.*;
 
 public final class BlackPlayer extends Player{
-    public BlackPlayer(final Board board, final Collection<Move> whiteStandardLegalMoves, final Collection<Move> blackStandardLegalMoves) {
-        super(board, blackStandardLegalMoves, whiteStandardLegalMoves);
-    }
+    public BlackPlayer(final Board board, final Collection<Move> whiteStandardLegalMoves, final Collection<Move> blackStandardLegalMoves) { super(board, blackStandardLegalMoves, whiteStandardLegalMoves); }
+
     @Override
     public Collection<Piece> getActivePieces() {
         return this.board.getBlackPieces();
@@ -41,9 +40,7 @@ public final class BlackPlayer extends Player{
     @Override
     protected Collection<Move> calculateKingCastles(final Collection<Move> opponentLegals) {
 
-        if (this.isCastled()) {
-            return Collections.emptyList();
-        }
+        if (this.isCastled()) { return Collections.emptyList(); }
 
         final List<Move> kingCastles = new ArrayList<>();
 

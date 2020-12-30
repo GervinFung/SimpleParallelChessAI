@@ -4,9 +4,10 @@ import chess.engine.board.Board;
 import chess.engine.pieces.Piece;
 import chess.engine.player.Player;
 
+import java.util.Arrays;
 import java.util.List;
-import java.util.ArrayList;
 import java.util.Collections;
+import java.util.stream.Collectors;
 
 public final class StandardBoardEvaluation {
 
@@ -15,7 +16,7 @@ public final class StandardBoardEvaluation {
     private static final int DEPTH_BONUS = 100;
     private static final int CASTLE_BONUS = 60;
 
-    private static final Integer[] kingEvaluation = {
+    private static final int[] kingEvaluation = {
             -30,-40,-40,-50,-50,-40,-40,-30,
             -30,-40,-40,-50,-50,-40,-40,-30,
             -30,-40,-40,-50,-50,-40,-40,-30,
@@ -26,7 +27,7 @@ public final class StandardBoardEvaluation {
             20, 30, 10,  0,  0, 10, 30, 20
     };
 
-    private static final Integer[] queenEvaluation = {
+    private static final int[] queenEvaluation = {
             -20,-10,-10, -5, -5,-10,-10,-20,
             -10,  0,  0,  0,  0,  0,  0,-10,
             -10,  0,  5,  5,  5,  5,  0,-10,
@@ -37,7 +38,7 @@ public final class StandardBoardEvaluation {
             -20,-10,-10, -5, -5,-10,-10,-20
     };
 
-    private static final Integer[] rookEvaluation = {
+    private static final int[] rookEvaluation = {
             0,  0,  0,  0,  0,  0,  0,  0,
             5, 10, 10, 10, 10, 10, 10,  5,
             -5,  0,  0,  0,  0,  0,  0, -5,
@@ -48,7 +49,7 @@ public final class StandardBoardEvaluation {
             0,  0,  0,  5,  5,  0,  0,  0
     };
 
-    private static final Integer[] bishopEvaluation = {
+    private static final int[] bishopEvaluation = {
             -20,-10,-10,-10,-10,-10,-10,-20,
             -10,  0,  0,  0,  0,  0,  0,-10,
             -10,  0,  5, 10, 10,  5,  0,-10,
@@ -59,7 +60,7 @@ public final class StandardBoardEvaluation {
             -20,-10,-10,-10,-10,-10,-10,-20
     };
 
-    private static final Integer[] knightEvaluation = {
+    private static final int[] knightEvaluation = {
             -50,-40,-30,-30,-30,-30,-40,-50,
             -40,-20,  0,  0,  0,  0,-20,-40,
             -30,  0, 10, 15, 15, 10,  0,-30,
@@ -70,7 +71,7 @@ public final class StandardBoardEvaluation {
             -50,-40,-30,-30,-30,-30,-40,-50
     };
 
-    private static final Integer[] pawnEvaluation = {
+    private static final int[] pawnEvaluation = {
             0,  0,  0,  0,  0,  0,  0,  0,
             50, 50, 50, 50, 50, 50, 50, 50,
             10, 10, 20, 30, 30, 20, 10, 10,
@@ -95,9 +96,7 @@ public final class StandardBoardEvaluation {
         return player.isCastled() ? CASTLE_BONUS : 0;
     }
 
-    private static int checkMate(final Player player, final int depth) {
-        return player.getOpponent().isInCheckmate() ? CHECK_MATE * depthBonus(depth) : 0;
-    }
+    private static int checkMate(final Player player, final int depth) { return player.getOpponent().isInCheckmate() ? CHECK_MATE * depthBonus(depth) : 0; }
 
     private static int depthBonus(final int depth) {
         return depth == 0 ? 1 : DEPTH_BONUS * depth;
@@ -130,30 +129,29 @@ public final class StandardBoardEvaluation {
 
     private static List<Integer> positionValue(final Piece piece) {
         final boolean isWhite = piece.getLeague().isWhite();
-        if ("K".equals(piece.toString())) {
-            return getPiecePositionValue(isWhite, kingEvaluation);
-        } else if ("Q".equals(piece.toString())) {
-            return getPiecePositionValue(isWhite, queenEvaluation);
-        } else if ("R".equals(piece.toString())) {
-            return getPiecePositionValue(isWhite, rookEvaluation);
-        } else if ("B".equals(piece.toString())) {
-            return getPiecePositionValue(isWhite, bishopEvaluation);
-        } else if ("N".equals(piece.toString())) {
-            return getPiecePositionValue(isWhite, knightEvaluation);
-        } else {
-            return getPiecePositionValue(isWhite, pawnEvaluation);
-        }
+
+        if ("K".equals(piece.toString())) { return getPiecePositionValue(isWhite, kingEvaluation); }
+
+        else if ("Q".equals(piece.toString())) { return getPiecePositionValue(isWhite, queenEvaluation); }
+
+        else if ("R".equals(piece.toString())) { return getPiecePositionValue(isWhite, rookEvaluation); }
+
+        else if ("B".equals(piece.toString())) { return getPiecePositionValue(isWhite, bishopEvaluation); }
+
+        else if ("N".equals(piece.toString())) { return getPiecePositionValue(isWhite, knightEvaluation); }
+
+        else { return getPiecePositionValue(isWhite, pawnEvaluation); }
     }
 
-    private static List<Integer> getPiecePositionValue(final boolean isWhite, final Integer[] positionValue) {
+    private static List<Integer> getPiecePositionValue(final boolean isWhite, final int[] positionValue) {
         if (isWhite) {
-            return List.of(positionValue);
+            return Arrays.stream(positionValue).boxed().collect(Collectors.toUnmodifiableList());
         }
         return reversePositionEvaluation(positionValue);
     }
 
-    private static List<Integer> reversePositionEvaluation(final Integer[] positionValue) {
-        final List<Integer> piecePositionValue = new ArrayList<>(List.of(positionValue));
+    private static List<Integer> reversePositionEvaluation(final int[] positionValue) {
+        final List<Integer> piecePositionValue = Arrays.stream(positionValue).boxed().collect(Collectors.toList());
         Collections.reverse(piecePositionValue);
         return Collections.unmodifiableList(piecePositionValue);
     }
