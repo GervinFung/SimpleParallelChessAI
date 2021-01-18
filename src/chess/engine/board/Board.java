@@ -111,17 +111,18 @@ public final class Board{
     }
 
     public static Board createStandardBoard() {
-        final Builder builder = new Builder(0);
+        //white to move
+        final Builder builder = new Builder(0, League.WHITE, null);
         // Black Layout
 
-        builder.setPiece(new Rook(League.BLACK, 0));
-        builder.setPiece(new Knight(League.BLACK, 1));
-        builder.setPiece(new Bishop(League.BLACK, 2));
-        builder.setPiece(new Queen(League.BLACK, 3));
-        builder.setPiece(new King(League.BLACK, 4, true, true));
-        builder.setPiece(new Bishop(League.BLACK, 5));
-        builder.setPiece(new Knight(League.BLACK, 6));
-        builder.setPiece(new Rook(League.BLACK, 7));
+        builder.setPiece(new Rook(League.BLACK, 0))
+        .setPiece(new Knight(League.BLACK, 1))
+        .setPiece(new Bishop(League.BLACK, 2))
+        .setPiece(new Queen(League.BLACK, 3))
+        .setPiece(new King(League.BLACK, 4, true, true))
+        .setPiece(new Bishop(League.BLACK, 5))
+        .setPiece(new Knight(League.BLACK, 6))
+        .setPiece(new Rook(League.BLACK, 7));
         for (int i = 8; i < 16; i++) {
             builder.setPiece(new Pawn(League.BLACK, i));
         }
@@ -129,16 +130,14 @@ public final class Board{
         for (int i = 48; i < 56; i++) {
             builder.setPiece(new Pawn(League.WHITE, i));
         }
-        builder.setPiece(new Rook(League.WHITE, 56));
-        builder.setPiece(new Knight(League.WHITE, 57));
-        builder.setPiece(new Bishop(League.WHITE, 58));
-        builder.setPiece(new Queen(League.WHITE, 59));
-        builder.setPiece(new King(League.WHITE, 60,true, true));
-        builder.setPiece(new Bishop(League.WHITE, 61));
-        builder.setPiece(new Knight(League.WHITE, 62));
-        builder.setPiece(new Rook(League.WHITE, 63));
-        //white to move
-        builder.setMoveMaker(League.WHITE);
+        builder.setPiece(new Rook(League.WHITE, 56))
+        .setPiece(new Knight(League.WHITE, 57))
+        .setPiece(new Bishop(League.WHITE, 58))
+        .setPiece(new Queen(League.WHITE, 59))
+        .setPiece(new King(League.WHITE, 60,true, true))
+        .setPiece(new Bishop(League.WHITE, 61))
+        .setPiece(new Knight(League.WHITE, 62))
+        .setPiece(new Rook(League.WHITE, 63));
         //build the board
         return builder.build();
     }
@@ -146,13 +145,15 @@ public final class Board{
     public static final class Builder {
 
         private final HashMap<Integer, Piece> boardConfig;
-        private League nextMoveMaker;
-        private Pawn enPassantPawn;
+        private final League nextMoveMaker;
+        private final Pawn enPassantPawn;
         private final int moveCount;
 
-        public Builder(final int moveCount) {
+        public Builder(final int moveCount, final League nextMoveMaker, final Pawn enPassantPawn) {
             this.boardConfig = new HashMap<>();
+            this.nextMoveMaker = nextMoveMaker;
             this.moveCount = moveCount;
+            this.enPassantPawn = enPassantPawn;
         }
 
         public Builder setPiece(final Piece piece) {
@@ -160,15 +161,7 @@ public final class Board{
             return this;
         }
 
-        public void setMoveMaker(final League nextMoveMaker) {
-            this.nextMoveMaker = nextMoveMaker;
-        }
-
         public Board build() { return new Board(this); }
-
-        public void setEnPassantPawn(final Pawn movedPawn) {
-            this.enPassantPawn = movedPawn;
-        }
 
         public int moveCount() { return this.moveCount; }
     }

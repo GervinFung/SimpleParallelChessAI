@@ -74,10 +74,7 @@ public final class MiniMax{
         return this.moveCount;
     }
 
-    private static boolean isEndGameScenario(final Board board) {
-        return board.currentPlayer().isInCheckmate() ||
-                board.currentPlayer().isInStalemate();
-    }
+    private static boolean isEndGameScenario(final Board board) { return board.currentPlayer().isInCheckmate() || board.currentPlayer().isInStalemate(); }
 
     private int min(final Board board, final int depth, final int alpha, int beta) {
 

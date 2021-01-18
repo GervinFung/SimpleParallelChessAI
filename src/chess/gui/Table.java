@@ -177,9 +177,7 @@ public final class Table {
     //singleton
     public static Table getSingletonInstance() { return SingleTon.INSTANCE; }
 
-    private static final class SingleTon {
-        private static final Table INSTANCE = new Table();
-    }
+    private static final class SingleTon { private static final Table INSTANCE = new Table();}
 
     private void displayEndGameMessage() {
         if (this.getGameBoard().currentPlayer().isInCheckmate()) {
@@ -495,9 +493,7 @@ public final class Table {
             this.validate();
         }
 
-        public List<TilePanel> getBoardTiles() {
-            return Collections.unmodifiableList(this.boardTiles);
-        }
+        public List<TilePanel> getBoardTiles() { return Collections.unmodifiableList(this.boardTiles); }
         public void drawBoard(final Board board) {
             this.removeAll();
             for (final TilePanel tilePanel : boardTiles) {
@@ -514,32 +510,20 @@ public final class Table {
 
         private final List<Move> moves;
 
-        public MoveLog() {
-            this.moves = new ArrayList<>();
-        }
+        public MoveLog() { this.moves = new ArrayList<>(); }
 
-        public List<Move> getMoves() {
-            return this.moves;
-        }
+        public List<Move> getMoves() { return this.moves; }
 
-        public void addMove(final Move move) {
-            this.moves.add(move);
-        }
+        public void addMove(final Move move) { this.moves.add(move); }
 
-        public int size() {
-            return this.moves.size();
-        }
+        public int size() { return this.moves.size(); }
 
-        public void clear() {
-            this.moves.clear();
-        }
+        public void clear() { this.moves.clear(); }
 
         public Move removeMove() { return this.moves.remove(this.moves.size() - 1); }
     }
 
-    enum PlayerType {
-        HUMAN, COMPUTER
-    }
+    enum PlayerType {HUMAN, COMPUTER}
 
     private final class TilePanel extends JPanel {
 

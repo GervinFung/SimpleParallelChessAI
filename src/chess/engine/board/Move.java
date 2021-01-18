@@ -81,21 +81,19 @@ public abstract class Move {
 
     public Board execute() {
 
-        final Builder builder = new Builder(this.board.getMoveCount() + 1);
+        final Builder builder = new Builder(this.board.getMoveCount() + 1, this.board.currentPlayer().getOpponent().getLeague(), null);
 
         this.board.currentPlayer().getActivePieces().stream().filter(piece -> !this.movePiece.equals(piece)).forEach(builder::setPiece);
         this.board.currentPlayer().getOpponent().getActivePieces().forEach(builder::setPiece);
 
         builder.setPiece(this.movePiece.movedPiece(this));
-        builder.setMoveMaker(this.board.currentPlayer().getOpponent().getLeague());
 
         return builder.build();
     }
 
     public Board undo() {
-        final Builder builder = new Builder(this.board.getMoveCount() - 1);
+        final Builder builder = new Builder(this.board.getMoveCount() - 1, this.board.currentPlayer().getLeague(), null);
         this.board.getAllPieces().forEach(builder::setPiece);
-        builder.setMoveMaker(this.board.currentPlayer().getLeague());
         return builder.build();
     }
 
@@ -204,22 +202,20 @@ public abstract class Move {
 
         @Override
         public Board execute() {
-            final Builder builder = new Builder(this.board.getMoveCount() + 1);
+            final Builder builder = new Builder(this.board.getMoveCount() + 1, this.board.currentPlayer().getOpponent().getLeague(), null);
 
             this.board.currentPlayer().getActivePieces().stream().filter(piece -> !this.movePiece.equals(piece)).forEach(builder::setPiece);
             this.board.currentPlayer().getOpponent().getActivePieces().stream().filter(piece -> !piece.equals(this.getAttackedPiece())).forEach(builder::setPiece);
 
             builder.setPiece(this.movePiece.movedPiece(this));
-            builder.setMoveMaker(this.board.currentPlayer().getOpponent().getLeague());
+
             return builder.build();
         }
 
         @Override
         public Board undo() {
-            final Board.Builder builder = new Builder(this.board.getMoveCount() - 1);
+            final Board.Builder builder = new Builder(this.board.getMoveCount() - 1, this.board.currentPlayer().getLeague(), (Pawn)this.getAttackedPiece());
             this.board.getAllPieces().forEach(builder::setPiece);
-            builder.setEnPassantPawn((Pawn)this.getAttackedPiece());
-            builder.setMoveMaker(this.board.currentPlayer().getLeague());
             return builder.build();
         }
 
@@ -246,15 +242,14 @@ public abstract class Move {
         public Move getDecoratedMove() { return this.decoratedMove; }
 
         public Board promotePawn(final Board board) {
-            final Builder builder = new Builder(this.board.getMoveCount() + 1);
+            //promotion take a move, which the move flips player turn after executed, so this should not flip again
+            final Builder builder = new Builder(this.board.getMoveCount() + 1, board.currentPlayer().getLeague(), null);
 
             board.currentPlayer().getActivePieces().stream().filter(piece -> !this.promotedPawn.equals(piece)).forEach(builder::setPiece);
             board.currentPlayer().getOpponent().getActivePieces().forEach(builder::setPiece);
 
             this.promotedPiece = startPromotion();
             builder.setPiece(this.promotedPiece.movedPiece(this));
-            //promotion take a move, which the move flips player turn after executed, so this should not flip again
-            builder.setMoveMaker(board.currentPlayer().getLeague());
             return builder.build();
         }
 
@@ -262,14 +257,13 @@ public abstract class Move {
         public Board execute() {
 
             final Board pawnMoveBoard = this.decoratedMove.execute();
-            final Board.Builder builder = new Builder(this.board.getMoveCount() + 1);
+            final Board.Builder builder = new Builder(this.board.getMoveCount() + 1, pawnMoveBoard.currentPlayer().getLeague(), null);
 
             pawnMoveBoard.currentPlayer().getActivePieces().stream().filter(piece -> !this.promotedPawn.equals(piece)).forEach(builder::setPiece);
             pawnMoveBoard.currentPlayer().getOpponent().getActivePieces().forEach(builder::setPiece);
 
             this.promotedPiece = this.MinimaxPromotionPiece;
             builder.setPiece(this.MinimaxPromotionPiece.movedPiece(this));
-            builder.setMoveMaker(pawnMoveBoard.currentPlayer().getLeague());
             return builder.build();
         }
 
@@ -335,15 +329,14 @@ public abstract class Move {
 
         @Override
         public Board execute() {
-            final Builder builder = new Builder(this.board.getMoveCount() + 1);
+            final Pawn movedPawn = (Pawn)this.movePiece.movedPiece(this);
+
+            final Builder builder = new Builder(this.board.getMoveCount() + 1, this.board.currentPlayer().getOpponent().getLeague(), movedPawn);
 
             this.board.currentPlayer().getActivePieces().stream().filter(piece -> !this.movePiece.equals(piece)).forEach(builder::setPiece);
             this.board.currentPlayer().getOpponent().getActivePieces().forEach(builder::setPiece);
 
-            final Pawn movedPawn = (Pawn)this.movePiece.movedPiece(this);
             builder.setPiece(movedPawn);
-            builder.setEnPassantPawn(movedPawn);
-            builder.setMoveMaker(this.board.currentPlayer().getOpponent().getLeague());
             return builder.build();
         }
 
@@ -381,7 +374,7 @@ public abstract class Move {
         @Override
         public Board execute() {
 
-            final Builder builder = new Builder(this.board.getMoveCount() + 1);
+            final Builder builder = new Builder(this.board.getMoveCount() + 1, this.board.currentPlayer().getOpponent().getLeague(), null);
 
             for (final Piece piece : this.board.getAllPieces()) {
                 if (!this.movePiece.equals(piece) && !this.castleRook.equals(piece)) {
@@ -390,7 +383,6 @@ public abstract class Move {
             }
             builder.setPiece(this.movePiece.movedPiece(this));
             builder.setPiece(new Rook(this.castleRook.getLeague(), this.castleRookDestination, false));
-            builder.setMoveMaker(this.board.currentPlayer().getOpponent().getLeague());
             return builder.build();
         }
 

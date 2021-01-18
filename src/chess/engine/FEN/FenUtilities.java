@@ -80,25 +80,26 @@ public class FenUtilities {
 
     private static boolean queenSideCastle(final String fenCastleString, final boolean isWhite) { return isWhite ? fenCastleString.contains("Q") : fenCastleString.contains("q"); }
 
-    private static boolean enPassantPawnExist(final String fenEnPassantCoordinate) {
-        return !"-".equals(fenEnPassantCoordinate);
+    private static boolean enPassantPawnExist(final String fenEnPassantCoordinate) { return !"-".equals(fenEnPassantCoordinate); }
+
+    private static Pawn getEnPassantPawn(final String[] fenPartitions) {
+        if (enPassantPawnExist(fenPartitions[3])) {
+            final int enPassantPawnPosition = Integer.parseInt(fenPartitions[3].substring(0, 2));
+            final String league = Character.toString(fenPartitions[3].charAt(2));
+            return new Pawn(getLeague(league), enPassantPawnPosition);
+        }
+        return null;
     }
 
     private static Board parseFEN(final String fenString) {
         final String[] fenPartitions = fenString.trim().split(" ");
 
-        final Builder builder = new Builder(Integer.parseInt(fenPartitions[fenPartitions.length - 1]));
+        final Builder builder = new Builder(Integer.parseInt(fenPartitions[fenPartitions.length - 1]), getLeague(fenPartitions[1]), getEnPassantPawn(fenPartitions));
 
         final boolean whiteKingSideCastle = kingSideCastle(fenPartitions[2], true);
         final boolean whiteQueenSideCastle = queenSideCastle(fenPartitions[2], true);
         final boolean blackKingSideCastle = kingSideCastle(fenPartitions[2], false);
         final boolean blackQueenSideCastle = queenSideCastle(fenPartitions[2], false);
-
-        if (enPassantPawnExist(fenPartitions[3])) {
-            final int enPassantPawnPosition = Integer.parseInt(fenPartitions[3].substring(0, 2));
-            final String league = Character.toString(fenPartitions[3].charAt(2));
-            builder.setEnPassantPawn(new Pawn(getLeague(league), enPassantPawnPosition));
-        }
 
         final String gameConfiguration = fenPartitions[0];
         final char[] boardTiles = gameConfiguration.replaceAll("/", "")
@@ -169,7 +170,6 @@ public class FenUtilities {
                     throw new RuntimeException("Invalid FEN String " +gameConfiguration);
             }
         }
-        builder.setMoveMaker(getLeague(fenPartitions[1]));
         return builder.build();
     }
     private static League getLeague(final String moveMakerString) {
