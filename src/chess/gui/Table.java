@@ -177,7 +177,7 @@ public final class Table {
     //singleton
     public static Table getSingletonInstance() { return SingleTon.INSTANCE; }
 
-    private static class SingleTon {
+    private static final class SingleTon {
         private static final Table INSTANCE = new Table();
     }
 
@@ -658,7 +658,7 @@ public final class Table {
                 try {
                     this.add(new JLabel(new ImageIcon(ImageIO.read(new File(absolutePieceIconPath + alliance + pieceName)))));
                 } catch (final IOException e) {
-                    System.err.println("Image path is invalid");
+                    System.err.println(absolutePieceIconPath + alliance + pieceName);
                 }
             }
         }
@@ -679,7 +679,7 @@ public final class Table {
 
                     final int coordinate = move.getDestinationCoordinate();
                     Color tileColor;
-                    if (move instanceof AttackMove) {
+                    if (move.isAttack() || move instanceof PawnPromotion && ((PawnPromotion)move).getDecoratedMove().isAttack()) {
                         //dark red
                         this.boardPanel.getBoardTiles().get(coordinate).setBackground(new Color(204, 0, 0));
                     } else {

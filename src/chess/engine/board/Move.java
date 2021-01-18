@@ -243,6 +243,8 @@ public abstract class Move {
             this.MinimaxPromotionPiece = MinimaxPromotionPiece;
         }
 
+        public Move getDecoratedMove() { return this.decoratedMove; }
+
         public Board promotePawn(final Board board) {
             final Builder builder = new Builder(this.board.getMoveCount() + 1);
 
@@ -290,14 +292,8 @@ public abstract class Move {
             JOptionPane.showMessageDialog(null, "You only have 1 chance to promote your pawn\nChoose wisely");
             while (true) {
                 final int promoteOption = JOptionPane.showOptionDialog(null, null, "Pawn Promotion", JOptionPane.DEFAULT_OPTION, JOptionPane.PLAIN_MESSAGE, null, icons, null);
-                if (promoteOption == 0) {
-                    return getPromotionPieces.get(0);
-                } else if (promoteOption == 1) {
-                    return getPromotionPieces.get(1);
-                } else if (promoteOption == 2) {
-                    return getPromotionPieces.get(2);
-                } else if (promoteOption == 3) {
-                    return getPromotionPieces.get(3);
+                if (promoteOption >= 0 && promoteOption <= 3) {
+                    return getPromotionPieces.get(promoteOption);
                 }
                 JOptionPane.showMessageDialog(null, "You must promote your pawn");
             }
