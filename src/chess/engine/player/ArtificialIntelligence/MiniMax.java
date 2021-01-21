@@ -3,7 +3,7 @@ package chess.engine.player.ArtificialIntelligence;
 import chess.engine.board.Board;
 import chess.engine.board.BoardUtils;
 import chess.engine.board.Move;
-import chess.engine.player.MoveTransition;
+import chess.engine.board.MoveTransition;
 import chess.engine.player.Player;
 import com.google.common.collect.ComparisonChain;
 import com.google.common.collect.Ordering;

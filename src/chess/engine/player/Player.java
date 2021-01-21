@@ -2,6 +2,8 @@ package chess.engine.player;
 
 import chess.engine.League;
 import chess.engine.board.Board;
+import chess.engine.board.MoveTransition;
+import chess.engine.board.MoveStatus;
 import chess.engine.board.Move;
 import chess.engine.board.Tile;
 import chess.engine.pieces.King;
@@ -11,6 +13,8 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.ArrayList;
+import java.util.stream.Collectors;
+import static java.util.stream.Collectors.collectingAndThen;
 
 public abstract class Player {
 
@@ -23,7 +27,6 @@ public abstract class Player {
         this.board = board;
         this.playerKing = establishKing();
         final List<Move> legal = new ArrayList<>(legalMoves);
-        assert this.playerKing != null;
         this.isInCheck = !Player.calculateAttacksOnTile(this.playerKing.getPiecePosition(), opponentLegalMoves).isEmpty();
         //for ai
         legal.addAll(calculateKingCastles(opponentLegalMoves));
@@ -39,23 +42,16 @@ public abstract class Player {
     }
 
     public static List<Move> calculateAttacksOnTile(final int piecePosition, final Collection<Move> moves) {
-        final List<Move> attackMove = new ArrayList<>();
-
-        for (final Move move : moves) {
-            if(piecePosition == move.getDestinationCoordinate()) {
-                attackMove.add(move);
-            }
-        }
-        return Collections.unmodifiableList(attackMove);
+        return moves.stream()
+                .filter(move -> move.getDestinationCoordinate() == piecePosition)
+                .collect(collectingAndThen(Collectors.toList(), Collections::unmodifiableList));
     }
 
     private King establishKing() {
-        for (final Piece piece : getActivePieces()) {
-            if (piece.getPieceType().isKing()) {
-                return (King) piece;
-            }
-        }
-        throw new RuntimeException("Invalid board");
+        return (King) getActivePieces().stream()
+                .filter(piece -> piece.getPieceType().isKing())
+                .findAny()
+                .orElseThrow(RuntimeException::new);
         //return null;
     }
 
@@ -101,14 +97,7 @@ public abstract class Player {
 
     protected boolean noEscapeMoves() {
 
-        for (final Move move : this.legalMoves) {
-            final MoveTransition transition = makeMove(move);
-
-            if (transition.getMoveStatus().isDone()) {
-                return false;
-            }
-        }
-        return true;
+        return this.legalMoves.stream().noneMatch(move -> makeMove(move).getMoveStatus().isDone());
     }
 
     public MoveTransition makeMove(final Move move) {

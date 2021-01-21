@@ -5,7 +5,7 @@ import chess.engine.board.Board;
 import chess.engine.board.BoardUtils;
 import chess.engine.board.Move;
 import chess.engine.pieces.Piece;
-import chess.engine.player.MoveTransition;
+import chess.engine.board.MoveTransition;
 import chess.engine.player.ArtificialIntelligence.MiniMax;
 import com.google.common.collect.Lists;
 
@@ -42,10 +42,7 @@ import java.awt.Toolkit;
 import java.awt.Cursor;
 import java.awt.Image;
 
-import java.util.List;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Collection;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -197,7 +194,6 @@ public final class Table {
                     JOptionPane.INFORMATION_MESSAGE);
         }
     }
-
 
     public void start() {
         this.getMoveLog().clear();
@@ -364,7 +360,6 @@ public final class Table {
 
     private void restartGame() {
         this.updateGameBoard(Board.createStandardBoard());
-        this.getGameHistoryPanel().redo(this.getGameBoard(), this.getMoveLog());
         this.start();
     }
 
@@ -419,12 +414,30 @@ public final class Table {
             this.AIThinking = false;
             if (!this.isGameEnded()) {
                 final int confirmedRestart = JOptionPane.showConfirmDialog(Table.this.getBoardPanel(), "Are you sure you want to restart game without saving?", "Restart Game", JOptionPane.YES_NO_CANCEL_OPTION);
-                if (confirmedRestart == JOptionPane.NO_OPTION) {
-                    FenUtilities.writeFENToFile(this.getGameBoard());
-                }
-                if (confirmedRestart != JOptionPane.CANCEL_OPTION) {
+                if (confirmedRestart == JOptionPane.YES_OPTION) {
                     this.gameEnded = false;
-                    restartGame();
+                    this.restartGame();
+                } else if (confirmedRestart == JOptionPane.NO_OPTION) {
+                    this.gameEnded = false;
+                    FenUtilities.writeFENToFile(this.getGameBoard());
+                    this.restartGame();
+                }
+            }
+        });
+
+        final JMenuItem loadGameMenuItem = new JMenuItem("Load Saved Game");
+        loadGameMenuItem.addActionListener(e -> {
+            final int confirmLoadGame = JOptionPane.showConfirmDialog(Table.this.getBoardPanel(), "Confirm to load previous game?", "Load Game", JOptionPane.YES_NO_CANCEL_OPTION);
+
+            if(confirmLoadGame == JOptionPane.YES_OPTION) {
+
+                this.updateGameBoard(FenUtilities.createGameFromFEN());
+                this.start();
+
+                if (this.getGameBoard().currentPlayer().getLeague().isBlack()) {
+                    JOptionPane.showMessageDialog(Table.this.getBoardPanel(), "Black to move", "Welcome", JOptionPane.INFORMATION_MESSAGE);
+                } else {
+                    JOptionPane.showMessageDialog(Table.this.getBoardPanel(), "White to move", "Welcome", JOptionPane.INFORMATION_MESSAGE);
                 }
             }
         });
@@ -435,27 +448,9 @@ public final class Table {
             if (confirmSave == JOptionPane.YES_OPTION) {
                 FenUtilities.writeFENToFile(this.getGameBoard());
                 JOptionPane.showMessageDialog(this.getGameFrame(), "Game Saved!");
+                loadGameMenuItem.setVisible(true);
             }
         });
-
-
-        final JMenuItem loadGameMenuItem = new JMenuItem("Load Saved Game");
-        loadGameMenuItem.addActionListener(e -> {
-            final int confirmLoadGame = JOptionPane.showConfirmDialog(Table.this.getBoardPanel(), "Confirm to load previous game?", "Load Game", JOptionPane.YES_NO_CANCEL_OPTION);
-
-            if(confirmLoadGame == JOptionPane.YES_OPTION) {
-
-                this.updateGameBoard(FenUtilities.createGameFromFEN());
-                this.getBoardPanel().drawBoard(this.getGameBoard());
-
-                if (this.getGameBoard().currentPlayer().getLeague().isBlack()) {
-                    JOptionPane.showMessageDialog(Table.this.getBoardPanel(), "Black to move", "Welcome", JOptionPane.INFORMATION_MESSAGE);
-                } else {
-                    JOptionPane.showMessageDialog(Table.this.getBoardPanel(), "White to move", "Welcome", JOptionPane.INFORMATION_MESSAGE);
-                }
-            }
-        });
-
 
         final JMenuItem exitMenuItem = new JMenuItem("Exit game");
         exitMenuItem.addActionListener(actionEvent -> {
@@ -464,8 +459,11 @@ public final class Table {
                 System.exit(0);
             } else if (confirmedExit == JOptionPane.NO_OPTION) {
                 FenUtilities.writeFENToFile(this.getGameBoard());
+                System.exit(0);
             }
         });
+
+        if (!new File(System.getProperty("user.dir") + File.separator + "DO_NOT_DELETE.txt").exists()) { loadGameMenuItem.setVisible(false); }
 
         gameMenu.add(newGameMenuItem);
         gameMenu.add(saveGameMenuItem);
@@ -667,15 +665,9 @@ public final class Table {
         private void assignTilePieceIcon(final Board board) {
             this.removeAll();
             if (board.getTile(this.tileID).isTileOccupied()) {
-                final File imageFile = new File("image/chessPieceImages/");
-                final String absolutePieceIconPath = imageFile.getAbsolutePath() + "/";
-                final String alliance = board.getTile(this.tileID).getPiece().getLeague().toString().substring(0, 1);
-                final String pieceName = board.getTile(this.tileID).getPiece().toString() + ".png";
                 try {
-                    this.add(new JLabel(new ImageIcon(ImageIO.read(new File(absolutePieceIconPath + alliance + pieceName)))));
-                } catch (final IOException e) {
-                    System.err.println(absolutePieceIconPath + alliance + pieceName);
-                }
+                    this.add(new JLabel(new ImageIcon(ImageIO.read(Objects.requireNonNull(getClass().getClassLoader().getResource(BoardUtils.imagePath(board.getTile(this.tileID).getPiece())))))));
+                } catch (final IOException | NullPointerException e) { System.err.println("Invalid Path"); }
             }
         }
 

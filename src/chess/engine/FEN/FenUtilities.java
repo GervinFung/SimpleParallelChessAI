@@ -6,10 +6,11 @@ import chess.engine.board.BoardUtils;
 import chess.engine.pieces.*;
 
 import java.io.File;
-import java.io.BufferedReader;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.FileWriter;
+
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 import static chess.engine.board.Board.*;
 
@@ -20,21 +21,19 @@ public class FenUtilities {
     }
 
     private static String createFENFromFile() {
-        final File FEN_file = new File("src/chess/engine/FEN/chessGame.fen");
+
         try {
-            return new BufferedReader(new FileReader(FEN_file.getAbsolutePath())).readLine();
-        }
-        catch (final IOException ignored) {}
+            return Files.readString(Path.of(new File(System.getProperty("user.dir") + File.separator + "DO_NOT_DELETE.txt").toURI()));
+        } catch (final NullPointerException | IOException ignored) { }
         throw new RuntimeException("Path for FEN file is invalid");
     }
 
     public static void writeFENToFile(final Board board) {
         try {
-            final File FEN_file = new File("src/chess/engine/FEN/chessGame.fen");
-            final FileWriter myWriter = new FileWriter(FEN_file.getAbsolutePath());
+            final FileWriter myWriter = new FileWriter(new File(System.getProperty("user.dir") + File.separator + "DO_NOT_DELETE.txt").getAbsolutePath());
             myWriter.write(createFENFromGame(board));
             myWriter.close();
-        } catch (final IOException ignored) {}
+        } catch (final NullPointerException | IOException ignored) {}
     }
 
     public static Board createGameFromFEN() {

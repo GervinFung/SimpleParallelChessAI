@@ -1,5 +1,6 @@
 package chess.gui;
 
+import chess.engine.board.BoardUtils;
 import chess.engine.board.Move;
 import chess.engine.pieces.Piece;
 
@@ -21,6 +22,7 @@ import java.awt.Image;
 import java.awt.Dimension;
 import java.awt.BorderLayout;
 import java.awt.GridLayout;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import static chess.gui.Table.*;
@@ -89,13 +91,11 @@ public final class TakenPiecePanel extends JPanel {
         final List<Piece> takenPieces = takenPiecesMap.keySet().stream().sorted(Comparator.comparingInt(Piece::getPieceValue)).collect(Collectors.toList());
         takenPiecePanel.removeAll();
         for (final Piece takenPiece : takenPieces) {
-            final String alliance = takenPiece.getLeague().toString().substring(0, 1);
-            final String pieceName = takenPiece.toString() + ".png";
             try {
-                final Image image = ImageIO.read(new File("image/chessPieceImages/" + alliance + pieceName));
+                final Image image = ImageIO.read(Objects.requireNonNull(getClass().getClassLoader().getResource(BoardUtils.imagePath(takenPiece))));
                 final JLabel imageLabel = new JLabel(Integer.toString(takenPiecesMap.get(takenPiece)), new ImageIcon(resizeImage(image)), SwingConstants.LEADING);
                 takenPiecePanel.add(imageLabel);
-            } catch (final IOException ignored) { }
+            } catch (final IOException | NullPointerException e) { System.err.println("Invalid Path"); }
         }
     }
 

@@ -8,8 +8,7 @@ import javax.imageio.ImageIO;
 import javax.swing.ImageIcon;
 import javax.swing.JOptionPane;
 
-import java.awt.image.BufferedImage;
-import java.io.File;
+import java.awt.*;
 import java.io.IOException;
 import java.util.List;
 import java.util.Objects;
@@ -273,12 +272,12 @@ public abstract class Move {
         private ImageIcon[] pawnPromotionInterface(final List<Piece> getPromotionPieces) {
             final ImageIcon[] icons = new ImageIcon[4];
             for (int i = 0; i < 4; i++) {
+
                 try {
-                    final BufferedImage image = ImageIO.read(new File(imageAbsolutePath(getPromotionPieces.get(i))));
+                    final Image image = ImageIO.read(Objects.requireNonNull(getClass().getClassLoader().getResource(BoardUtils.imagePath(getPromotionPieces.get(i)))));
                     icons[i] = new ImageIcon(image);
-                } catch (final IOException e) {
-                    System.err.println("Image path is invalid");
-                }
+                } catch (final IOException | NullPointerException e) { System.err.println("Invalid Path"); }
+
             }
             return icons;
         }
@@ -294,14 +293,6 @@ public abstract class Move {
                 }
                 JOptionPane.showMessageDialog(null, "You must promote your pawn");
             }
-        }
-
-        private String imageAbsolutePath(final Piece promotionPiece) {
-            final File imageFile = new File("image/chessPieceImages/");
-            final String absolutePieceIconPath = imageFile.getAbsolutePath() + "/";
-            final String alliance = promotionPiece.getLeague().toString().substring(0, 1);
-            final String pieceName = promotionPiece.toString() + ".png";
-            return absolutePieceIconPath + alliance + pieceName;
         }
 
         @Override

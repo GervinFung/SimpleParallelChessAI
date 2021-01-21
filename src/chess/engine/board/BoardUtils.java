@@ -96,6 +96,14 @@ public final class BoardUtils {
         return Collections.unmodifiableList(moveHistory);
     }
 
+    public static String imagePath(final Piece promotionPiece) {
+        final String pieceIconPath = "chessPieceImages/";
+        final String alliance = promotionPiece.getLeague().toString().substring(0, 1);
+        final String pieceName = promotionPiece.toString() + ".png";
+
+        return pieceIconPath + alliance + pieceName;
+    }
+
     public static boolean kingThreat(final Move move) { return move.getBoard().currentPlayer().makeMove(move).getLatestBoard().currentPlayer().isInCheck(); }
 
     public static boolean isEndGameScenario(final Board board) { return board.currentPlayer().isInCheckmate() || board.currentPlayer().isInStalemate(); }

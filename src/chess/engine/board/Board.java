@@ -158,7 +158,8 @@ public final class Board{
         private Move transitionMove;
 
         public Builder(final int moveCount, final League nextMoveMaker, final Pawn enPassantPawn) {
-            this.boardConfig = new HashMap<>();
+            //set initialCapacity to 32 and loadFactor to 1 to reduce chance of hash collision
+            this.boardConfig = new HashMap<>(32, 1);
             this.nextMoveMaker = nextMoveMaker;
             this.moveCount = moveCount;
             this.enPassantPawn = enPassantPawn;

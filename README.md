@@ -12,11 +12,12 @@ The workspace contains two folders by default, where:
 NOTE: **The image dragged is a bit low quality as image of piece is added to cursor**
 No. | Steps
 --- | ----
-1.| User can choose to play as white/black
-2.| User can choose white/black as AI
-3.| Or, user can watch AI play against itself
-4.| Once the game started, press(not click) the piece you wish to move, drag and drop to the square you wish to place it
-5.| The piece will move as user drag
+1.| Open Intellij Project.jar program
+2.| User can choose to play as white/black
+3.| User can choose white/black as AI
+4.| Or, user can watch AI play against itself
+5.| Once the game started, press(not click) the piece you wish to move, drag and drop to the square you wish to place it
+6.| The piece will move as user drag
 
 ## Game Features
 
@@ -35,3 +36,5 @@ No. | Features
 9.| Undo previous move
 10.| Multithread feature depends on the number of cores of a pc, the greater the better/faster AI can think
 11.| Flip board
+
+![Chess sample](chess.png)

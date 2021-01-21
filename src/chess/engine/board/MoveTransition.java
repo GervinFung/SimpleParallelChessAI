@@ -1,6 +1,4 @@
-package chess.engine.player;
-
-import chess.engine.board.Board;
+package chess.engine.board;
 
 public final class MoveTransition {
 
