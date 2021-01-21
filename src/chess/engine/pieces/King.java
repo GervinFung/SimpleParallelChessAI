@@ -126,10 +126,10 @@ public final class King extends Piece{
     public String toString() { return PieceType.KING.toString(); }
 
     private static boolean isFirstColumnExclusion(final int currentPosition, final int candidateOFFSET) {
-        return BoardUtils.FIRST_COLUMN[currentPosition] && (candidateOFFSET == -9 || candidateOFFSET == 7 || candidateOFFSET == -1);
+        return BoardUtils.FIRST_COLUMN.get(currentPosition) && (candidateOFFSET == -9 || candidateOFFSET == 7 || candidateOFFSET == -1);
     }
 
     private static boolean isEighthColumnExclusion(final int currentPosition, final int candidateOFFSET) {
-        return BoardUtils.EIGHTH_COLUMN[currentPosition] && (candidateOFFSET == 9 || candidateOFFSET == -7 || candidateOFFSET == 1);
+        return BoardUtils.EIGHTH_COLUMN.get(currentPosition) && (candidateOFFSET == 9 || candidateOFFSET == -7 || candidateOFFSET == 1);
     }
 }

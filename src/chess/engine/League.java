@@ -26,9 +26,7 @@ public enum League {
             return whitePlayer;
         }
         @Override
-        public boolean isPawnPromotionSquare(final int position) {
-            return BoardUtils.FIRST_ROW[position];
-        }
+        public boolean isPawnPromotionSquare(final int position) { return BoardUtils.FIRST_ROW.get(position); }
     },
     BLACK {
         @Override
@@ -51,7 +49,7 @@ public enum League {
         }
         @Override
         public boolean isPawnPromotionSquare(final int position) {
-            return BoardUtils.EIGHTH_ROW[position];
+            return BoardUtils.EIGHTH_ROW.get(position);
         }
     };
 

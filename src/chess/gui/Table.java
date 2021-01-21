@@ -7,6 +7,7 @@ import chess.engine.board.Move;
 import chess.engine.pieces.Piece;
 import chess.engine.player.MoveTransition;
 import chess.engine.player.ArtificialIntelligence.MiniMax;
+import com.google.common.collect.Lists;
 
 import javax.imageio.ImageIO;
 import java.beans.PropertyChangeListener;
@@ -79,6 +80,7 @@ public final class Table {
 
     private Color darkTileColor, lightTileColor;
     private Color legalMovesLightTileColor, legalMovesDarkTileColor;
+    private BoardDirection boardDirection;
 
     private boolean gameEnded;
 
@@ -107,6 +109,7 @@ public final class Table {
         this.showAIThinking = true;
         this.mouseEnteredHighlightMoves = true;
         this.gameFrame.setCursor(MOVE_CURSOR);
+        this.boardDirection = BoardDirection.NORMAL;
         //a property change listener for AI, as Observable is deprecated
         final PropertyChangeListener propertyChangeListener = propertyChangeEvent -> {
             if (Table.this.getGameSetup().isAIPlayer(Table.this.getGameBoard().currentPlayer()) &&
@@ -120,11 +123,11 @@ public final class Table {
         this.propertyChangeSupport = new PropertyChangeSupport(propertyChangeListener);
         this.propertyChangeSupport.addPropertyChangeListener(propertyChangeListener);
 
-        this.darkTileColor = new Color(29 ,61 ,99);
-        this.lightTileColor = Color.white;
-
         this.legalMovesLightTileColor = new Color(169, 169, 169);
         this.legalMovesDarkTileColor = new Color(105, 105, 105);
+
+        this.lightTileColor = new Color(240, 217, 181);
+        this.darkTileColor = new Color(181, 136, 99);
     }
 
 
@@ -137,9 +140,9 @@ public final class Table {
 
     private void enableHighLightMoves(final boolean highlightLegalMoves) { this.highlightLegalMoves = highlightLegalMoves; }
 
-    private void updateGameBoard(final Board board) {
-        this.chessBoard = board;
-    }
+    private void updateGameBoard(final Board board) { this.chessBoard = board; }
+
+    private void setBoardDirection(final BoardDirection boardDirection) { this.boardDirection = boardDirection; }
 
     //getter
     private boolean getAIThinking() { return this.AIThinking; }
@@ -158,21 +161,15 @@ public final class Table {
 
     private JFrame getGameFrame() { return this.gameFrame; }
 
-    private BoardPanel getBoardPanel() {
-        return this.boardPanel;
-    }
+    private BoardPanel getBoardPanel() { return this.boardPanel; }
 
-    private MoveLog getMoveLog() {
-        return this.moveLog;
-    }
+    private MoveLog getMoveLog() { return this.moveLog; }
 
-    private GameHistoryPanel getGameHistoryPanel() {
-        return this.gameHistoryPanel;
-    }
+    private GameHistoryPanel getGameHistoryPanel() { return this.gameHistoryPanel; }
 
-    private TakenPiecePanel getTakenPiecesPanel() {
-        return this.takenPiecePanel;
-    }
+    private TakenPiecePanel getTakenPiecesPanel() { return this.takenPiecePanel; }
+
+    private BoardDirection getBoardDirection() { return this.boardDirection; }
 
     //singleton
     public static Table getSingletonInstance() { return SingleTon.INSTANCE; }
@@ -276,9 +273,7 @@ public final class Table {
                 running.lazySet(false);
                 return bestMove;
 
-            } catch (final Exception e){
-                e.printStackTrace();
-            }
+            } catch (final Exception e) { e.printStackTrace(); }
             return null;
         }
 
@@ -293,19 +288,13 @@ public final class Table {
                 this.table.getBoardPanel().drawBoard(this.table.getGameBoard());
                 this.table.moveMadeUpdate();
                 this.table.setAIThinking(false);
-            } catch (final ExecutionException | InterruptedException e) {
-                e.printStackTrace();
-            }
+            } catch (final ExecutionException | InterruptedException e) { e.printStackTrace(); }
         }
     }
 
-    private void moveMadeUpdate() {
-        this.propertyChangeSupport.firePropertyChange("moveMadeUpdate", PlayerType.COMPUTER, PlayerType.HUMAN);
-    }
+    private void moveMadeUpdate() { this.propertyChangeSupport.firePropertyChange("moveMadeUpdate", PlayerType.COMPUTER, PlayerType.HUMAN); }
 
-    private void setupUpdate(final GameSetup gameSetup) {
-        this.propertyChangeSupport.firePropertyChange("setupUpdate", null, gameSetup);
-    }
+    private void setupUpdate(final GameSetup gameSetup) { this.propertyChangeSupport.firePropertyChange("setupUpdate", null, gameSetup); }
 
     private void undoLastMove() {
         final Move lastMove = this.getMoveLog().removeMove();
@@ -347,12 +336,20 @@ public final class Table {
 
         final JMenuItem undoMoveMenuItem = new JMenuItem("Undo last move");
         undoMoveMenuItem.addActionListener(e -> {
-            if(this.getMoveLog().size() > 0) {
-                undoLastMove();
-            }
+            if(this.getMoveLog().size() > 0) { undoLastMove(); }
         });
+
+        final JMenuItem flipBoardMenuItem = new JMenuItem("Flip board");
+
+        flipBoardMenuItem.addActionListener(e -> {
+            this.setBoardDirection(this.getBoardDirection().opposite());
+            this.getBoardPanel().drawBoard(this.getGameBoard());
+        });
+
         optionMenu.add(undoMoveMenuItem);
         optionMenu.add(setupGameMenuItem);
+        optionMenu.add(flipBoardMenuItem);
+
         return optionMenu;
     }
 
@@ -496,7 +493,7 @@ public final class Table {
         public List<TilePanel> getBoardTiles() { return Collections.unmodifiableList(this.boardTiles); }
         public void drawBoard(final Board board) {
             this.removeAll();
-            for (final TilePanel tilePanel : boardTiles) {
+            for (final TilePanel tilePanel : boardDirection.traverse(boardTiles)) {
                 tilePanel.drawTile(board);
                 this.add(tilePanel);
             }
@@ -524,6 +521,35 @@ public final class Table {
     }
 
     enum PlayerType {HUMAN, COMPUTER}
+
+    enum BoardDirection {
+        NORMAL {
+            @Override
+            List<TilePanel> traverse(final List<TilePanel> boardTiles) {
+                return boardTiles;
+            }
+
+            @Override
+            BoardDirection opposite() {
+                return FLIPPED;
+            }
+        },
+        FLIPPED {
+            @Override
+            List<TilePanel> traverse(final List<TilePanel> boardTiles) {
+                return Lists.reverse(boardTiles);
+            }
+
+            @Override
+            BoardDirection opposite() {
+                return NORMAL;
+            }
+        };
+
+        abstract List<TilePanel> traverse(final List<TilePanel> boardTiles);
+        abstract BoardDirection opposite();
+
+    }
 
     private final class TilePanel extends JPanel {
 
@@ -558,7 +584,6 @@ public final class Table {
                 public void mousePressed(final MouseEvent mouseEvent) {
                     if (Table.this.isGameEnded() || Table.this.getAIThinking()) { return; }
                     if (isLeftMouseButton(mouseEvent)) {
-
                         if (Table.this.humanMovePiece != null && Table.this.humanMovePiece.getLeague() == Table.this.getGameBoard().currentPlayer().getLeague()) {
 
                             Table.this.mousePressedY = (int) Math.ceil(mouseEvent.getY() / 64.0);
@@ -586,10 +611,17 @@ public final class Table {
                             final int releasedX = (int) Math.ceil(mouseEvent.getX() / 64.0) - Table.this.mousePressedX;
                             final int releasedY = ((int) Math.ceil(mouseEvent.getY() / 64.0) - Table.this.mousePressedY) * 8;
 
-                            final Move move = MoveFactory.createMove(Table.this.getGameBoard(), Table.this.humanMovePiece, TilePanel.this.tileID,
-                                    TilePanel.this.tileID + (releasedY + releasedX));
-                            final MoveTransition transition = Table.this.getGameBoard().currentPlayer().makeMove(move);
+                            final int direction;
 
+                            if (Table.this.getBoardDirection() == BoardDirection.NORMAL) {
+                                direction = 1;
+                            } else {
+                                direction = -1;
+                            }
+
+                            final Move move = MoveFactory.createMove(Table.this.getGameBoard(), Table.this.humanMovePiece, TilePanel.this.tileID,
+                                    TilePanel.this.tileID + (direction)*(releasedY + releasedX));
+                            final MoveTransition transition = Table.this.getGameBoard().currentPlayer().makeMove(move);
                             if (transition.getMoveStatus().isDone()) {
 
                                 Table.this.updateGameBoard(transition.getLatestBoard());
@@ -667,10 +699,10 @@ public final class Table {
                         //dark red
                         this.boardPanel.getBoardTiles().get(coordinate).setBackground(new Color(204, 0, 0));
                     } else {
-                        if (BoardUtils.FIRST_ROW[coordinate] ||
-                                BoardUtils.THIRD_ROW[coordinate] ||
-                                BoardUtils.FIFTH_ROW[coordinate] ||
-                                BoardUtils.SEVENTH_ROW[coordinate]) {
+                        if (BoardUtils.FIRST_ROW.get(coordinate) ||
+                                BoardUtils.THIRD_ROW.get(coordinate) ||
+                                BoardUtils.FIFTH_ROW.get(coordinate) ||
+                                BoardUtils.SEVENTH_ROW.get(coordinate)) {
                             tileColor = (coordinate % 2 == 0 ? Table.this.legalMovesLightTileColor : Table.this.legalMovesDarkTileColor);
                         } else {
                             tileColor = (coordinate % 2 != 0 ? Table.this.legalMovesLightTileColor : Table.this.legalMovesDarkTileColor);
@@ -689,10 +721,10 @@ public final class Table {
         }
 
         private void assignTileColor() {
-            if (BoardUtils.FIRST_ROW[this.tileID] ||
-                    BoardUtils.THIRD_ROW[this.tileID] ||
-                    BoardUtils.FIFTH_ROW[this.tileID] ||
-                    BoardUtils.SEVENTH_ROW[this.tileID]) {
+            if (BoardUtils.FIRST_ROW.get(this.tileID) ||
+                    BoardUtils.THIRD_ROW.get(this.tileID) ||
+                    BoardUtils.FIFTH_ROW.get(this.tileID) ||
+                    BoardUtils.SEVENTH_ROW.get(this.tileID)) {
                 this.setBackground(this.tileID % 2 == 0 ? Table.this.lightTileColor : Table.this.darkTileColor);
             }
             else {

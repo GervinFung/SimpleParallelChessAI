@@ -1,4 +1,4 @@
-A simple 2 player chess AI that implemented minimax & alpha-beta pruning with a slightly different FEN file format
+A simple 2 player chess AI that implemented minimax & alpha-beta pruning & move-ordering to fully optimise the AI with a slightly different FEN file format
 
 I screwed up my previous chess game with bad design and without planning ahead
 
@@ -34,3 +34,4 @@ No. | Features
 8.| Show AI thinking progress bar
 9.| Undo previous move
 10.| Multithread feature depends on the number of cores of a pc, the greater the better/faster AI can think
+11.| Flip board

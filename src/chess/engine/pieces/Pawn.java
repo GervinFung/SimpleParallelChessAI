@@ -48,8 +48,8 @@ public final class Pawn extends Piece {
 
 
             } else if (currentCandidateOFFSET == 16 && this.isFirstMove() &&
-                    ((BoardUtils.SECOND_ROW[this.piecePosition] && this.getLeague().isBlack()) ||
-                            (BoardUtils.SEVENTH_ROW[this.piecePosition] && this.getLeague().isWhite()))) {
+                    ((BoardUtils.SECOND_ROW.get(this.piecePosition) && this.getLeague().isBlack()) ||
+                            (BoardUtils.SEVENTH_ROW.get(this.piecePosition) && this.getLeague().isWhite()))) {
 
                 final int behindCandidateDestinationCoordinate = this.piecePosition + (this.getLeague().getDirection() * 8);
                 if (!board.getTile(behindCandidateDestinationCoordinate).isTileOccupied() &&
@@ -58,8 +58,8 @@ public final class Pawn extends Piece {
                     legalMoves.add(new PawnJump(board, this, candidateDestinationCoordinate));
                 }
             } else if (currentCandidateOFFSET == 7 &&
-                    !((BoardUtils.EIGHTH_COLUMN[this.piecePosition] && this.league.isWhite()) ||
-                            (BoardUtils.FIRST_COLUMN[this.piecePosition] && this.league.isBlack()))) {
+                    !((BoardUtils.EIGHTH_COLUMN.get(this.piecePosition) && this.league.isWhite()) ||
+                            (BoardUtils.FIRST_COLUMN.get(this.piecePosition) && this.league.isBlack()))) {
                 if (board.getTile(candidateDestinationCoordinate).isTileOccupied()) {
                     final Piece pieceDestination = board.getTile(candidateDestinationCoordinate).getPiece();
 
@@ -91,8 +91,8 @@ public final class Pawn extends Piece {
                 }
 
             } else if (currentCandidateOFFSET == 9 &&
-                    !((BoardUtils.FIRST_COLUMN[this.piecePosition] && this.league.isWhite()) ||
-                            (BoardUtils.EIGHTH_COLUMN[this.piecePosition] && this.league.isBlack()))) {
+                    !((BoardUtils.FIRST_COLUMN.get(this.piecePosition) && this.league.isWhite()) ||
+                            (BoardUtils.EIGHTH_COLUMN.get(this.piecePosition) && this.league.isBlack()))) {
                 if (board.getTile(candidateDestinationCoordinate).isTileOccupied()) {
 
                     final Piece pieceDestination = board.getTile(candidateDestinationCoordinate).getPiece();

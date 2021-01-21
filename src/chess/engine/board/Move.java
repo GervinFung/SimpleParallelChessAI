@@ -87,6 +87,7 @@ public abstract class Move {
         this.board.currentPlayer().getOpponent().getActivePieces().forEach(builder::setPiece);
 
         builder.setPiece(this.movePiece.movedPiece(this));
+        builder.setTransitionMove(this);
 
         return builder.build();
     }
@@ -208,6 +209,7 @@ public abstract class Move {
             this.board.currentPlayer().getOpponent().getActivePieces().stream().filter(piece -> !piece.equals(this.getAttackedPiece())).forEach(builder::setPiece);
 
             builder.setPiece(this.movePiece.movedPiece(this));
+            builder.setTransitionMove(this);
 
             return builder.build();
         }
@@ -250,6 +252,7 @@ public abstract class Move {
 
             this.promotedPiece = startPromotion();
             builder.setPiece(this.promotedPiece.movedPiece(this));
+            builder.setTransitionMove(this);
             return builder.build();
         }
 
@@ -337,6 +340,7 @@ public abstract class Move {
             this.board.currentPlayer().getOpponent().getActivePieces().forEach(builder::setPiece);
 
             builder.setPiece(movedPawn);
+            builder.setTransitionMove(this);
             return builder.build();
         }
 
@@ -383,6 +387,7 @@ public abstract class Move {
             }
             builder.setPiece(this.movePiece.movedPiece(this));
             builder.setPiece(new Rook(this.castleRook.getLeague(), this.castleRookDestination, false));
+            builder.setTransitionMove(this);
             return builder.build();
         }
 
@@ -452,9 +457,13 @@ public abstract class Move {
 
     public static final class MoveFactory {
 
+        private static final Move NULL_MOVE = new NullMove();
+
         private MoveFactory() {
             throw new RuntimeException ("Not instantiatable");
         }
+
+        public static Move getNullMove() { return NULL_MOVE; }
 
         public static Move createMove(final Board board, final Piece piece, final int currentCoordinate, final int destinationCoordinate) {
             for (final Move move : piece.calculateLegalMoves(board)) {
@@ -462,7 +471,7 @@ public abstract class Move {
                     return move;
                 }
             }
-            return new NullMove();
+            return NULL_MOVE;
         }
     }
 }

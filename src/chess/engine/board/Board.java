@@ -12,6 +12,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 
+import static chess.engine.board.Move.MoveFactory;
+
 public final class Board{
 
     private final List<Tile> gameBoard;
@@ -23,6 +25,8 @@ public final class Board{
 
     private final Pawn enPassantPawn;
     private final int moveCount;
+
+    private final Move transitionMove;
 
     private Board(final Builder builder) {
         this.gameBoard = createGameBoard(builder);
@@ -39,6 +43,7 @@ public final class Board{
         this.currentPlayer = builder.nextMoveMaker.choosePlayer(this.whitePlayer, this.blackPlayer);
 
         this.moveCount = builder.moveCount();
+        this.transitionMove = builder.transitionMove != null ? builder.transitionMove : MoveFactory.getNullMove();
     }
 
     public int getMoveCount() { return this.moveCount; }
@@ -100,6 +105,8 @@ public final class Board{
         return gameBoard.get(tileCoordinate);
     }
 
+    public Move getTransitionMove() { return this.transitionMove; }
+
     public static List<Tile> createGameBoard(final Builder builder) {
         final Tile[] tiles = new Tile[BoardUtils.NUM_TILES];
 
@@ -148,6 +155,7 @@ public final class Board{
         private final League nextMoveMaker;
         private final Pawn enPassantPawn;
         private final int moveCount;
+        private Move transitionMove;
 
         public Builder(final int moveCount, final League nextMoveMaker, final Pawn enPassantPawn) {
             this.boardConfig = new HashMap<>();
@@ -162,6 +170,8 @@ public final class Board{
         }
 
         public Board build() { return new Board(this); }
+
+        public void setTransitionMove(final Move transitionMove) { this.transitionMove = transitionMove; }
 
         public int moveCount() { return this.moveCount; }
     }
