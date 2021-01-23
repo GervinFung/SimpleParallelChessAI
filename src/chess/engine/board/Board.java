@@ -8,9 +8,9 @@ import chess.engine.player.WhitePlayer;
 
 import java.util.HashMap;
 import java.util.List;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static chess.engine.board.Move.MoveFactory;
 
@@ -30,8 +30,8 @@ public final class Board{
 
     private Board(final Builder builder) {
         this.gameBoard = createGameBoard(builder);
-        this.whitePieces = calculateActivePieces(this.gameBoard, League.WHITE);
-        this.blackPieces = calculateActivePieces(this.gameBoard, League.BLACK);
+        this.whitePieces = calculateActivePieces(builder, League.WHITE);
+        this.blackPieces = calculateActivePieces(builder, League.BLACK);
 
         this.enPassantPawn = builder.enPassantPawn;
         final Collection<Move> whiteStandardLegalMoves = this.calculateLegalMoves(this.whitePieces);
@@ -66,39 +66,15 @@ public final class Board{
 
     public Collection<Piece> getBlackPieces() { return this.blackPieces; }
 
-    public Collection<Piece> getAllPieces() {
-        final List <Piece> allPieces = new ArrayList<>(this.whitePieces);
-        allPieces.addAll(this.blackPieces);
-        return Collections.unmodifiableList(allPieces);
-    }
+    public Collection<Piece> getAllPieces() { return Stream.concat(this.whitePieces.stream(), this.blackPieces.stream()).collect(Collectors.toUnmodifiableList()); }
 
     public Pawn getEnPassantPawn() {
         return this.enPassantPawn;
     }
 
-    private Collection<Move> calculateLegalMoves(final Collection<Piece> pieces) {
-        final List<Move> legalMoves = new ArrayList<>();
+    private Collection<Move> calculateLegalMoves(final Collection<Piece> pieces) { return pieces.stream().flatMap(piece -> piece.calculateLegalMoves(this).stream()).collect(Collectors.toUnmodifiableList()); }
 
-        for (final Piece piece: pieces) {
-            legalMoves.addAll(piece.calculateLegalMoves(this));
-        }
-        return Collections.unmodifiableList(legalMoves);
-    }
-
-    private static Collection<Piece> calculateActivePieces(final List<Tile> gameBoard, final League league) {
-
-        final List<Piece> activePieces = new ArrayList<>();
-
-        for (final Tile tile: gameBoard) {
-            if (tile.isTileOccupied()) {
-                final Piece piece = tile.getPiece();
-                if (piece.getLeague() == league) {
-                    activePieces.add(piece);
-                }
-            }
-        }
-        return Collections.unmodifiableList(activePieces);
-    }
+    private static Collection<Piece> calculateActivePieces(final Builder builder, final League league) { return builder.boardConfig.values().stream().filter(piece -> piece.getLeague() == league).collect(Collectors.toUnmodifiableList()); }
 
 
     public Tile getTile(final int tileCoordinate) {
