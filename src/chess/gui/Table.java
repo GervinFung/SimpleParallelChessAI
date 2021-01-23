@@ -463,7 +463,7 @@ public final class Table {
             }
         });
 
-        if (!new File(System.getProperty("user.dir") + File.separator + "DO_NOT_DELETE.txt").exists()) { loadGameMenuItem.setVisible(false); }
+        if (!new File(System.getProperty("user.dir") + File.separator + ".DO_NOT_DELETE.txt").exists()) { loadGameMenuItem.setVisible(false); }
 
         gameMenu.add(newGameMenuItem);
         gameMenu.add(saveGameMenuItem);

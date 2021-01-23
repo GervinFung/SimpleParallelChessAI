@@ -23,14 +23,14 @@ public class FenUtilities {
     private static String createFENFromFile() {
 
         try {
-            return Files.readString(Path.of(new File(System.getProperty("user.dir") + File.separator + "DO_NOT_DELETE.txt").toURI()));
+            return Files.readString(Path.of(new File(System.getProperty("user.dir") + File.separator + ".DO_NOT_DELETE.txt").toURI()));
         } catch (final NullPointerException | IOException ignored) { }
         throw new RuntimeException("Path for FEN file is invalid");
     }
 
     public static void writeFENToFile(final Board board) {
         try {
-            final FileWriter myWriter = new FileWriter(new File(System.getProperty("user.dir") + File.separator + "DO_NOT_DELETE.txt").getAbsolutePath());
+            final FileWriter myWriter = new FileWriter(new File(System.getProperty("user.dir") + File.separator + ".DO_NOT_DELETE.txt").getAbsolutePath());
             myWriter.write(createFENFromGame(board));
             myWriter.close();
         } catch (final NullPointerException | IOException ignored) {}
