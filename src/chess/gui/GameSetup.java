@@ -28,8 +28,19 @@ public final class GameSetup extends JDialog {
     private static final String HUMAN_TEXT = "Human";
     private static final String COMPUTER_TEXT = "Computer";
 
+    protected Thread whitePlayer, blackPlayer;
+
+    protected Timer w, b;
+
     public GameSetup(final JFrame frame, final boolean modal) {
         super(frame, modal);
+        /**
+         * setting up Timer fields
+         */
+        this.whitePlayer = whitePlayer;
+        this.blackPlayer = blackPlayer;
+        this.w = w;
+        this.b = b;
         final JPanel myPanel = new JPanel(new GridLayout(0, 1));
         final JRadioButton whiteHumanButton = new JRadioButton(HUMAN_TEXT);
         final JRadioButton whiteComputerButton = new JRadioButton(COMPUTER_TEXT);
@@ -84,9 +95,15 @@ public final class GameSetup extends JDialog {
     }
 
     boolean isAIPlayer(final Player player) {
+        //If the current player if 'White'
         if(player.getLeague() == League.WHITE) {
+            blackPlayer.suspend(); // Stopping timer for black player
+            whitePlayer.resume(); // Starting timer for white player
             return getWhitePlayerType() == PlayerType.COMPUTER;
         }
+        //If the current player is 'Black'
+        whitePlayer.suspend(); // Stopping timer for white player
+        blackPlayer.resume(); // Starting timer for black player
         return getBlackPlayerType() == PlayerType.COMPUTER;
     }
 

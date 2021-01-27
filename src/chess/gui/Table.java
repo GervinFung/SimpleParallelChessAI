@@ -15,19 +15,7 @@ import java.beans.PropertyChangeSupport;
 import java.io.File;
 import java.io.IOException;
 
-import javax.swing.JPanel;
-import javax.swing.JFrame;
-import javax.swing.JMenuBar;
-import javax.swing.JMenuItem;
-import javax.swing.JMenu;
-import javax.swing.SwingWorker;
-import javax.swing.JCheckBoxMenuItem;
-import javax.swing.JOptionPane;
-import javax.swing.SwingUtilities;
-import javax.swing.JLabel;
-import javax.swing.ImageIcon;
-import javax.swing.JProgressBar;
-import javax.swing.JDialog;
+import javax.swing.*;
 
 import java.awt.Dimension;
 import java.awt.GridLayout;
@@ -57,7 +45,7 @@ public final class Table {
     private final MoveLog moveLog;
     private final GameSetup gameSetup;
 
-    private boolean highlightLegalMoves, showAIThinking, AIThinking, mouseEnteredHighlightMoves;
+    private boolean highlightLegalMoves, showAIThinking, AIThinking, mouseEnteredHighlightMoves,showTimer;
     private final GameHistoryPanel gameHistoryPanel;
     private final TakenPiecePanel takenPiecePanel;
 
@@ -78,6 +66,25 @@ public final class Table {
     private Color darkTileColor, lightTileColor;
     private Color legalMovesLightTileColor, legalMovesDarkTileColor;
     private BoardDirection boardDirection;
+    private JCheckBoxMenuItem showTimerProgressBarCheckBox; //New CheckBox item , used to show Time/or not
+
+    boolean timeOver = false;
+    private JTextField seconds; //New TextField item , represents the amount of the seconds
+    protected Thread whitePlayer, blackPlayer;
+    /**
+     * Two Timer objects
+     * w represents White
+     * b represents Black
+     */
+    protected Timer w, b;
+
+    /**
+     * Two variables that represent the seconds left for each player
+     */
+    private int time = 1000; // default time , can be changed in game by the user
+    private int whitePlayerSeconds = time;
+    private int blackPlayerSeconds = time;
+
 
     private boolean gameEnded;
 
@@ -91,6 +98,7 @@ public final class Table {
         this.boardPanel = new BoardPanel();
         this.moveLog = new MoveLog();
         this.gameSetup = new GameSetup(this.gameFrame, true);
+        setupTimer(); // Setting up Timer
         this.highlightLegalMoves = true;
         this.gameFrame.add(this.boardPanel, BorderLayout.CENTER);
         final JMenuBar tableMenuBar = createTableMenuBar();
@@ -103,6 +111,7 @@ public final class Table {
         this.gameFrame.setResizable(false);
         this.gameFrame.setVisible(true);
         this.AIThinking = false;
+        this.showTimer = false;
         this.showAIThinking = true;
         this.mouseEnteredHighlightMoves = true;
         this.gameFrame.setCursor(MOVE_CURSOR);
@@ -127,9 +136,10 @@ public final class Table {
         this.darkTileColor = new Color(181, 136, 99);
     }
 
-
     //setter
     private void setAIThinking(final boolean AIThinking) { this.AIThinking = AIThinking; }
+
+    private void setShowTimer(final boolean showTimer) { this.showTimer = showTimer; }
 
     private void setMouseEnteredHighlightMoves(final boolean mouseEnteredHighlightMoves) { this.mouseEnteredHighlightMoves = mouseEnteredHighlightMoves; }
 
@@ -141,8 +151,33 @@ public final class Table {
 
     private void setBoardDirection(final BoardDirection boardDirection) { this.boardDirection = boardDirection; }
 
+    /**
+     * Void Function that implements the two Timers
+     */
+    private void setupTimer(){
+        w = new Timer(this, whitePlayerSeconds, "white");
+        b = new Timer(this, blackPlayerSeconds, "black");
+
+        whitePlayer = new Thread(w);
+        blackPlayer = new Thread(b);
+
+        whitePlayerSeconds = time;
+        blackPlayerSeconds = time;
+
+        whitePlayer.start();
+        blackPlayer.start();
+        blackPlayer.suspend();
+
+        this.getGameSetup().whitePlayer = whitePlayer;
+        this.getGameSetup().blackPlayer = blackPlayer;
+        this.getGameSetup().b = b;
+        this.getGameSetup().w = w;
+    }
+
     //getter
     private boolean getAIThinking() { return this.AIThinking; }
+
+    private boolean getshowTimer() {return  showTimer;}
 
     private boolean getMouseEnteredHighlightMoves() { return this.mouseEnteredHighlightMoves; }
 
@@ -173,15 +208,27 @@ public final class Table {
 
     private static final class SingleTon { private static final Table INSTANCE = new Table();}
 
-    private void displayEndGameMessage() {
+    public void displayEndGameMessage() {
         if (this.getGameBoard().currentPlayer().isInCheckmate()) {
+            closeTimer();
             JOptionPane.showMessageDialog(this.getBoardPanel(),
                     "Game Over: Player " + this.getGameBoard().currentPlayer() + " is in checkmate!", "Game Over",
                     JOptionPane.INFORMATION_MESSAGE);
             this.gameEnded = true;
         }
 
+        /**
+         * If the user lost because the timer run out
+         */
+        if(timeOver){
+            JOptionPane.showMessageDialog(this.getBoardPanel(),
+                    "Game Over: Player " + this.getGameBoard().currentPlayer() + " run out of time !", "Game Over",
+                    JOptionPane.INFORMATION_MESSAGE);
+            this.gameEnded = true;
+        }
+
         if (this.getGameBoard().currentPlayer().isInStalemate()) {
+            closeTimer();
             JOptionPane.showMessageDialog(this.getBoardPanel(),
                     "Game Over: Player " + this.getGameBoard().currentPlayer() + " is in stalemate!", "Game Over",
                     JOptionPane.INFORMATION_MESSAGE);
@@ -193,6 +240,7 @@ public final class Table {
                     "From Game Menu\n1. New Game to start a new game\n2. Exit Game to exit this game", "Game Over",
                     JOptionPane.INFORMATION_MESSAGE);
         }
+        gameEnded = false; // Critical to change the state of the game back to false, because the user might want to play again
     }
 
     public void start() {
@@ -307,17 +355,83 @@ public final class Table {
 
         final JCheckBoxMenuItem legalMoveHighlighterCheckBox = new JCheckBoxMenuItem("Highlight Legal Moves");
         final JCheckBoxMenuItem AIThinkingProgressBarCheckBox = new JCheckBoxMenuItem("Show AI thinking");
+        showTimerProgressBarCheckBox = new JCheckBoxMenuItem("Enable timer"); //Added and made this item private so it can be modified inside the class by other objects
+
+        /**
+         * Setting up a JTextField.
+         * This JTextField can be changed by the user ! It represents the time of the Timer
+         */
+        seconds = new JTextField(5);
+        seconds.setText(String.valueOf(time));
+        seconds.setMaximumSize(seconds.getPreferredSize());
+        seconds.setHorizontalAlignment(JTextField.CENTER);
+        seconds.setVisible(true);
 
         legalMoveHighlighterCheckBox.setState(true);
         AIThinkingProgressBarCheckBox.setState(true);
+        showTimerProgressBarCheckBox.setState(true);
 
+        /**
+         * If the user decides to change the timer
+         */
+        seconds.addActionListener(actionEvent -> {
+            if(checkSeconds(Integer.parseInt(seconds.getText()))){
+                time = Integer.parseInt(seconds.getText());
+                whitePlayerSeconds = time;
+                blackPlayerSeconds = time;
+            }
+
+        });
         legalMoveHighlighterCheckBox.addActionListener(actionEvent -> this.enableHighLightMoves(legalMoveHighlighterCheckBox.isSelected()));
         AIThinkingProgressBarCheckBox.addActionListener(actionEvent -> this.setShowAIThinking(AIThinkingProgressBarCheckBox.isSelected()));
+        /**
+         * Check box that can turn on/off the Timer
+         */
+        showTimerProgressBarCheckBox.addActionListener(actionEvent -> {
+            this.setShowTimer(showTimerProgressBarCheckBox.isSelected());
+            if (showTimerProgressBarCheckBox.isSelected()) {
+                seconds.setVisible(true);
+                closeTimer();
+                setupTimer();
+            }else {
+                seconds.setVisible(false);
+                closeTimer();
+            }
+        } );
+
 
         preferenceMenu.add(legalMoveHighlighterCheckBox);
         preferenceMenu.add(AIThinkingProgressBarCheckBox);
+        preferenceMenu.add(showTimerProgressBarCheckBox);
+        preferenceMenu.add(seconds);
 
         return preferenceMenu;
+    }
+
+    /**
+     * Check if the user input inside the JTextField is valid
+     * @param sec user input in 'seconds'
+     * @return true/false
+     */
+    private boolean checkSeconds(int sec){
+        try {
+            if(sec >= 30 ){
+                return true;
+            }
+        }catch (Exception e){
+            return false;
+        }
+        return false;
+    }
+
+    /**
+     * Void Function that turns off the Timers
+     */
+    private void closeTimer(){
+        whitePlayer.suspend();
+        blackPlayer.suspend();
+        w.timeFrame.dispose();
+        b.timeFrame.dispose();
     }
 
     private JMenu createOptionMenu() {
@@ -359,6 +473,12 @@ public final class Table {
     }
 
     private void restartGame() {
+        closeTimer(); // Closing existing Timers
+        setupTimer(); // Starting new Timers
+        showTimerProgressBarCheckBox.setState(true); // Checking show Timers box
+        seconds.setVisible(true); // Making the JTextField visible
+        gameEnded = false; //Setting game state to false
+
         this.updateGameBoard(Board.createStandardBoard());
         this.start();
     }
@@ -412,6 +532,7 @@ public final class Table {
         final JMenuItem newGameMenuItem = new JMenuItem("New Game");
         newGameMenuItem.addActionListener(e -> {
             this.AIThinking = false;
+            this.showTimer = true;
             if (!this.isGameEnded()) {
                 final int confirmedRestart = JOptionPane.showConfirmDialog(Table.this.getBoardPanel(), "Are you sure you want to restart game without saving?", "Restart Game", JOptionPane.YES_NO_CANCEL_OPTION);
                 if (confirmedRestart == JOptionPane.YES_OPTION) {
