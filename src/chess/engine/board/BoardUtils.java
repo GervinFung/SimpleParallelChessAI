@@ -3,9 +3,12 @@ package chess.engine.board;
 import chess.engine.pieces.Piece;
 import chess.engine.pieces.PieceType;
 
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.Collections;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Objects;
 
 import static chess.engine.board.Move.MoveFactory;
 
@@ -22,8 +25,11 @@ public final class BoardUtils {
     public static final List<Boolean> FIFTH_ROW = initRow(32);
     public static final List<Boolean> SEVENTH_ROW = initRow(48);
     public static final List<Boolean> EIGHTH_ROW = initRow(56);
-
     public static final List<String> ALGEBRAIC_NOTATION = initializeAlgebraicNotation();
+    public static final Map<String, Integer> POSITION_TO_COORDINATE = initializePositionToCoordinateMap();
+
+    public static final int NUM_TILES = 64;
+    public static final int NUM_TILES_PER_ROW = 8;
 
     private static List<String> initializeAlgebraicNotation() {
         return List.of(
@@ -36,10 +42,6 @@ public final class BoardUtils {
                 "a2", "b2", "c2", "d2", "e2", "f2", "g2", "h2",
                 "a1", "b1", "c1", "d1", "e1", "f1", "g1", "h1");
     }
-
-
-    public static final int NUM_TILES = 64;
-    public static final int NUM_TILES_PER_ROW = 8;
 
     private static List<Boolean> initColumn(int columnNumber) {
         final boolean[] columns = new boolean[NUM_TILES];
@@ -67,13 +69,13 @@ public final class BoardUtils {
         return Collections.unmodifiableList(rowList);
     }
 
-    private BoardUtils() {
-        throw new RuntimeException("You cannot instantiate BoardUtils");
-    }
+    private BoardUtils() { throw new RuntimeException("You cannot instantiate BoardUtils"); }
 
     public static boolean isValidTileCoordinate(final int coordinate) { return coordinate >= 0 && coordinate < NUM_TILES; }
 
     public static String getPositionAtCoordinate(final int destinationCoordinate) { return ALGEBRAIC_NOTATION.get(destinationCoordinate); }
+
+    public static int getCoordinateAtPosition(final String destinationPosition) { return POSITION_TO_COORDINATE.get(destinationPosition); }
 
     public static int mostValuableVictimLeastValuableAggressor(final Move move) {
         final Piece movingPiece = move.getMovedPiece();
@@ -107,4 +109,12 @@ public final class BoardUtils {
     public static boolean kingThreat(final Move move) { return move.getBoard().currentPlayer().makeMove(move).getLatestBoard().currentPlayer().isInCheck(); }
 
     public static boolean isEndGameScenario(final Board board) { return board.currentPlayer().isInCheckmate() || board.currentPlayer().isInStalemate(); }
+
+    private static Map<String, Integer> initializePositionToCoordinateMap() {
+        final Map<String, Integer> positionToCoordinate = new HashMap<>(64);
+        for (int i = 0; i < NUM_TILES; i++) {
+            positionToCoordinate.put(Objects.requireNonNull(ALGEBRAIC_NOTATION.get(i)), i);
+        }
+        return Collections.unmodifiableMap(positionToCoordinate);
+    }
 }

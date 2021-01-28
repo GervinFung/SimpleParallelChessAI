@@ -125,11 +125,7 @@ public final class King extends Piece{
     @Override
     public String toString() { return PieceType.KING.toString(); }
 
-    private static boolean isFirstColumnExclusion(final int currentPosition, final int candidateOFFSET) {
-        return BoardUtils.FIRST_COLUMN.get(currentPosition) && (candidateOFFSET == -9 || candidateOFFSET == 7 || candidateOFFSET == -1);
-    }
+    private static boolean isFirstColumnExclusion(final int currentPosition, final int candidateOFFSET) { return BoardUtils.FIRST_COLUMN.get(currentPosition) && (candidateOFFSET == -9 || candidateOFFSET == 7 || candidateOFFSET == -1); }
 
-    private static boolean isEighthColumnExclusion(final int currentPosition, final int candidateOFFSET) {
-        return BoardUtils.EIGHTH_COLUMN.get(currentPosition) && (candidateOFFSET == 9 || candidateOFFSET == -7 || candidateOFFSET == 1);
-    }
+    private static boolean isEighthColumnExclusion(final int currentPosition, final int candidateOFFSET) { return BoardUtils.EIGHTH_COLUMN.get(currentPosition) && (candidateOFFSET == 9 || candidateOFFSET == -7 || candidateOFFSET == 1); }
 }

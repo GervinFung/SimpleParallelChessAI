@@ -21,16 +21,15 @@ public class FenUtilities {
     }
 
     private static String createFENFromFile() {
-
         try {
-            return Files.readString(Path.of(new File(System.getProperty("user.dir") + File.separator + ".DO_NOT_DELETE.txt").toURI()));
+            return Files.readString(Path.of(new File(System.getProperty("user.home") + File.separator + ".DO_NOT_DELETE.txt").toURI()));
         } catch (final NullPointerException | IOException ignored) { }
         throw new RuntimeException("Path for FEN file is invalid");
     }
 
     public static void writeFENToFile(final Board board) {
         try {
-            final FileWriter myWriter = new FileWriter(new File(System.getProperty("user.dir") + File.separator + ".DO_NOT_DELETE.txt").getAbsolutePath());
+            final FileWriter myWriter = new FileWriter(new File(System.getProperty("user.home") + File.separator + ".DO_NOT_DELETE.txt").getAbsolutePath());
             myWriter.write(createFENFromGame(board));
             myWriter.close();
         } catch (final NullPointerException | IOException ignored) {}
@@ -40,11 +39,11 @@ public class FenUtilities {
         return parseFEN(createFENFromFile());
     }
 
-    private static String createFENFromGame(final Board board) {
+    public static String createFENFromGame(final Board board) {
         return calculateBoardText(board) + " " +
                 calculateCurrentPlayerText(board) + " " +
                 calculateCastleText(board) + " " +
-                calculateEnPassantText(board) + " " +
+                calculateEnPassantSquare(board) + " " +
                 "0 " + board.getMoveCount();
     }
 
@@ -52,8 +51,7 @@ public class FenUtilities {
         final StringBuilder builder = new StringBuilder();
 
         for (int i = 0; i < BoardUtils.NUM_TILES; i++) {
-            final String tileText = board.getTile(i).toString();
-            builder.append(tileText);
+            builder.append(board.getTile(i).toString());
         }
         builder.insert(8, "/");
         builder.insert(17, "/");
@@ -79,21 +77,20 @@ public class FenUtilities {
 
     private static boolean queenSideCastle(final String fenCastleString, final boolean isWhite) { return isWhite ? fenCastleString.contains("Q") : fenCastleString.contains("q"); }
 
-    private static boolean enPassantPawnExist(final String fenEnPassantCoordinate) { return !"-".equals(fenEnPassantCoordinate); }
-
-    private static Pawn getEnPassantPawn(final String[] fenPartitions) {
-        if (enPassantPawnExist(fenPartitions[3])) {
-            final int enPassantPawnPosition = Integer.parseInt(fenPartitions[3].substring(0, 2));
-            final String league = Character.toString(fenPartitions[3].charAt(2));
-            return new Pawn(getLeague(league), enPassantPawnPosition);
+    private static Pawn getEnPassantPawn(final League league, final String fenEnPassantCoordinate) {
+        if (!"-".equals(fenEnPassantCoordinate)) {
+            final int enPassantPawnPosition = BoardUtils.getCoordinateAtPosition(fenEnPassantCoordinate) - (8) * league.getDirection();
+            return new Pawn(league.isBlack() ? League.WHITE : League.BLACK, enPassantPawnPosition);
         }
         return null;
     }
 
-    private static Board parseFEN(final String fenString) {
+    public static Board parseFEN(final String fenString) {
         final String[] fenPartitions = fenString.trim().split(" ");
 
-        final Builder builder = new Builder(Integer.parseInt(fenPartitions[fenPartitions.length - 1]), getLeague(fenPartitions[1]), getEnPassantPawn(fenPartitions));
+        final League playerLeague = getLeague(fenPartitions[1]);
+
+        final Builder builder = new Builder(Integer.parseInt(fenPartitions[fenPartitions.length - 1]), playerLeague, getEnPassantPawn(playerLeague, fenPartitions[3]));
 
         final boolean whiteKingSideCastle = kingSideCastle(fenPartitions[2], true);
         final boolean whiteQueenSideCastle = queenSideCastle(fenPartitions[2], true);
@@ -166,7 +163,7 @@ public class FenUtilities {
                     i++;
                     break;
                 default:
-                    throw new RuntimeException("Invalid FEN String " +gameConfiguration);
+                    throw new RuntimeException("Invalid FEN String " + gameConfiguration);
             }
         }
         return builder.build();
@@ -180,20 +177,15 @@ public class FenUtilities {
         throw new RuntimeException("Invalid FEN String " + moveMakerString);
     }
 
-    private static String calculateEnPassantText(final Board board) {
-
+    private static String calculateEnPassantSquare(final Board board) {
         final Pawn enPassantPawn = board.getEnPassantPawn();
-
-        if (enPassantPawn != null) {
-            final String league = enPassantPawn.getLeague().isWhite() ? "w" : "b";
-            return enPassantPawn.getPiecePosition() + league;
+        if(enPassantPawn != null) {
+            return BoardUtils.getPositionAtCoordinate(enPassantPawn.getPiecePosition() - (8) * enPassantPawn.getLeague().getDirection());
         }
         return "-";
     }
 
-    private static String calculateCurrentPlayerText(final Board board) {
-        return board.currentPlayer().toString().substring(0, 1).toLowerCase();
-    }
+    private static String calculateCurrentPlayerText(final Board board) { return board.currentPlayer().toString().substring(0, 1).toLowerCase(); }
 
     private static String calculateCastleText(final Board board) {
         final StringBuilder builder = new StringBuilder();

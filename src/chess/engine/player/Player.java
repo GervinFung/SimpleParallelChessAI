@@ -52,7 +52,6 @@ public abstract class Player {
                 .filter(piece -> piece.getPieceType().isKing())
                 .findAny()
                 .orElseThrow(RuntimeException::new);
-        //return null;
     }
 
     public abstract Collection<Piece> getActivePieces();

@@ -7,9 +7,20 @@ import chess.engine.board.Move;
 import chess.engine.pieces.Piece;
 import chess.engine.board.MoveTransition;
 import chess.engine.player.ArtificialIntelligence.MiniMax;
-import com.google.common.collect.Lists;
 
 import javax.imageio.ImageIO;
+
+import java.awt.Dimension;
+import java.awt.Cursor;
+import java.awt.Color;
+import java.awt.BorderLayout;
+import java.awt.Point;
+import java.awt.Image;
+import java.awt.Toolkit;
+import java.awt.GridBagLayout;
+import java.awt.GridLayout;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.io.File;
@@ -29,39 +40,35 @@ import javax.swing.ImageIcon;
 import javax.swing.JProgressBar;
 import javax.swing.JDialog;
 
-import java.awt.Dimension;
-import java.awt.GridLayout;
-import java.awt.Color;
-import java.awt.GridBagLayout;
-import java.awt.BorderLayout;
-import java.awt.Point;
-
 import java.awt.event.MouseListener;
 import java.awt.event.MouseEvent;
-import java.awt.Toolkit;
-import java.awt.Cursor;
-import java.awt.Image;
 
-import java.util.*;
+import java.util.List;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Collection;
+import java.util.Objects;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static java.lang.Thread.sleep;
 import static javax.swing.SwingUtilities.isLeftMouseButton;
 import static chess.engine.board.Move.*;
+import static javax.swing.SwingUtilities.isRightMouseButton;
 
 public final class Table {
 
     private final BoardPanel boardPanel;
     private Board chessBoard;
+    private Move computerMove, humanMove;
     private final MoveLog moveLog;
     private final GameSetup gameSetup;
 
-    private boolean highlightLegalMoves, showAIThinking, AIThinking, mouseEnteredHighlightMoves;
+    private boolean highlightLegalMoves, showAIThinking, AIThinking, mouseEnteredHighlightMoves, showHumanMove, showAIMove, mouseClicked;
     private final GameHistoryPanel gameHistoryPanel;
     private final TakenPiecePanel takenPiecePanel;
 
-    private int mousePressedX, mousePressedY;
+    private int mousePressedX, mousePressedY, mouseClickedID;
 
     private Piece humanMovePiece;
 
@@ -94,8 +101,8 @@ public final class Table {
         this.highlightLegalMoves = true;
         this.gameFrame.add(this.boardPanel, BorderLayout.CENTER);
         final JMenuBar tableMenuBar = createTableMenuBar();
-        this.gameFrame.add(this.takenPiecePanel, BorderLayout.WEST);
-        this.gameFrame.add(this.gameHistoryPanel, BorderLayout.EAST);
+        this.gameFrame.add(this.takenPiecePanel, BorderLayout.EAST);
+        this.gameFrame.add(this.gameHistoryPanel, BorderLayout.WEST);
         this.gameFrame.setJMenuBar(tableMenuBar);
         this.gameFrame.setSize(OUTER_FRAME_DIMENSION);
         this.gameFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -104,7 +111,10 @@ public final class Table {
         this.gameFrame.setVisible(true);
         this.AIThinking = false;
         this.showAIThinking = true;
+        this.showAIMove = true;
+        this.showHumanMove = true;
         this.mouseEnteredHighlightMoves = true;
+        this.mouseClicked = false;
         this.gameFrame.setCursor(MOVE_CURSOR);
         this.boardDirection = BoardDirection.NORMAL;
         //a property change listener for AI, as Observable is deprecated
@@ -112,9 +122,9 @@ public final class Table {
             if (Table.this.getGameSetup().isAIPlayer(Table.this.getGameBoard().currentPlayer()) &&
                     !Table.this.getGameBoard().currentPlayer().isInCheckmate() &&
                     !Table.this.getGameBoard().currentPlayer().isInStalemate()) {
-                new AIThinkTank(this).execute();
+                new AIThinkTank(Table.this).execute();
             }
-            this.displayEndGameMessage();
+            Table.this.displayEndGameMessage();
         };
 
         this.propertyChangeSupport = new PropertyChangeSupport(propertyChangeListener);
@@ -126,7 +136,6 @@ public final class Table {
         this.lightTileColor = new Color(240, 217, 181);
         this.darkTileColor = new Color(181, 136, 99);
     }
-
 
     //setter
     private void setAIThinking(final boolean AIThinking) { this.AIThinking = AIThinking; }
@@ -140,6 +149,20 @@ public final class Table {
     private void updateGameBoard(final Board board) { this.chessBoard = board; }
 
     private void setBoardDirection(final BoardDirection boardDirection) { this.boardDirection = boardDirection; }
+
+    private void updateComputerMove(final Move move) { this.computerMove = move; }
+
+    private void updateHumanMove(final Move move) { this.humanMove = move; }
+
+    private void setShowHumanMove(final boolean showHumanMove) {
+        this.showHumanMove = showHumanMove;
+        this.getBoardPanel().drawBoard(this.chessBoard);
+    }
+
+    private void setShowAIMove(final boolean showAIMove) {
+        this.showAIMove = showAIMove;
+        this.getBoardPanel().drawBoard(this.chessBoard);
+    }
 
     //getter
     private boolean getAIThinking() { return this.AIThinking; }
@@ -168,6 +191,10 @@ public final class Table {
 
     private BoardDirection getBoardDirection() { return this.boardDirection; }
 
+    private boolean getShowHumanMove() { return this.showHumanMove; }
+
+    private boolean getShowAIMove() { return this.showAIMove; }
+
     //singleton
     public static Table getSingletonInstance() { return SingleTon.INSTANCE; }
 
@@ -175,23 +202,17 @@ public final class Table {
 
     private void displayEndGameMessage() {
         if (this.getGameBoard().currentPlayer().isInCheckmate()) {
-            JOptionPane.showMessageDialog(this.getBoardPanel(),
-                    "Game Over: Player " + this.getGameBoard().currentPlayer() + " is in checkmate!", "Game Over",
-                    JOptionPane.INFORMATION_MESSAGE);
+            JOptionPane.showMessageDialog(this.getBoardPanel(), "Game Over: Player " + this.getGameBoard().currentPlayer() + " is in checkmate!", "Game Over", JOptionPane.INFORMATION_MESSAGE);
             this.gameEnded = true;
         }
 
         if (this.getGameBoard().currentPlayer().isInStalemate()) {
-            JOptionPane.showMessageDialog(this.getBoardPanel(),
-                    "Game Over: Player " + this.getGameBoard().currentPlayer() + " is in stalemate!", "Game Over",
-                    JOptionPane.INFORMATION_MESSAGE);
+            JOptionPane.showMessageDialog(this.getBoardPanel(), "Game Over: Player " + this.getGameBoard().currentPlayer() + " is in stalemate!", "Game Over", JOptionPane.INFORMATION_MESSAGE);
             this.gameEnded = true;
         }
 
         if (this.gameEnded) {
-            JOptionPane.showMessageDialog(this.getBoardPanel(),
-                    "From Game Menu\n1. New Game to start a new game\n2. Exit Game to exit this game", "Game Over",
-                    JOptionPane.INFORMATION_MESSAGE);
+            JOptionPane.showMessageDialog(this.getBoardPanel(), "From Game Menu\n1. New Game to start a new game\n2. Exit Game to exit this game", "Game Over", JOptionPane.INFORMATION_MESSAGE);
         }
     }
 
@@ -200,6 +221,7 @@ public final class Table {
         this.getGameHistoryPanel().redo(this.getGameBoard(), this.getMoveLog());
         this.getTakenPiecesPanel().redo(this.getMoveLog());
         this.getBoardPanel().drawBoard(this.getGameBoard());
+        JOptionPane.showMessageDialog(this.gameFrame, "1. Left press and release to move the piece\n2. Right click to move the piece from one tile to another");
     }
 
     private static final class AIThinkTank extends SwingWorker<Move, Integer> {
@@ -247,17 +269,17 @@ public final class Table {
 
                     //progress is shown based on move count / total available moves ratio
                     final Thread displayProgress = new Thread(() -> {
-                        this.table.getBoardPanel().updateBoardPanelCursor(Table.WAIT_CURSOR);
-                        this.dialog.setCursor(Table.WAIT_CURSOR);
+                        AIThinkTank.this.table.getBoardPanel().updateBoardPanelCursor(Table.WAIT_CURSOR);
+                        AIThinkTank.this.dialog.setCursor(Table.WAIT_CURSOR);
                         while(running.get()) {
-                            final double progress = ((double)miniMax.getMoveCount() / this.max) * 100;
-                            this.publish((int)progress);//publish the progress
+                            final double progress = ((double)miniMax.getMoveCount() / AIThinkTank.this.max) * 100;
+                            AIThinkTank.this.publish((int)progress);//publish the progress
                         }
                         //so 100% progress is shown
                         try {
                             sleep(100);
-                            this.dialog.dispose();
-                            this.table.getBoardPanel().updateBoardPanelCursor(Table.MOVE_CURSOR);
+                            AIThinkTank.this.dialog.dispose();
+                            AIThinkTank.this.table.getBoardPanel().updateBoardPanelCursor(Table.MOVE_CURSOR);
                         }
                         catch (final InterruptedException e) { e.printStackTrace(); }
                     });
@@ -277,6 +299,8 @@ public final class Table {
         public void done() {
             try {
                 final Move bestMove = this.get();
+                this.table.updateComputerMove(bestMove);
+                this.table.updateHumanMove(null);
                 this.table.updateGameBoard(this.table.getGameBoard().currentPlayer().makeMove(bestMove).getLatestBoard());
                 this.table.getMoveLog().addMove(bestMove);
                 this.table.getGameHistoryPanel().redo(this.table.getGameBoard(), this.table.getMoveLog());
@@ -295,10 +319,19 @@ public final class Table {
     private void undoLastMove() {
         final Move lastMove = this.getMoveLog().removeMove();
         this.updateGameBoard(this.getGameBoard().currentPlayer().undoMove(lastMove).getPreviousBoard());
+        this.updateComputerMove(null);
+        this.updateHumanMove(null);
         this.getGameHistoryPanel().redo(this.getGameBoard(), this.getMoveLog());
         this.getTakenPiecesPanel().redo(this.getMoveLog());
         this.getBoardPanel().drawBoard(this.getGameBoard());
     }
+
+    private void undoAllMoves() {
+        for(int i = this.getMoveLog().size() - 1; i >= 0; i--) {
+            this.undoLastMove();
+        }
+    }
+
 
     private JMenu createPreferencesMenu() {
         final JMenu preferenceMenu = new JMenu("Preferences");
@@ -307,15 +340,23 @@ public final class Table {
 
         final JCheckBoxMenuItem legalMoveHighlighterCheckBox = new JCheckBoxMenuItem("Highlight Legal Moves");
         final JCheckBoxMenuItem AIThinkingProgressBarCheckBox = new JCheckBoxMenuItem("Show AI thinking");
+        final JCheckBoxMenuItem showHumanMoveCheckBox = new JCheckBoxMenuItem("Show Human Move");
+        final JCheckBoxMenuItem showAIMoveCheckBox = new JCheckBoxMenuItem("Show AI Move");
 
         legalMoveHighlighterCheckBox.setState(true);
         AIThinkingProgressBarCheckBox.setState(true);
+        showHumanMoveCheckBox.setState(true);
+        showAIMoveCheckBox.setState(true);
 
-        legalMoveHighlighterCheckBox.addActionListener(actionEvent -> this.enableHighLightMoves(legalMoveHighlighterCheckBox.isSelected()));
-        AIThinkingProgressBarCheckBox.addActionListener(actionEvent -> this.setShowAIThinking(AIThinkingProgressBarCheckBox.isSelected()));
+        legalMoveHighlighterCheckBox.addActionListener(e -> Table.this.enableHighLightMoves(legalMoveHighlighterCheckBox.isSelected()));
+        AIThinkingProgressBarCheckBox.addActionListener(e -> Table.this.setShowAIThinking(AIThinkingProgressBarCheckBox.isSelected()));
+        showAIMoveCheckBox.addActionListener(e -> Table.this.setShowAIMove(showAIMoveCheckBox.isSelected()));
+        showHumanMoveCheckBox.addActionListener(e -> Table.this.setShowHumanMove(showHumanMoveCheckBox.isSelected()));
 
         preferenceMenu.add(legalMoveHighlighterCheckBox);
         preferenceMenu.add(AIThinkingProgressBarCheckBox);
+        preferenceMenu.add(showHumanMoveCheckBox);
+        preferenceMenu.add(showAIMoveCheckBox);
 
         return preferenceMenu;
     }
@@ -325,21 +366,21 @@ public final class Table {
         final JMenu optionMenu = new JMenu("Options");
 
         final JMenuItem setupGameMenuItem = new JMenuItem("Setup Game");
-        setupGameMenuItem.addActionListener(actionEvent -> {
-            this.getGameSetup().promptUser();
-            this.setupUpdate(this.getGameSetup());
+        setupGameMenuItem.addActionListener(e -> {
+            Table.this.getGameSetup().promptUser();
+            Table.this.setupUpdate(Table.this.getGameSetup());
         });
 
         final JMenuItem undoMoveMenuItem = new JMenuItem("Undo last move");
         undoMoveMenuItem.addActionListener(e -> {
-            if(this.getMoveLog().size() > 0) { undoLastMove(); }
+            if(Table.this.getMoveLog().size() > 0) { Table.this.undoLastMove(); }
         });
 
         final JMenuItem flipBoardMenuItem = new JMenuItem("Flip board");
 
         flipBoardMenuItem.addActionListener(e -> {
-            this.setBoardDirection(this.getBoardDirection().opposite());
-            this.getBoardPanel().drawBoard(this.getGameBoard());
+            Table.this.setBoardDirection(Table.this.getBoardDirection().opposite());
+            Table.this.getBoardPanel().drawBoard(Table.this.getGameBoard());
         });
 
         optionMenu.add(undoMoveMenuItem);
@@ -359,48 +400,56 @@ public final class Table {
     }
 
     private void restartGame() {
+        this.undoAllMoves();
         this.updateGameBoard(Board.createStandardBoard());
-        this.start();
+        this.getBoardPanel().drawBoard(this.getGameBoard());
+    }
+
+    private final static class BoardColor implements ActionListener {
+
+        private final Table table;
+        private final Color darkTileColor, lightTileColor, legalMovesLightTileColor, legalMovesDarkTileColor;
+
+        private BoardColor(final Table table, final Color darkTileColor, final Color lightTileColor, final Color legalMovesLightTileColor, final Color legalMovesDarkTileColor) {
+            this.table = table;
+            this.darkTileColor = darkTileColor;
+            this.lightTileColor = lightTileColor;
+            this.legalMovesLightTileColor = legalMovesLightTileColor;
+            this.legalMovesDarkTileColor = legalMovesDarkTileColor;
+        }
+
+        @Override
+        public void actionPerformed(final ActionEvent e) {
+            this.table.darkTileColor = this.darkTileColor;
+            this.table.lightTileColor = this.lightTileColor;
+            this.table.legalMovesLightTileColor = this.legalMovesLightTileColor;
+            this.table.legalMovesDarkTileColor = this.legalMovesDarkTileColor;
+            this.table.getBoardPanel().drawBoard(this.table.getGameBoard());
+        }
     }
 
     private JMenu createBoardColorMenu() {
         final JMenu gameMenu = new JMenu("Board Color");
 
         final JMenuItem blueWhiteMenuItem = new JMenuItem("Blue & White");
-        blueWhiteMenuItem.addActionListener(e -> {
-            this.darkTileColor = new Color(29 ,61 ,99);
-            this.lightTileColor = Color.white;
-            //light gray
-            this.legalMovesLightTileColor = new Color(169, 169, 169);
-            //dark gray
-            this.legalMovesDarkTileColor = new Color(105, 105, 105);
-            this.getBoardPanel().drawBoard(this.getGameBoard());
-        });
-
+        final JMenuItem bumbleBeeMenuItem = new JMenuItem("Bumblebee");
         final JMenuItem greyWhiteMenuItem = new JMenuItem("Grey & White");
-        greyWhiteMenuItem.addActionListener(e -> {
-            this.darkTileColor = new Color(105, 105, 105);
-            this.lightTileColor = Color.white;
-            //light yellow
-            this.legalMovesLightTileColor = new Color(255, 253, 156);
-            //yellow
-            this.legalMovesDarkTileColor = new Color(255, 252, 84);
-            this.getBoardPanel().drawBoard(this.getGameBoard());
-        });
-
         final JMenuItem classicMenuItem = new JMenuItem("Classic Board");
-        classicMenuItem.addActionListener(e -> {
-            this.lightTileColor = new Color(240, 217, 181);
-            this.darkTileColor = new Color(181, 136, 99);
-            //light gray
-            this.legalMovesLightTileColor = new Color(169, 169, 169);
-            //dark gray
-            this.legalMovesDarkTileColor = new Color(105, 105, 105);
-            this.getBoardPanel().drawBoard(this.getGameBoard());
-        });
+        final JMenuItem lightGreyWhiteMenuItem = new JMenuItem("Light Grey & White");
+        final JMenuItem lightBlueWhiteMenuItem = new JMenuItem("Light Blue & White");
 
+        blueWhiteMenuItem.addActionListener(new BoardColor(this, new Color(29 ,61 ,99), Color.white, new Color(169, 169, 169), new Color(105, 105, 105)));
+        greyWhiteMenuItem.addActionListener(new BoardColor(this, new Color(105, 105, 105), Color.white, new Color(255, 253, 156), new Color(255, 252, 84)));
+        classicMenuItem.addActionListener(new BoardColor(this, new Color(240, 217, 181), new Color(181, 136, 99), new Color(169, 169, 169), new Color(105, 105, 105)));
+        lightGreyWhiteMenuItem.addActionListener(new BoardColor(this, new Color(177, 179, 179), Color.white, new Color(255, 253, 156), new Color(255, 252, 84)));
+        lightBlueWhiteMenuItem.addActionListener(new BoardColor(this, new Color(137, 171, 227), Color.white, new Color(169, 169, 169), new Color(105, 105, 105)));
+        bumbleBeeMenuItem.addActionListener(new BoardColor(this, new Color(64, 64, 64), new Color(254, 231, 21), new Color(169, 169, 169), new Color(105, 105, 105)));
+
+        gameMenu.add(bumbleBeeMenuItem);
         gameMenu.add(blueWhiteMenuItem);
         gameMenu.add(classicMenuItem);
+        gameMenu.add(lightGreyWhiteMenuItem);
+        gameMenu.add(lightBlueWhiteMenuItem);
         gameMenu.add(greyWhiteMenuItem);
 
         return gameMenu;
@@ -411,16 +460,16 @@ public final class Table {
 
         final JMenuItem newGameMenuItem = new JMenuItem("New Game");
         newGameMenuItem.addActionListener(e -> {
-            this.AIThinking = false;
-            if (!this.isGameEnded()) {
+            Table.this.AIThinking = false;
+            if (!Table.this.isGameEnded()) {
                 final int confirmedRestart = JOptionPane.showConfirmDialog(Table.this.getBoardPanel(), "Are you sure you want to restart game without saving?", "Restart Game", JOptionPane.YES_NO_CANCEL_OPTION);
                 if (confirmedRestart == JOptionPane.YES_OPTION) {
-                    this.gameEnded = false;
-                    this.restartGame();
+                    Table.this.gameEnded = false;
+                    Table.this.restartGame();
                 } else if (confirmedRestart == JOptionPane.NO_OPTION) {
-                    this.gameEnded = false;
-                    FenUtilities.writeFENToFile(this.getGameBoard());
-                    this.restartGame();
+                    Table.this.gameEnded = false;
+                    FenUtilities.writeFENToFile(Table.this.getGameBoard());
+                    Table.this.restartGame();
                 }
             }
         });
@@ -430,11 +479,11 @@ public final class Table {
             final int confirmLoadGame = JOptionPane.showConfirmDialog(Table.this.getBoardPanel(), "Confirm to load previous game?", "Load Game", JOptionPane.YES_NO_CANCEL_OPTION);
 
             if(confirmLoadGame == JOptionPane.YES_OPTION) {
+                Table.this.undoAllMoves();
+                Table.this.updateGameBoard(FenUtilities.createGameFromFEN());
+                Table.this.boardPanel.drawBoard(Table.this.getGameBoard());
 
-                this.updateGameBoard(FenUtilities.createGameFromFEN());
-                this.start();
-
-                if (this.getGameBoard().currentPlayer().getLeague().isBlack()) {
+                if (Table.this.getGameBoard().currentPlayer().getLeague().isBlack()) {
                     JOptionPane.showMessageDialog(Table.this.getBoardPanel(), "Black to move", "Welcome", JOptionPane.INFORMATION_MESSAGE);
                 } else {
                     JOptionPane.showMessageDialog(Table.this.getBoardPanel(), "White to move", "Welcome", JOptionPane.INFORMATION_MESSAGE);
@@ -446,19 +495,19 @@ public final class Table {
         saveGameMenuItem.addActionListener(e -> {
             final int confirmSave = JOptionPane.showConfirmDialog(Table.this.getBoardPanel(), "Confirm to save this game?", "Save Game", JOptionPane.YES_NO_CANCEL_OPTION);
             if (confirmSave == JOptionPane.YES_OPTION) {
-                FenUtilities.writeFENToFile(this.getGameBoard());
-                JOptionPane.showMessageDialog(this.getGameFrame(), "Game Saved!");
+                FenUtilities.writeFENToFile(Table.this.getGameBoard());
+                JOptionPane.showMessageDialog(Table.this.getGameFrame(), "Game Saved!");
                 loadGameMenuItem.setVisible(true);
             }
         });
 
         final JMenuItem exitMenuItem = new JMenuItem("Exit game");
-        exitMenuItem.addActionListener(actionEvent -> {
+        exitMenuItem.addActionListener(e -> {
             final int confirmedExit = JOptionPane.showConfirmDialog(Table.this.getBoardPanel(), "Are you sure you want to quit game without saving?","Exit Game", JOptionPane.YES_NO_CANCEL_OPTION);
             if (confirmedExit == JOptionPane.YES_OPTION) {
                 System.exit(0);
             } else if (confirmedExit == JOptionPane.NO_OPTION) {
-                FenUtilities.writeFENToFile(this.getGameBoard());
+                FenUtilities.writeFENToFile(Table.this.getGameBoard());
                 System.exit(0);
             }
         });
@@ -484,7 +533,7 @@ public final class Table {
                 final TilePanel tilePanel = new TilePanel(this, i);
                 this.boardTiles.add(tilePanel);
             }
-            setPreferredSize(BOARD_PANEL_DIMENSION);
+            this.setPreferredSize(BOARD_PANEL_DIMENSION);
             this.validate();
         }
 
@@ -523,9 +572,7 @@ public final class Table {
     enum BoardDirection {
         NORMAL {
             @Override
-            List<TilePanel> traverse(final List<TilePanel> boardTiles) {
-                return boardTiles;
-            }
+            List<TilePanel> traverse(final List<TilePanel> boardTiles) { return Collections.unmodifiableList(boardTiles); }
 
             @Override
             BoardDirection opposite() {
@@ -535,7 +582,9 @@ public final class Table {
         FLIPPED {
             @Override
             List<TilePanel> traverse(final List<TilePanel> boardTiles) {
-                return Lists.reverse(boardTiles);
+                final List<TilePanel> reversePanel = new ArrayList<>(boardTiles);
+                Collections.reverse(reversePanel);
+                return Collections.unmodifiableList(reversePanel);
             }
 
             @Override
@@ -561,8 +610,55 @@ public final class Table {
             this.validate();
 
             this.addMouseListener(new MouseListener() {
-                @Deprecated
-                public void mouseClicked(final MouseEvent mouseEvent) {}
+                @Override
+                public void mouseClicked(final MouseEvent mouseEvent) {
+                    if (Table.this.isGameEnded() || Table.this.getAIThinking()) { return; }
+                    if (isRightMouseButton(mouseEvent)) {
+                        if (!Table.this.mouseClicked && Table.this.humanMovePiece != null && Table.this.humanMovePiece.getLeague() == Table.this.getGameBoard().currentPlayer().getLeague()) {
+                            Table.this.setMouseEnteredHighlightMoves(false);
+                            Table.this.mouseClickedID = TilePanel.this.tileID;
+                            Table.this.humanMovePiece = Table.this.getGameBoard().getTile(TilePanel.this.tileID).getPiece();
+                            final Image image = ((ImageIcon)((JLabel) TilePanel.this.boardPanel.getBoardTiles().get(TilePanel.this.tileID).getComponent(0)).getIcon()).getImage();
+                            try {
+                                TilePanel.this.boardPanel.updateBoardPanelCursor(Toolkit.getDefaultToolkit().createCustomCursor(image, new Point(mouseEvent.getX(), mouseEvent.getY()), null));
+                                TilePanel.this.boardPanel.getBoardTiles().get(TilePanel.this.tileID).remove(0);
+                            } catch (final IndexOutOfBoundsException ignored) {}
+                            TilePanel.this.validate();
+                            TilePanel.this.repaint();
+                            Table.this.mouseClicked = true;
+                        } else if (Table.this.mouseClicked && Table.this.humanMovePiece != null && Table.this.humanMovePiece.getLeague() == Table.this.getGameBoard().currentPlayer().getLeague()) {
+                            final Move move = MoveFactory.createMove(Table.this.getGameBoard(), Table.this.humanMovePiece, Table.this.mouseClickedID, TilePanel.this.tileID);
+                            final MoveTransition transition = Table.this.getGameBoard().currentPlayer().makeMove(move);
+                            if (transition.getMoveStatus().isDone()) {
+
+                                Table.this.updateGameBoard(transition.getLatestBoard());
+                                if (move instanceof PawnPromotion) {
+                                    TilePanel.this.boardPanel.updateBoardPanelCursor(Table.MOVE_CURSOR);
+                                    //display pawn promotion interface
+                                    Table.this.updateGameBoard(((PawnPromotion)move).promotePawn(Table.this.getGameBoard()));
+                                }
+                                Table.this.getMoveLog().addMove(move);
+                                Table.this.updateHumanMove(move);
+                            }
+                            TilePanel.this.boardPanel.drawBoard(Table.this.getGameBoard());
+                            Table.this.mouseClicked = false;
+                            SwingUtilities.invokeLater(() -> {
+                                Table.this.getGameHistoryPanel().redo(Table.this.getGameBoard(), Table.this.getMoveLog());
+                                Table.this.getTakenPiecesPanel().redo(Table.this.getMoveLog());
+
+                                if (!Table.this.getGameSetup().isAIPlayer(Table.this.getGameBoard().currentPlayer())) {
+                                    Table.this.displayEndGameMessage();
+                                }
+                                else if (Table.this.getGameSetup().isAIPlayer(Table.this.getGameBoard().currentPlayer())) {
+                                    Table.this.moveMadeUpdate();
+                                }
+                            });
+                            TilePanel.this.boardPanel.updateBoardPanelCursor(Table.MOVE_CURSOR);
+                            Table.this.humanMovePiece = null;
+                            Table.this.setMouseEnteredHighlightMoves(true);
+                        }
+                    }
+                }
                 @Override
                 public void mouseEntered(final MouseEvent mouseEvent) {
                     if (!Table.this.getAIThinking() && Table.this.getMouseEnteredHighlightMoves()) {
@@ -583,9 +679,8 @@ public final class Table {
                     if (Table.this.isGameEnded() || Table.this.getAIThinking()) { return; }
                     if (isLeftMouseButton(mouseEvent)) {
                         if (Table.this.humanMovePiece != null && Table.this.humanMovePiece.getLeague() == Table.this.getGameBoard().currentPlayer().getLeague()) {
-
-                            Table.this.mousePressedY = (int) Math.ceil(mouseEvent.getY() / 64.0);
-                            Table.this.mousePressedX = (int) Math.ceil(mouseEvent.getX() / 64.0);
+                            Table.this.mousePressedY = (int) Math.ceil(mouseEvent.getY() / TilePanel.this.getSize().getHeight());
+                            Table.this.mousePressedX = (int) Math.ceil(mouseEvent.getX() / TilePanel.this.getSize().getWidth());
 
                             Table.this.setMouseEnteredHighlightMoves(false);
                             Table.this.humanMovePiece = Table.this.getGameBoard().getTile(TilePanel.this.tileID).getPiece();
@@ -594,8 +689,8 @@ public final class Table {
                                 TilePanel.this.boardPanel.updateBoardPanelCursor(Toolkit.getDefaultToolkit().createCustomCursor(image, new Point(mouseEvent.getX(), mouseEvent.getY()), null));
                                 TilePanel.this.boardPanel.getBoardTiles().get(TilePanel.this.tileID).remove(0);
                             } catch (final IndexOutOfBoundsException ignored) {}
-                            validate();
-                            repaint();
+                            TilePanel.this.validate();
+                            TilePanel.this.repaint();
                         }
                     }
                 }
@@ -606,19 +701,12 @@ public final class Table {
 
                         if (Table.this.humanMovePiece != null && Table.this.humanMovePiece.getLeague() == Table.this.getGameBoard().currentPlayer().getLeague()) {
 
-                            final int releasedX = (int) Math.ceil(mouseEvent.getX() / 64.0) - Table.this.mousePressedX;
-                            final int releasedY = ((int) Math.ceil(mouseEvent.getY() / 64.0) - Table.this.mousePressedY) * 8;
+                            final int releasedX = (int) Math.ceil(mouseEvent.getX() / TilePanel.this.getSize().getHeight()) - Table.this.mousePressedX;
+                            final int releasedY = ((int) Math.ceil(mouseEvent.getY() / TilePanel.this.getSize().getWidth()) - Table.this.mousePressedY) * 8;
 
-                            final int direction;
+                            final int direction = Table.this.getBoardDirection() == BoardDirection.NORMAL ? 1 : -1;
 
-                            if (Table.this.getBoardDirection() == BoardDirection.NORMAL) {
-                                direction = 1;
-                            } else {
-                                direction = -1;
-                            }
-
-                            final Move move = MoveFactory.createMove(Table.this.getGameBoard(), Table.this.humanMovePiece, TilePanel.this.tileID,
-                                    TilePanel.this.tileID + (direction)*(releasedY + releasedX));
+                            final Move move = MoveFactory.createMove(Table.this.getGameBoard(), Table.this.humanMovePiece, TilePanel.this.tileID, TilePanel.this.tileID + (direction)*(releasedY + releasedX));
                             final MoveTransition transition = Table.this.getGameBoard().currentPlayer().makeMove(move);
                             if (transition.getMoveStatus().isDone()) {
 
@@ -629,10 +717,10 @@ public final class Table {
                                     Table.this.updateGameBoard(((PawnPromotion)move).promotePawn(Table.this.getGameBoard()));
                                 }
                                 Table.this.getMoveLog().addMove(move);
+                                Table.this.updateHumanMove(move);
                             }
                             TilePanel.this.boardPanel.drawBoard(Table.this.getGameBoard());
                             SwingUtilities.invokeLater(() -> {
-
                                 Table.this.getGameHistoryPanel().redo(Table.this.getGameBoard(), Table.this.getMoveLog());
                                 Table.this.getTakenPiecesPanel().redo(Table.this.getMoveLog());
 
@@ -657,6 +745,8 @@ public final class Table {
             if (board.currentPlayer().isInCheck()) {
                 this.highlightKingCheck(board.currentPlayer().getPlayerKing().getPiecePosition());
             }
+            this.highlightAIMove();
+            this.highlightHumanMove();
             this.assignTilePieceIcon(board);
             this.validate();
             this.repaint();
@@ -666,7 +756,7 @@ public final class Table {
             this.removeAll();
             if (board.getTile(this.tileID).isTileOccupied()) {
                 try {
-                    this.add(new JLabel(new ImageIcon(ImageIO.read(Objects.requireNonNull(getClass().getClassLoader().getResource(BoardUtils.imagePath(board.getTile(this.tileID).getPiece())))))));
+                    this.add(new JLabel(new ImageIcon(ImageIO.read(Objects.requireNonNull(this.getClass().getClassLoader().getResource(BoardUtils.imagePath(board.getTile(this.tileID).getPiece())))))));
                 } catch (final IOException | NullPointerException e) { System.err.println("Invalid Path"); }
             }
         }
@@ -674,6 +764,26 @@ public final class Table {
         private void highlightKingCheck(final int kingCoordinate) {
             if (kingCoordinate == this.tileID) {
                 this.setBackground(Color.RED);
+            }
+        }
+
+        private void highlightAIMove() {
+            if(Table.this.computerMove != null && Table.this.getShowAIMove()) {
+                if(this.tileID == Table.this.computerMove.getCurrentCoordinate()) {
+                    this.setBackground(Color.PINK);
+                } else if(this.tileID == Table.this.computerMove.getDestinationCoordinate()) {
+                    this.setBackground(new Color(255, 51, 51));
+                }
+            }
+        }
+
+        private void highlightHumanMove() {
+            if (Table.this.humanMove != null && Table.this.getShowHumanMove()) {
+                if(this.tileID == Table.this.humanMove.getCurrentCoordinate()) {
+                    this.setBackground(new Color(102, 255, 102));
+                } else if(this.tileID == Table.this.humanMove.getDestinationCoordinate()) {
+                    this.setBackground(new Color(50, 205, 50));
+                }
             }
         }
 
@@ -707,7 +817,7 @@ public final class Table {
 
         private Collection<Move> pieceLegalMoves(final Board board) {
             if (Table.this.humanMovePiece != null && Table.this.humanMovePiece.getLeague() == board.currentPlayer().getLeague()){
-                return Table.this.humanMovePiece.calculateLegalMoves(board);
+                return Collections.unmodifiableCollection(Table.this.humanMovePiece.calculateLegalMoves(board));
             }
             return Collections.emptyList();
         }

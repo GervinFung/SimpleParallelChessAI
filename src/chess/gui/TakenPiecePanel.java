@@ -5,7 +5,6 @@ import chess.engine.board.Move;
 import chess.engine.pieces.Piece;
 
 import javax.imageio.ImageIO;
-import java.io.File;
 import java.io.IOException;
 
 import java.util.List;
