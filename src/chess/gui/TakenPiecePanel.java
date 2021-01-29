@@ -28,21 +28,17 @@ import static chess.gui.Table.*;
 
 public final class TakenPiecePanel extends JPanel {
 
-    private static final EtchedBorder PANEL_BORDER = new EtchedBorder(EtchedBorder.RAISED);
-
     private final JPanel northPanel, southPanel;
-
-    private static final Dimension TAKEN_PIECE_DIMENSION = new Dimension(60, 80);
 
     public TakenPiecePanel() {
         super(new BorderLayout());
-        this.setBorder(PANEL_BORDER);
-        GridLayout gridLayout = new GridLayout(8, 2);
+        this.setBorder(new EtchedBorder(EtchedBorder.RAISED));
+        final GridLayout gridLayout = new GridLayout(7, 2);
         this.northPanel = new JPanel(gridLayout);
         this.southPanel = new JPanel(gridLayout);
         this.add(this.northPanel, BorderLayout.NORTH);
         this.add(this.southPanel, BorderLayout.SOUTH);
-        this.setPreferredSize(TAKEN_PIECE_DIMENSION);
+        this.setPreferredSize(new Dimension(60, 80));
     }
 
     public boolean notContainSamePiece(final HashMap<Piece, Integer> takenPieces, final Piece takenPiece) {

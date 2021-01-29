@@ -1,6 +1,5 @@
 package chess.gui;
 
-import chess.engine.League;
 import chess.engine.player.Player;
 import chess.gui.Table.PlayerType;
 
@@ -83,16 +82,16 @@ public final class GameSetup extends JDialog {
         this.repaint();
     }
 
-    boolean isAIPlayer(final Player player) {
-        if(player.getLeague() == League.WHITE) {
+    protected boolean isAIPlayer(final Player player) {
+        if(player.getLeague().isWhite()) {
             return getWhitePlayerType() == PlayerType.COMPUTER;
         }
         return getBlackPlayerType() == PlayerType.COMPUTER;
     }
 
-    PlayerType getWhitePlayerType() { return this.whitePlayerType; }
+    protected PlayerType getWhitePlayerType() { return this.whitePlayerType; }
 
-    PlayerType getBlackPlayerType() { return this.blackPlayerType; }
+    protected PlayerType getBlackPlayerType() { return this.blackPlayerType; }
 
     private static JSpinner addLabeledSpinner(final Container c, final SpinnerModel model) {
         final JLabel l = new JLabel("Select Level");

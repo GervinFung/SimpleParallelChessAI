@@ -22,9 +22,7 @@ public enum League {
         @Override
         public int getOppositeDirection () {return 1;}
         @Override
-        public Player choosePlayer(final WhitePlayer whitePlayer, final BlackPlayer blackPlayer) {
-            return whitePlayer;
-        }
+        public Player choosePlayer(final WhitePlayer whitePlayer, final BlackPlayer blackPlayer) { return whitePlayer; }
         @Override
         public boolean isPawnPromotionSquare(final int position) { return BoardUtils.FIRST_ROW.get(position); }
     },

@@ -14,7 +14,7 @@ public final class CheckMateTest {
     @Test
     public void testFoolsMate() {
 
-        final Board board = Board.createStandardBoard();
+        final Board board = Board.createStandardBoard(BoardUtils.DEFAULT_TIMER_MINUTE, BoardUtils.DEFAULT_TIMER_SECOND);
         final MoveTransition t1 = board.currentPlayer().makeMove(MoveFactory.createMove(board, BoardTest.getPieceAtPosition(board, "f2"), BoardUtils.getCoordinateAtPosition("f2"), BoardUtils.getCoordinateAtPosition("f3")));
 
         assertTrue(t1.getMoveStatus().isDone());
@@ -38,7 +38,7 @@ public final class CheckMateTest {
     @Test
     public void testScholarsMate() {
 
-        final Board board = Board.createStandardBoard();
+        final Board board = Board.createStandardBoard(BoardUtils.DEFAULT_TIMER_MINUTE, BoardUtils.DEFAULT_TIMER_SECOND);
         final MoveTransition t1 = board.currentPlayer().makeMove(MoveFactory.createMove(board, BoardTest.getPieceAtPosition(board, "e2"), BoardUtils.getCoordinateAtPosition("e2"), BoardUtils.getCoordinateAtPosition("e4")));
 
         assertTrue(t1.getMoveStatus().isDone());
@@ -72,7 +72,7 @@ public final class CheckMateTest {
     @Test
     public void testLegalsMate() {
 
-        final Board board = Board.createStandardBoard();
+        final Board board = Board.createStandardBoard(BoardUtils.DEFAULT_TIMER_MINUTE, BoardUtils.DEFAULT_TIMER_SECOND);
         final MoveTransition t1 = board.currentPlayer().makeMove(MoveFactory.createMove(board, BoardTest.getPieceAtPosition(board, "e2"),BoardUtils.getCoordinateAtPosition("e2"), BoardUtils.getCoordinateAtPosition("e4")));
 
         assertTrue(t1.getMoveStatus().isDone());
@@ -130,7 +130,7 @@ public final class CheckMateTest {
     @Test
     public void testSevenMoveMate() {
 
-        final Board board = Board.createStandardBoard();
+        final Board board = Board.createStandardBoard(BoardUtils.DEFAULT_TIMER_MINUTE, BoardUtils.DEFAULT_TIMER_SECOND);
         final MoveTransition t1 = board.currentPlayer().makeMove(MoveFactory.createMove(board, BoardTest.getPieceAtPosition(board, "e2"), BoardUtils.getCoordinateAtPosition("e2"), BoardUtils.getCoordinateAtPosition("e4")));
 
         assertTrue(t1.getMoveStatus().isDone());
@@ -189,7 +189,7 @@ public final class CheckMateTest {
     @Test
     public void testGrecoGame() {
 
-        final Board board = Board.createStandardBoard();
+        final Board board = Board.createStandardBoard(BoardUtils.DEFAULT_TIMER_MINUTE, BoardUtils.DEFAULT_TIMER_SECOND);
         final MoveTransition t1 = board.currentPlayer().makeMove(MoveFactory.createMove(board, BoardTest.getPieceAtPosition(board, "d2"),BoardUtils.getCoordinateAtPosition("d2"), BoardUtils.getCoordinateAtPosition("d4")));
 
         assertTrue(t1.getMoveStatus().isDone());
@@ -244,7 +244,7 @@ public final class CheckMateTest {
     @Test
     public void testOlympicGame() {
 
-        final Board board = Board.createStandardBoard();
+        final Board board = Board.createStandardBoard(BoardUtils.DEFAULT_TIMER_MINUTE, BoardUtils.DEFAULT_TIMER_SECOND);
         final MoveTransition t1 = board.currentPlayer().makeMove(MoveFactory.createMove(board, BoardTest.getPieceAtPosition(board, "e2"), BoardUtils.getCoordinateAtPosition("e2"), BoardUtils.getCoordinateAtPosition("e4")));
 
         assertTrue(t1.getMoveStatus().isDone());
@@ -295,7 +295,7 @@ public final class CheckMateTest {
     @Test
     public void testAnotherGame() {
 
-        final Board board = Board.createStandardBoard();
+        final Board board = Board.createStandardBoard(BoardUtils.DEFAULT_TIMER_MINUTE, BoardUtils.DEFAULT_TIMER_SECOND);
         final MoveTransition t1 = board.currentPlayer().makeMove(MoveFactory.createMove(board, BoardTest.getPieceAtPosition(board, "e2"), BoardUtils.getCoordinateAtPosition("e2"), BoardUtils.getCoordinateAtPosition("e4")));
 
         assertTrue(t1.getMoveStatus().isDone());

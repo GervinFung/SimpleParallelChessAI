@@ -37,8 +37,8 @@ public final class Board{
         final Collection<Move> whiteStandardLegalMoves = this.calculateLegalMoves(this.whitePieces);
         final Collection<Move> blackStandardLegalMoves = this.calculateLegalMoves(this.blackPieces);
 
-        this.whitePlayer = new WhitePlayer(this, whiteStandardLegalMoves, blackStandardLegalMoves);
-        this.blackPlayer = new BlackPlayer(this, whiteStandardLegalMoves, blackStandardLegalMoves);
+        this.whitePlayer = new WhitePlayer(this, whiteStandardLegalMoves, blackStandardLegalMoves, builder.whiteMinute, builder.whiteSecond);
+        this.blackPlayer = new BlackPlayer(this, whiteStandardLegalMoves, blackStandardLegalMoves, builder.blackMinute, builder.blackSecond);
 
         this.currentPlayer = builder.nextMoveMaker.choosePlayer(this.whitePlayer, this.blackPlayer);
 
@@ -93,11 +93,12 @@ public final class Board{
         return List.of(tiles);
     }
 
-    public static Board createStandardBoard() {
+    public static Board createStandardBoard(final int minute, final int second) {
         //white to move
-        final Builder builder = new Builder(0, League.WHITE, null);
+        final Builder builder = new Builder(0, League.WHITE, null)
+                                .updateWhiteTimer(minute, second)
+                                .updateBlackTimer(minute, second);
         // Black Layout
-
         builder.setPiece(new Rook(League.BLACK, 0))
         .setPiece(new Knight(League.BLACK, 1))
         .setPiece(new Bishop(League.BLACK, 2))
@@ -131,6 +132,8 @@ public final class Board{
         private final League nextMoveMaker;
         private final Pawn enPassantPawn;
         private final int moveCount;
+        private int whiteMinute, whiteSecond;
+        private int blackMinute, blackSecond;
         private Move transitionMove;
 
         public Builder(final int moveCount, final League nextMoveMaker, final Pawn enPassantPawn) {
@@ -151,5 +154,17 @@ public final class Board{
         public void setTransitionMove(final Move transitionMove) { this.transitionMove = transitionMove; }
 
         public int moveCount() { return this.moveCount; }
+
+        public Builder updateWhiteTimer(final int whiteMinute, final int whiteSecond) {
+            this.whiteMinute = whiteMinute;
+            this.whiteSecond = whiteSecond;
+            return this;
+        }
+
+        public Builder updateBlackTimer(final int blackMinute, final int blackSecond) {
+            this.blackMinute = blackMinute;
+            this.blackSecond = blackSecond;
+            return this;
+        }
     }
 }

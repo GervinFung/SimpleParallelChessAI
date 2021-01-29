@@ -21,7 +21,7 @@ public final class PlayerTest {
     final StandardBoardEvaluation standardBoardEvaluation = new StandardBoardEvaluation();
     @Test
     public void testSimpleEvaluation() {
-        final Board board = Board.createStandardBoard();
+        final Board board = Board.createStandardBoard(BoardUtils.DEFAULT_TIMER_MINUTE, BoardUtils.DEFAULT_TIMER_SECOND);
         final MoveTransition t1 = board.currentPlayer().makeMove(MoveFactory.createMove(board, BoardTest.getPieceAtPosition(board, "e2"), BoardUtils.getCoordinateAtPosition("e2"), BoardUtils.getCoordinateAtPosition("e4")));
         assertTrue(t1.getMoveStatus().isDone());
 
@@ -33,7 +33,7 @@ public final class PlayerTest {
 
     @Test
     public void testBug() {
-        final Board board = Board.createStandardBoard();
+        final Board board = Board.createStandardBoard(BoardUtils.DEFAULT_TIMER_MINUTE, BoardUtils.DEFAULT_TIMER_SECOND);
         final MoveTransition t1 = board.currentPlayer().makeMove(MoveFactory.createMove(board, BoardTest.getPieceAtPosition(board, "c2"), BoardUtils.getCoordinateAtPosition("c2"), BoardUtils.getCoordinateAtPosition("c3")));
         assertTrue(t1.getMoveStatus().isDone());
 
@@ -71,7 +71,7 @@ public final class PlayerTest {
 
     @Test
     public void testUnmakeMove() {
-        final Board board = Board.createStandardBoard();
+        final Board board = Board.createStandardBoard(BoardUtils.DEFAULT_TIMER_MINUTE, BoardUtils.DEFAULT_TIMER_SECOND);
         final Move m1 = MoveFactory.createMove(board, BoardTest.getPieceAtPosition(board, "e2"), BoardUtils.getCoordinateAtPosition("e2"), BoardUtils.getCoordinateAtPosition("e4"));
         final MoveTransition t1 = board.currentPlayer().makeMove(m1);
         assertTrue(t1.getMoveStatus().isDone());
@@ -80,7 +80,7 @@ public final class PlayerTest {
 
     @Test
     public void testIllegalMove() {
-        final Board board = Board.createStandardBoard();
+        final Board board = Board.createStandardBoard(BoardUtils.DEFAULT_TIMER_MINUTE, BoardUtils.DEFAULT_TIMER_SECOND);
         final Move m1 = MoveFactory.createMove(board, BoardTest.getPieceAtPosition(board, "e2"), BoardUtils.getCoordinateAtPosition("e2"), BoardUtils.getCoordinateAtPosition("e6"));
         final MoveTransition t1 = board.currentPlayer().makeMove(m1);
         assertFalse(t1.getMoveStatus().isDone());

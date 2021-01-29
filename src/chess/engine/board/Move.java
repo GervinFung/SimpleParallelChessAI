@@ -80,11 +80,12 @@ public abstract class Move {
 
     public Board execute() {
 
-        final Builder builder = new Builder(this.board.getMoveCount() + 1, this.board.currentPlayer().getOpponent().getLeague(), null);
+        final Builder builder = new Builder(this.board.getMoveCount() + 1, this.board.currentPlayer().getOpponent().getLeague(), null)
+                                .updateWhiteTimer(this.board.whitePlayer().getMinute(), this.board.whitePlayer().getSecond())
+                                .updateBlackTimer(this.board.blackPlayer().getMinute(), this.board.blackPlayer().getSecond());
 
         this.board.currentPlayer().getActivePieces().stream().filter(piece -> !this.movePiece.equals(piece)).forEach(builder::setPiece);
         this.board.currentPlayer().getOpponent().getActivePieces().forEach(builder::setPiece);
-
         builder.setPiece(this.movePiece.movedPiece(this));
         builder.setTransitionMove(this);
 
@@ -92,7 +93,9 @@ public abstract class Move {
     }
 
     public Board undo() {
-        final Builder builder = new Builder(this.board.getMoveCount() - 1, this.board.currentPlayer().getLeague(), null);
+        final Builder builder = new Builder(this.board.getMoveCount() - 1, this.board.currentPlayer().getLeague(), null)
+                                .updateWhiteTimer(this.board.whitePlayer().getMinute(), this.board.whitePlayer().getSecond())
+                                .updateBlackTimer(this.board.blackPlayer().getMinute(), this.board.blackPlayer().getSecond());
         this.board.getAllPieces().forEach(builder::setPiece);
         return builder.build();
     }
@@ -202,7 +205,9 @@ public abstract class Move {
 
         @Override
         public Board execute() {
-            final Builder builder = new Builder(this.board.getMoveCount() + 1, this.board.currentPlayer().getOpponent().getLeague(), null);
+            final Builder builder = new Builder(this.board.getMoveCount() + 1, this.board.currentPlayer().getOpponent().getLeague(), null)
+                                    .updateWhiteTimer(this.board.whitePlayer().getMinute(), this.board.whitePlayer().getSecond())
+                                    .updateBlackTimer(this.board.blackPlayer().getMinute(), this.board.blackPlayer().getSecond());
 
             this.board.currentPlayer().getActivePieces().stream().filter(piece -> !this.movePiece.equals(piece)).forEach(builder::setPiece);
             this.board.currentPlayer().getOpponent().getActivePieces().stream().filter(piece -> !piece.equals(this.getAttackedPiece())).forEach(builder::setPiece);
@@ -244,7 +249,9 @@ public abstract class Move {
 
         public Board promotePawn(final Board board) {
             //promotion take a move, which the move flips player turn after executed, so this should not flip again
-            final Builder builder = new Builder(this.board.getMoveCount() + 1, board.currentPlayer().getLeague(), null);
+            final Builder builder = new Builder(this.board.getMoveCount() + 1, board.currentPlayer().getLeague(), null)
+                            .updateWhiteTimer(this.board.whitePlayer().getMinute(), this.board.whitePlayer().getSecond())
+                            .updateBlackTimer(this.board.blackPlayer().getMinute(), this.board.blackPlayer().getSecond());
 
             board.currentPlayer().getActivePieces().stream().filter(piece -> !this.promotedPawn.equals(piece)).forEach(builder::setPiece);
             board.currentPlayer().getOpponent().getActivePieces().forEach(builder::setPiece);
@@ -259,7 +266,9 @@ public abstract class Move {
         public Board execute() {
 
             final Board pawnMoveBoard = this.decoratedMove.execute();
-            final Board.Builder builder = new Builder(this.board.getMoveCount() + 1, pawnMoveBoard.currentPlayer().getLeague(), null);
+            final Board.Builder builder = new Builder(this.board.getMoveCount() + 1, pawnMoveBoard.currentPlayer().getLeague(), null)
+                                        .updateWhiteTimer(this.board.whitePlayer().getMinute(), this.board.whitePlayer().getSecond())
+                                        .updateBlackTimer(this.board.blackPlayer().getMinute(), this.board.blackPlayer().getSecond());
 
             pawnMoveBoard.currentPlayer().getActivePieces().stream().filter(piece -> !this.promotedPawn.equals(piece)).forEach(builder::setPiece);
             pawnMoveBoard.currentPlayer().getOpponent().getActivePieces().forEach(builder::setPiece);
@@ -325,7 +334,9 @@ public abstract class Move {
         public Board execute() {
             final Pawn movedPawn = (Pawn)this.movePiece.movedPiece(this);
 
-            final Builder builder = new Builder(this.board.getMoveCount() + 1, this.board.currentPlayer().getOpponent().getLeague(), movedPawn);
+            final Builder builder = new Builder(this.board.getMoveCount() + 1, this.board.currentPlayer().getOpponent().getLeague(), movedPawn)
+                                    .updateWhiteTimer(this.board.whitePlayer().getMinute(), this.board.whitePlayer().getSecond())
+                                    .updateBlackTimer(this.board.blackPlayer().getMinute(), this.board.blackPlayer().getSecond());
 
             this.board.currentPlayer().getActivePieces().stream().filter(piece -> !this.movePiece.equals(piece)).forEach(builder::setPiece);
             this.board.currentPlayer().getOpponent().getActivePieces().forEach(builder::setPiece);
@@ -369,7 +380,9 @@ public abstract class Move {
         @Override
         public Board execute() {
 
-            final Builder builder = new Builder(this.board.getMoveCount() + 1, this.board.currentPlayer().getOpponent().getLeague(), null);
+            final Builder builder = new Builder(this.board.getMoveCount() + 1, this.board.currentPlayer().getOpponent().getLeague(), null)
+                                    .updateWhiteTimer(this.board.whitePlayer().getMinute(), this.board.whitePlayer().getSecond())
+                                    .updateBlackTimer(this.board.blackPlayer().getMinute(), this.board.blackPlayer().getSecond());
 
             for (final Piece piece : this.board.getAllPieces()) {
                 if (!this.movePiece.equals(piece) && !this.castleRook.equals(piece)) {

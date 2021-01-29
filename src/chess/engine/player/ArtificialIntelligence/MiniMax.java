@@ -53,7 +53,6 @@ public class MiniMax {
         abstract Collection<Move> sort(Collection<Move> moves);
     }
 
-
     public MiniMax(final int searchDepth) {
         this.evaluator = new StandardBoardEvaluation();
         this.nThreads = Runtime.getRuntime().availableProcessors();
@@ -86,8 +85,8 @@ public class MiniMax {
             if (isCheckMate.get()) {
                 break;
             }
-            executorService.execute(() -> {
-                if (moveTransition.getMoveStatus().isDone()) {
+            if (moveTransition.getMoveStatus().isDone()) {
+                executorService.execute(() -> {
                     final int currentVal = currentPlayer.getLeague().isWhite() ?
                             min(moveTransition.getLatestBoard(), this.searchDepth - 1, highestSeenValue.get(), lowestSeenValue.get()) :
                             max(moveTransition.getLatestBoard(), this.searchDepth - 1, highestSeenValue.get(), lowestSeenValue.get());
@@ -109,8 +108,8 @@ public class MiniMax {
                         }
                     }
                     this.moveCount++;
-                }
-            });
+                });
+            }
         }
 
         executorService.shutdown();

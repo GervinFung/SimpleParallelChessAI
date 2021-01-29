@@ -16,8 +16,9 @@ No. | Steps
 2.| User can choose to play as white/black
 3.| User can choose white/black as AI
 4.| Or, user can watch AI play against itself
-5.| Once the game started, press(not click) the piece you wish to move, drag and drop to the square you wish to place it
-6.| The piece will move as user drag
+5.| Once the game started, left press the piece you wish to move, drag and drop to the square you wish to place it
+6.| OR, right click the piece you wish to move, and right click again to the square you wish to place it
+7.| The piece will move as user drag
 
 ## Game Features
 
@@ -36,5 +37,6 @@ No. | Features
 9.| Undo previous move
 10.| Multithread feature depends on the number of cores of a pc, the greater the better/faster AI can think
 11.| Flip board
+12./ Has a timer
 
 ![Chess sample](chess.png)

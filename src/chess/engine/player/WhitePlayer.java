@@ -15,7 +15,7 @@ import java.util.List;
 import static chess.engine.board.Move.*;
 
 public final class WhitePlayer extends Player{
-    public WhitePlayer(final Board board, final Collection<Move> whiteStandardLegalMoves, final Collection<Move> blackStandardLegalMoves) { super(board, whiteStandardLegalMoves, blackStandardLegalMoves); }
+    public WhitePlayer(final Board board, final Collection<Move> whiteStandardLegalMoves, final Collection<Move> blackStandardLegalMoves, final int minute, final int second) { super(board, whiteStandardLegalMoves, blackStandardLegalMoves, minute, second); }
 
     @Override
     public Collection<Piece> getActivePieces() {

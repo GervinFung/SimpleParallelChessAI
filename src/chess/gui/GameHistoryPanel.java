@@ -31,8 +31,7 @@ public final class GameHistoryPanel extends JPanel {
         table.setRowHeight(15);
         this.scrollPane = new JScrollPane(table);
         scrollPane.setColumnHeaderView(table.getTableHeader());
-        Dimension HISTORY_PANEL_DIMENSION = new Dimension(100, 400);
-        scrollPane.setPreferredSize(HISTORY_PANEL_DIMENSION);
+        scrollPane.setPreferredSize(new Dimension(100, 400));
         this.add(scrollPane);
         this.setVisible(true);
     }

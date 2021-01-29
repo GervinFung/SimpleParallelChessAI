@@ -22,7 +22,7 @@ public final class BoardTest {
 
     @Test
     public void testInitialBoard() {
-        final Board board = Board.createStandardBoard();
+        final Board board = Board.createStandardBoard(BoardUtils.DEFAULT_TIMER_MINUTE, BoardUtils.DEFAULT_TIMER_SECOND);
         //each player should have 16 pieces and 20 moves at the beginning
         assertEquals(board.currentPlayer().getLegalMoves().size(), 20);
         assertEquals(board.currentPlayer().getOpponent().getLegalMoves().size(), 20);
@@ -181,7 +181,7 @@ public final class BoardTest {
 
     @Test
     public void testBoardConsistency() {
-        final Board board = Board.createStandardBoard();
+        final Board board = Board.createStandardBoard(BoardUtils.DEFAULT_TIMER_MINUTE, BoardUtils.DEFAULT_TIMER_SECOND);
         assertEquals(board.currentPlayer(), board.whitePlayer());
 
         final MoveTransition t1 = board.currentPlayer()

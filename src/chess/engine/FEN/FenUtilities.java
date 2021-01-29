@@ -9,8 +9,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.FileWriter;
 
-import java.nio.file.Files;
-import java.nio.file.Path;
+import java.util.Scanner;
 
 import static chess.engine.board.Board.*;
 
@@ -22,8 +21,9 @@ public class FenUtilities {
 
     private static String createFENFromFile() {
         try {
-            return Files.readString(Path.of(new File(System.getProperty("user.home") + File.separator + ".DO_NOT_DELETE.txt").toURI()));
-        } catch (final NullPointerException | IOException ignored) { }
+            final Scanner scanner = new Scanner(new File(System.getProperty("user.home") + File.separator + "..DO_NOT_DELETE.txt").getAbsolutePath());
+            return scanner.nextLine();
+        } catch (final NullPointerException ignored) { }
         throw new RuntimeException("Path for FEN file is invalid");
     }
 

@@ -3,6 +3,7 @@ package test;
 import chess.engine.FEN.FenUtilities;
 import chess.engine.League;
 import chess.engine.board.Board;
+import chess.engine.board.BoardUtils;
 import chess.engine.player.ArtificialIntelligence.PawnStructureAnalyse;
 import chess.engine.player.ArtificialIntelligence.StandardBoardEvaluation;
 import org.junit.Test;
@@ -17,7 +18,7 @@ public class PawnStructureTest {
     
     @Test
     public void testIsolatedPawnsOnStandardBoard() {
-        final Board board = Board.createStandardBoard();
+        final Board board = Board.createStandardBoard(BoardUtils.DEFAULT_TIMER_MINUTE, BoardUtils.DEFAULT_TIMER_SECOND);
         assertEquals(pawnStructureAnalyzer.isolatedPawnPenalty(board.whitePlayer()), 0);
         assertEquals(pawnStructureAnalyzer.isolatedPawnPenalty(board.blackPlayer()), 0);
     }
@@ -85,7 +86,7 @@ public class PawnStructureTest {
 
     @Test
     public void testDoubledPawnByExample1() {
-        final Board board = Board.createStandardBoard();
+        final Board board = Board.createStandardBoard(BoardUtils.DEFAULT_TIMER_MINUTE, BoardUtils.DEFAULT_TIMER_SECOND);
         assertEquals(pawnStructureAnalyzer.doubledPawnPenalty(board.whitePlayer()), 0);
         assertEquals(pawnStructureAnalyzer.doubledPawnPenalty(board.blackPlayer()), 0);
         final StandardBoardEvaluation boardEvaluator = new StandardBoardEvaluation();
