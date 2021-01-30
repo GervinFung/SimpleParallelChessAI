@@ -123,5 +123,5 @@ public abstract class Player {
         return new MoveTransition(null, null, MoveStatus.Illegal_Move);
     }
 
-    public MoveTransition undoMove(final Move move) { return new MoveTransition(this.board, move.undo(), MoveStatus.DONE); }
+    public final MoveTransition undoMove(final Move move) { return new MoveTransition(this.board, move.undo(), MoveStatus.DONE); }
 }

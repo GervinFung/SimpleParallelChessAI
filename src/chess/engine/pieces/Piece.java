@@ -6,7 +6,6 @@ import chess.engine.board.Move;
 import chess.engine.board.MoveTransition;
 
 import java.util.Collection;
-import java.util.Objects;
 
 import static chess.engine.board.Move.*;
 
@@ -16,17 +15,27 @@ public abstract class Piece {
     protected final int piecePosition;
     protected final League league;
     private final boolean isFirstMove;
+    private final int hashCode;
 
     public Piece(final PieceType pieceType, final int piecePosition, final League league, final boolean isFirstMove) {
         this.pieceType = pieceType;
         this.piecePosition = piecePosition;
         this.league = league;
         this.isFirstMove = isFirstMove;
+        this.hashCode = generateHashCode();
+    }
+
+    private int generateHashCode() {
+        int result = this.pieceType.hashCode();
+        result = 31 * result + this.league.hashCode();
+        result = 31 * result + this.piecePosition;
+        result = 31 * result + (this.isFirstMove ? 1 : 0);
+        return result;
     }
 
     //prior to JDK 7, a manual hashCode is needed
     @Override
-    public int hashCode() { return Objects.hash(pieceType.hashCode(), piecePosition, league.hashCode(), isFirstMove); }
+    public int hashCode() { return this.hashCode; }
 
     @Override
     public boolean equals(final Object object) {

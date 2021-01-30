@@ -2,7 +2,7 @@ A simple 2 player chess AI that implemented minimax & alpha-beta pruning & move-
 
 I screwed up my previous chess game with bad design and without planning ahead
 
-**Credit to Christos-Kouros for timer function**
+NOTE: **Credit to Christos-Kouros for timer function**
 
 ## Folder Structure
 
@@ -12,6 +12,7 @@ The workspace contains two folders by default, where:
 
 ## To play the Game
 NOTE: **The image dragged is a bit low quality as image of piece is added to cursor**
+
 No. | Steps
 --- | ----
 1.| Open Intellij Project.jar program in out/artifacts/Intellij_Project_jar
@@ -40,6 +41,6 @@ No. | Features
 9.| Undo previous move
 10.| Multithread feature depends on the number of cores of a pc, the greater the better/faster AI can think
 11.| Flip board
-12.| Enabled/disable a timer
+12.| Enabled/disable a timer **(Credit to Christos-Kouros)**
 
 ![Chess sample](chess.png)
