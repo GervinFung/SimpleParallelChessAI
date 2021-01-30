@@ -97,7 +97,7 @@ public final class Table {
         this.chessBoard = Board.createStandardBoard(BoardUtils.DEFAULT_TIMER_MINUTE, BoardUtils.DEFAULT_TIMER_SECOND);
         this.gameHistoryPanel = new GameHistoryPanel();
         this.takenPiecePanel = new TakenPiecePanel();
-        this.gameTimerPanel = new GameTimerPanel(this, this.chessBoard.whitePlayer(), this.chessBoard.blackPlayer());
+        this.gameTimerPanel = new GameTimerPanel(this);
         this.boardPanel = new BoardPanel();
         this.moveLog = new MoveLog();
         this.gameSetup = new GameSetup(this.gameFrame, true);
@@ -137,6 +137,7 @@ public final class Table {
         //a property change listener for Timer, as Observable is deprecated
         final PropertyChangeListener timerSetupPropertyChangeListener = propertyChangeEvent -> {
             if (Table.this.isIncludeTimer() && Table.this.getTimerSetup().changeTimer()) {
+                Table.this.setGameEnded(false);
                 final int minute = Table.this.getTimerSetup().getMinute();
                 final int second = Table.this.getTimerSetup().getSecond();
                 final Board.Builder builder = new Board.Builder(this.getGameBoard().getMoveCount(), this.getGameBoard().currentPlayer().getLeague(), this.getGameBoard().getEnPassantPawn())
@@ -193,6 +194,8 @@ public final class Table {
 
     private void includeTimer(final boolean renewTimer) { this.includeTimer = renewTimer; }
 
+    private void setGameEnded(final boolean gameEnded) { this.gameEnded = gameEnded; }
+
     //getter
     private boolean getAIThinking() { return this.AIThinking; }
 
@@ -204,7 +207,7 @@ public final class Table {
 
     private boolean isGameEnded() { return this.gameEnded; }
 
-    private GameSetup getGameSetup() { return this.gameSetup; }
+    protected GameSetup getGameSetup() { return this.gameSetup; }
 
     private TimerSetup getTimerSetup() { return this.timerSetup; }
 
@@ -238,21 +241,21 @@ public final class Table {
     protected void displayEndGameMessage() {
         if (this.getGameBoard().currentPlayer().isInCheckmate()) {
             JOptionPane.showMessageDialog(this.getBoardPanel(), "Game Over: Player " + this.getGameBoard().currentPlayer() + " is in checkmate!", "Game Over", JOptionPane.INFORMATION_MESSAGE);
-            this.gameEnded = true;
+            this.setGameEnded(true);
         }
 
         if (this.getGameBoard().currentPlayer().isInStalemate()) {
             JOptionPane.showMessageDialog(this.getBoardPanel(), "Game Over: Player " + this.getGameBoard().currentPlayer() + " is in stalemate!", "Game Over", JOptionPane.INFORMATION_MESSAGE);
-            this.gameEnded = true;
+            this.setGameEnded(true);
         }
 
         if (this.getGameBoard().currentPlayer().isTimeOut()) {
             JOptionPane.showMessageDialog(this.getBoardPanel(), "Game Over: Player " + this.getGameBoard().currentPlayer() + " is time out!", "Game Over", JOptionPane.INFORMATION_MESSAGE);
-            this.gameEnded = true;
+            this.setGameEnded(true);
         }
 
-        if (this.gameEnded) {
-            JOptionPane.showMessageDialog(this.getBoardPanel(), "From Preference\n 1. Set Timer in Setup Game Menu\n From Game Menu\n1. New Game to start a new game\n2. Exit Game to exit this game", "Game Over", JOptionPane.INFORMATION_MESSAGE);
+        if (this.isGameEnded()) {
+            JOptionPane.showMessageDialog(this.getBoardPanel(), "From Game Menu\n1. New Game to start a new game\n2. Exit Game to exit this game", "Game Over", JOptionPane.INFORMATION_MESSAGE);
         }
     }
 
@@ -313,16 +316,19 @@ public final class Table {
                         AIThinkTank.this.table.getBoardPanel().updateBoardPanelCursor(Table.WAIT_CURSOR);
                         AIThinkTank.this.dialog.setCursor(Table.WAIT_CURSOR);
                         while(running.get()) {
-                            final double progress = ((double)miniMax.getMoveCount() / AIThinkTank.this.max) * 100;
-                            AIThinkTank.this.publish((int)progress);//publish the progress
+                            if (this.table.getGameBoard().currentPlayer().isTimeOut()) {
+                                miniMax.gamEndTimeOut();
+                            }
+                            AIThinkTank.this.publish((int)(((float)miniMax.getMoveCount() / AIThinkTank.this.max) * 100));//publish the progress
                         }
                         //so 100% progress is shown
                         try {
                             sleep(100);
                             AIThinkTank.this.dialog.dispose();
                             AIThinkTank.this.table.getBoardPanel().updateBoardPanelCursor(Table.MOVE_CURSOR);
+                        } catch (final InterruptedException e) {
+                            e.printStackTrace();
                         }
-                        catch (final InterruptedException e) { e.printStackTrace(); }
                     }).start();
                 }
 
@@ -339,6 +345,10 @@ public final class Table {
         public void done() {
             try {
                 final Move bestMove = this.get();
+                if (bestMove.equals(MoveFactory.getNullMove())) {
+                    this.table.setAIThinking(false);
+                    return ;
+                }
                 this.table.updateComputerMove(bestMove);
                 this.table.updateHumanMove(null);
                 this.table.updateGameBoard(this.table.getGameBoard().currentPlayer().makeMove(bestMove).getLatestBoard());
@@ -456,6 +466,7 @@ public final class Table {
         this.undoAllMoves();
         this.updateGameBoard(board);
         this.getBoardPanel().drawBoard(this.getGameBoard());
+        this.setGameEnded(false);
     }
 
     private final static class BoardColor implements ActionListener {
@@ -511,7 +522,7 @@ public final class Table {
     private void reInitTimerPanel() {
         this.getGameTimerPanel().setTerminateTimer(false);
         this.getGameFrame().remove(Table.this.getGameTimerPanel());
-        this.renewTimerPanel(new GameTimerPanel(this, Table.this.getGameBoard().whitePlayer(), Table.this.getGameBoard().blackPlayer()));
+        this.renewTimerPanel(new GameTimerPanel(this));
         this.getGameFrame().add(Table.this.getGameTimerPanel(), BorderLayout.SOUTH);
         this.startCountDownTimer();
     }
@@ -530,20 +541,18 @@ public final class Table {
         final JMenuItem newGameMenuItem = new JMenuItem("New Game");
         newGameMenuItem.addActionListener(e -> {
             Table.this.AIThinking = false;
-            if (!Table.this.isGameEnded()) {
-                final int confirmedRestart = JOptionPane.showConfirmDialog(Table.this.getBoardPanel(), "Are you sure you want to restart game without saving?", "Restart Game", JOptionPane.YES_NO_CANCEL_OPTION);
-                if (confirmedRestart == JOptionPane.YES_OPTION) {
-                    Table.this.getGameTimerPanel().setResumeEnabled(false);
-                    Table.this.restartGame(Board.createStandardBoard(BoardUtils.DEFAULT_TIMER_MINUTE, BoardUtils.DEFAULT_TIMER_SECOND));
-                    Table.this.getGameTimerPanel().setResumeEnabled(true);
-                    this.reInitTimerPanel();
-                } else if (confirmedRestart == JOptionPane.NO_OPTION) {
-                    Table.this.getGameTimerPanel().setResumeEnabled(false);
-                    FenUtilities.writeFENToFile(Table.this.getGameBoard());
-                    Table.this.restartGame(Board.createStandardBoard(BoardUtils.DEFAULT_TIMER_MINUTE, BoardUtils.DEFAULT_TIMER_SECOND));
-                    Table.this.getGameTimerPanel().setResumeEnabled(true);
-                    this.reInitTimerPanel();
-                }
+            final int confirmedRestart = JOptionPane.showConfirmDialog(Table.this.getBoardPanel(), "Are you sure you want to restart game without saving?", "Restart Game", JOptionPane.YES_NO_CANCEL_OPTION);
+            if (confirmedRestart == JOptionPane.YES_OPTION) {
+                Table.this.getGameTimerPanel().setResumeEnabled(false);
+                Table.this.restartGame(Board.createStandardBoard(BoardUtils.DEFAULT_TIMER_MINUTE, BoardUtils.DEFAULT_TIMER_SECOND));
+                Table.this.getGameTimerPanel().setResumeEnabled(true);
+                this.reInitTimerPanel();
+            } else if (confirmedRestart == JOptionPane.NO_OPTION) {
+                Table.this.getGameTimerPanel().setResumeEnabled(false);
+                FenUtilities.writeFENToFile(Table.this.getGameBoard());
+                Table.this.restartGame(Board.createStandardBoard(BoardUtils.DEFAULT_TIMER_MINUTE, BoardUtils.DEFAULT_TIMER_SECOND));
+                Table.this.getGameTimerPanel().setResumeEnabled(true);
+                this.reInitTimerPanel();
             }
         });
 
@@ -734,14 +743,14 @@ public final class Table {
                 }
                 @Override
                 public void mouseEntered(final MouseEvent mouseEvent) {
-                    if (!Table.this.getAIThinking() && Table.this.getMouseEnteredHighlightMoves()) {
+                    if (!Table.this.getAIThinking() && Table.this.getMouseEnteredHighlightMoves() && !Table.this.isGameEnded()) {
                         Table.this.humanMovePiece = Table.this.getGameBoard().getTile(TilePanel.this.tileID).getPiece();
                         highlightLegals(Table.this.getGameBoard());
                     }
                 }
                 @Override
                 public void mouseExited(final MouseEvent mouseEvent) {
-                    if (!Table.this.getAIThinking() && Table.this.getMouseEnteredHighlightMoves() && Table.this.humanMovePiece != null) {
+                    if (!Table.this.getAIThinking() && Table.this.getMouseEnteredHighlightMoves() && Table.this.humanMovePiece != null && !Table.this.isGameEnded()) {
                         Table.this.humanMovePiece = null;
                         Table.this.getBoardPanel().drawBoard(Table.this.getGameBoard());
                     }

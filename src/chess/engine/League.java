@@ -32,9 +32,7 @@ public enum League {
             return 1;
         }
         @Override
-        public boolean isWhite() {
-            return false;
-        }
+        public boolean isWhite() { return false; }
         @Override
         public boolean isBlack() {
             return true;

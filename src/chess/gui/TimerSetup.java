@@ -69,6 +69,11 @@ public final class TimerSetup extends JDialog {
 
     protected boolean changeTimer() { return this.changeTimer; }
 
+    protected void setEnableTimer(final boolean enableTimer) {
+        this.minuteSpinner.setEnabled(enableTimer);
+        this.secondSpinner.setEnabled(enableTimer);
+    }
+
     protected int getMinute() { return (Integer)this.minuteSpinner.getValue(); }
 
     protected int getSecond() { return (Integer)this.secondSpinner.getValue(); }

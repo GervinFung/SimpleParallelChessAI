@@ -13,6 +13,7 @@ import chess.engine.pieces.*;
 import static chess.engine.board.Board.Builder;
 import static chess.engine.board.Move.MoveFactory;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 
 public class MiniMaxTest {
@@ -280,5 +281,25 @@ public class MiniMaxTest {
         assertEquals(bestMove, MoveFactory.createMove(board, BoardTest.getPieceAtPosition(board, "d6"), BoardUtils.getCoordinateAtPosition("d6"), BoardUtils.getCoordinateAtPosition("d1")));
         final MoveTransition t1 = board.currentPlayer().makeMove(bestMove);
         assertTrue(t1.getMoveStatus().isDone());
+    }
+
+    @Test
+    public void testTimeOut() {
+        final Board board = Board.createStandardBoard(0, 10);
+        final Move whiteMove = MoveFactory.createMove(board, BoardTest.getPieceAtPosition(board, "e2"), BoardUtils.getCoordinateAtPosition("e2"), BoardUtils.getCoordinateAtPosition("e4"));
+        final MiniMax miniMax = new MiniMax(5);
+        final Board currentBoard = whiteMove.execute();
+        new Thread(() -> {
+            long start = System.nanoTime();
+            while (!currentBoard.currentPlayer().isTimeOut()) {
+                if (((System.nanoTime() - start) / 1000000000) == 1) {
+                    currentBoard.currentPlayer().countDown();
+                    start = System.nanoTime();
+                }
+            }
+            miniMax.gamEndTimeOut();
+        }).start();
+        final Move bestMove = miniMax.execute(currentBoard);
+        assertEquals(MoveFactory.getNullMove(), bestMove);
     }
 }

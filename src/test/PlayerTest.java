@@ -85,4 +85,22 @@ public final class PlayerTest {
         final MoveTransition t1 = board.currentPlayer().makeMove(m1);
         assertFalse(t1.getMoveStatus().isDone());
     }
+
+    @Test
+    public void testTimeOut() {
+        Board board = Board.createStandardBoard(0, 6);
+        final Move whiteMove = Move.MoveFactory.createMove(board, BoardTest.getPieceAtPosition(board, "e2"), BoardUtils.getCoordinateAtPosition("e2"), BoardUtils.getCoordinateAtPosition("e4"));
+        board = whiteMove.execute();
+        final Move blackMove = Move.MoveFactory.createMove(board, BoardTest.getPieceAtPosition(board, "e7"), BoardUtils.getCoordinateAtPosition("e7"), BoardUtils.getCoordinateAtPosition("e5"));
+        board = blackMove.execute();
+        board.currentPlayer().countDown();
+        board.currentPlayer().countDown();
+        board.currentPlayer().countDown();
+        board.currentPlayer().countDown();
+        board.currentPlayer().countDown();
+
+        assertFalse(board.currentPlayer().isTimeOut());
+        board.currentPlayer().countDown();
+        assertTrue(board.currentPlayer().isTimeOut());
+    }
 }

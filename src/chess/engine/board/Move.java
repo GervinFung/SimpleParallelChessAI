@@ -220,7 +220,9 @@ public abstract class Move {
 
         @Override
         public Board undo() {
-            final Board.Builder builder = new Builder(this.board.getMoveCount() - 1, this.board.currentPlayer().getLeague(), (Pawn)this.getAttackedPiece());
+            final Board.Builder builder = new Builder(this.board.getMoveCount() - 1, this.board.currentPlayer().getLeague(), (Pawn)this.getAttackedPiece())
+                    .updateWhiteTimer(this.board.whitePlayer().getMinute(), this.board.whitePlayer().getSecond())
+                    .updateBlackTimer(this.board.blackPlayer().getMinute(), this.board.blackPlayer().getSecond());
             this.board.getAllPieces().forEach(builder::setPiece);
             return builder.build();
         }

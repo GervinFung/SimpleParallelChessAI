@@ -1,7 +1,6 @@
 package chess.gui;
 
 import chess.engine.League;
-import chess.engine.player.Player;
 
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -19,14 +18,14 @@ public final class GameTimerPanel extends JPanel implements Runnable{
 
     private volatile boolean includeTimer, terminate, resumeEnabled;
 
-    public GameTimerPanel(final Table table, final Player whitePlayer, final Player blackPlayer) {
+    public GameTimerPanel(final Table table) {
         this.timerThread = new Thread(this);
         this.setPreferredSize(new Dimension(720, 80));
         this.setBorder(new EtchedBorder(EtchedBorder.RAISED));
         this.setLayout(new GridLayout(0, 2));
 
-        this.eastTimer = new TimerPanel(Color.WHITE, blackPlayer);
-        this.westTimer = new TimerPanel(Color.BLACK, whitePlayer);
+        this.eastTimer = new TimerPanel(League.BLACK, table);
+        this.westTimer = new TimerPanel(League.WHITE, table);
 
         this.table = table;
 
@@ -95,39 +94,40 @@ public final class GameTimerPanel extends JPanel implements Runnable{
                 } catch (final InterruptedException e) { e.printStackTrace(); }
             }
         }
-        if (isGameEnd() && !terminate) { this.table.displayEndGameMessage(); }
+        if (isGameEnd() && !this.terminate && this.table.getGameSetup().isAIPlayer(this.table.getGameBoard().currentPlayer())) { this.table.displayEndGameMessage(); }
     }
 
     private static final class TimerPanel extends JPanel {
 
         private final JLabel label;
-        private final Player player;
+        private final Table table;
 
-        private TimerPanel(final Color color, final Player player) {
+        //pass table parameter to obtain the latest player state, as player is renewed after each move
+        private TimerPanel(final League league, final Table table) {
             super(new GridLayout(2, 0));
-
-            final JLabel title = new JLabel(player.toString());
+            this.table = table;
+            final Color color = league.isBlack() ? Color.WHITE : Color.BLACK;
+            final JLabel title = new JLabel(league.toString());
             title.setForeground(color);
             this.add(title, BorderLayout.NORTH);
 
-            this.player = player;
             this.label = new JLabel(this.getTimeFormat());
             this.label.setForeground(color);
             this.add(this.label, BorderLayout.SOUTH);
         }
 
-        private boolean isGameEnd() { return this.player.isTimeOut(); }
+        private boolean isGameEnd() { return table.getGameBoard().currentPlayer().isTimeOut(); }
 
         private void updateTimer() {
-            this.player.countDown();
+            table.getGameBoard().currentPlayer().countDown();
             this.label.setText(this.getTimeFormat());
         }
 
         private String getTimeFormat() {
-            if (this.player.getSecond() / 10 == 0) {
-                return this.player.getMinute() + " : 0" + this.player.getSecond();
+            if (table.getGameBoard().currentPlayer().getSecond() / 10 == 0) {
+                return table.getGameBoard().currentPlayer().getMinute() + " : 0" + table.getGameBoard().currentPlayer().getSecond();
             }
-            return this.player.getMinute() + " : " + this.player.getSecond();
+            return table.getGameBoard().currentPlayer().getMinute() + " : " + table.getGameBoard().currentPlayer().getSecond();
         }
     }
 }
