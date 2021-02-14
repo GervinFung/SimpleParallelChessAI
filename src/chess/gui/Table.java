@@ -4,6 +4,7 @@ import chess.engine.FEN.FenUtilities;
 import chess.engine.board.Board;
 import chess.engine.board.BoardUtils;
 import chess.engine.board.Move;
+import chess.engine.board.MoveLog;
 import chess.engine.pieces.Piece;
 import chess.engine.board.MoveTransition;
 import chess.engine.player.ArtificialIntelligence.MiniMax;
@@ -255,6 +256,7 @@ public final class Table {
         }
 
         if (this.isGameEnded()) {
+            this.getGameTimerPanel().setTerminateTimer(true);
             JOptionPane.showMessageDialog(this.getBoardPanel(), "From Game Menu\n1. New Game to start a new game\n2. Exit Game to exit this game", "Game Over", JOptionPane.INFORMATION_MESSAGE);
         }
     }
@@ -630,23 +632,6 @@ public final class Table {
             this.repaint();
         }
         public void updateBoardPanelCursor(final Cursor cursor) { this.setCursor(cursor); }
-    }
-
-    public static final class MoveLog {
-
-        private final List<Move> moves;
-
-        public MoveLog() { this.moves = new ArrayList<>(); }
-
-        public List<Move> getMoves() { return this.moves; }
-
-        public void addMove(final Move move) { this.moves.add(move); }
-
-        public int size() { return this.moves.size(); }
-
-        public void clear() { this.moves.clear(); }
-
-        public Move removeMove() { return this.moves.remove(this.moves.size() - 1); }
     }
 
     enum PlayerType {HUMAN, COMPUTER}

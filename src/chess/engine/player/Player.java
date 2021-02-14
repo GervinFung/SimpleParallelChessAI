@@ -12,8 +12,9 @@ import chess.engine.pieces.Piece;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.ArrayList;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
 import static java.util.stream.Collectors.collectingAndThen;
 
 public abstract class Player {
@@ -27,11 +28,9 @@ public abstract class Player {
     public Player(final Board board, final Collection<Move> legalMoves, final Collection<Move> opponentLegalMoves, final int minute, final int second) {
         this.board = board;
         this.playerKing = this.establishKing();
-        final List<Move> legal = new ArrayList<>(legalMoves);
         this.isInCheck = !Player.calculateAttacksOnTile(this.playerKing.getPiecePosition(), opponentLegalMoves).isEmpty();
         //for ai
-        legal.addAll(calculateKingCastles(opponentLegalMoves));
-        this.legalMoves = legal;
+        this.legalMoves = Stream.concat(legalMoves.stream(), calculateKingCastles(opponentLegalMoves).stream()).collect(Collectors.toUnmodifiableList());
         this.minute = minute;
         this.second = second;
     }

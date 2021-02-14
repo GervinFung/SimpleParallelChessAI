@@ -19,6 +19,8 @@ public class FenUtilities {
         throw new RuntimeException("Non instantiable");
     }
 
+    private static final String filepath = System.getProperty("user.home") + System.getProperty("file.separator") + "chess_data.txt" ;
+
     private static String createFENFromFile() {
         try {
             final Scanner scanner = new Scanner(new File(System.getProperty("user.home") + File.separator + "..DO_NOT_DELETE.txt").getAbsolutePath());
