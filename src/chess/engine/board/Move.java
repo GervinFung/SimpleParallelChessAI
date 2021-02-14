@@ -10,12 +10,15 @@ import javax.swing.JOptionPane;
 
 import java.awt.Image;
 import java.io.IOException;
+import java.io.Serializable;
 import java.util.List;
 import java.util.Objects;
 
 import static chess.engine.board.Board.*;
 
-public abstract class Move {
+public abstract class Move implements Serializable {
+
+    private final static long serialVersionUID = 2L;
 
     protected final Board board;
     protected final Piece movePiece;

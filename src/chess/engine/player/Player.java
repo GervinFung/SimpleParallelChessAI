@@ -9,6 +9,7 @@ import chess.engine.board.Tile;
 import chess.engine.pieces.King;
 import chess.engine.pieces.Piece;
 
+import java.io.Serializable;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -17,7 +18,9 @@ import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.collectingAndThen;
 
-public abstract class Player {
+public abstract class Player implements Serializable {
+
+    private final static long serialVersionUID = 6L;
 
     protected final Board board;
     protected final King playerKing;

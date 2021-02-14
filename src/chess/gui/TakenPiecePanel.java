@@ -2,6 +2,7 @@ package chess.gui;
 
 import chess.engine.board.BoardUtils;
 import chess.engine.board.Move;
+import chess.engine.board.MoveLog;
 import chess.engine.pieces.Piece;
 
 import javax.imageio.ImageIO;
@@ -23,8 +24,6 @@ import java.awt.BorderLayout;
 import java.awt.GridLayout;
 import java.util.Objects;
 import java.util.stream.Collectors;
-
-import static chess.gui.Table.*;
 
 public final class TakenPiecePanel extends JPanel {
 

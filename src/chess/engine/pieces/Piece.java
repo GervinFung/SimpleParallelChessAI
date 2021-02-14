@@ -5,11 +5,14 @@ import chess.engine.board.Board;
 import chess.engine.board.Move;
 import chess.engine.board.MoveTransition;
 
+import java.io.Serializable;
 import java.util.Collection;
 
 import static chess.engine.board.Move.*;
 
-public abstract class Piece {
+public abstract class Piece implements Serializable {
+
+    private final static long serialVersionUID = 5L;
 
     protected final PieceType pieceType;
     protected final int piecePosition;

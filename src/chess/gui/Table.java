@@ -24,7 +24,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
-import java.io.File;
 import java.io.IOException;
 
 import javax.swing.JPanel;
@@ -464,8 +463,8 @@ public final class Table {
     }
 
     private void restartGame(final Board board) {
-        this.getGameTimerPanel().setTerminateTimer(true);
         this.undoAllMoves();
+        this.getGameTimerPanel().setTerminateTimer(true);
         this.updateGameBoard(board);
         this.getBoardPanel().drawBoard(this.getGameBoard());
         this.setGameEnded(false);
@@ -529,14 +528,6 @@ public final class Table {
         this.startCountDownTimer();
     }
 
-    private Board resumeLoadedGame(final Board board) {
-        final Board.Builder builder = new Board.Builder(board.getMoveCount(), board.currentPlayer().getLeague(), board.getEnPassantPawn())
-                                    .updateWhiteTimer(this.getTimerSetup().getMinute(), this.getTimerSetup().getSecond())
-                                    .updateBlackTimer(this.getTimerSetup().getMinute(), this.getTimerSetup().getSecond());
-        board.getAllPieces().forEach(builder::setPiece);
-        return builder.build();
-    }
-
     private JMenu createFileMenu() {
         final JMenu gameMenu = new JMenu("Game");
 
@@ -551,7 +542,7 @@ public final class Table {
                 this.reInitTimerPanel();
             } else if (confirmedRestart == JOptionPane.NO_OPTION) {
                 Table.this.getGameTimerPanel().setResumeEnabled(false);
-                FenUtilities.writeFENToFile(Table.this.getGameBoard());
+                FenUtilities.writeMoveToFiles(Table.this.getMoveLog());
                 Table.this.restartGame(Board.createStandardBoard(BoardUtils.DEFAULT_TIMER_MINUTE, BoardUtils.DEFAULT_TIMER_SECOND));
                 Table.this.getGameTimerPanel().setResumeEnabled(true);
                 this.reInitTimerPanel();
@@ -564,7 +555,18 @@ public final class Table {
 
             if(confirmLoadGame == JOptionPane.YES_OPTION) {
                 Table.this.getGameTimerPanel().setResumeEnabled(false);
-                Table.this.restartGame(this.resumeLoadedGame(FenUtilities.createGameFromFEN()));
+                this.undoAllMoves();
+                this.getMoveLog().addAll(FenUtilities.readFile());
+                this.getGameTimerPanel().setTerminateTimer(true);
+                if (this.getMoveLog().size() > 0) {
+                    this.updateGameBoard(this.getMoveLog().get(this.getMoveLog().size() - 1).execute());
+                } else {
+                    this.updateGameBoard(Board.createStandardBoard(BoardUtils.DEFAULT_TIMER_MINUTE, BoardUtils.DEFAULT_TIMER_SECOND));
+                }
+                this.getBoardPanel().drawBoard(this.getGameBoard());
+                this.getGameHistoryPanel().redo(this.getGameBoard(), this.getMoveLog());
+                this.getTakenPiecesPanel().redo(this.getMoveLog());
+                this.setGameEnded(false);
                 if (Table.this.getGameBoard().currentPlayer().getLeague().isBlack()) {
                     JOptionPane.showConfirmDialog(Table.this.getBoardPanel(), "Black to move", "Welcome", JOptionPane.YES_NO_CANCEL_OPTION);
                 } else {
@@ -579,7 +581,7 @@ public final class Table {
         saveGameMenuItem.addActionListener(e -> {
             final int confirmSave = JOptionPane.showConfirmDialog(Table.this.getBoardPanel(), "Confirm to save this game?", "Save Game", JOptionPane.YES_NO_CANCEL_OPTION);
             if (confirmSave == JOptionPane.YES_OPTION) {
-                FenUtilities.writeFENToFile(Table.this.getGameBoard());
+                FenUtilities.writeMoveToFiles(Table.this.getMoveLog());
                 JOptionPane.showMessageDialog(Table.this.getGameFrame(), "Game Saved!");
                 loadGameMenuItem.setVisible(true);
             }
@@ -591,12 +593,12 @@ public final class Table {
             if (confirmedExit == JOptionPane.YES_OPTION) {
                 System.exit(0);
             } else if (confirmedExit == JOptionPane.NO_OPTION) {
-                FenUtilities.writeFENToFile(Table.this.getGameBoard());
+                FenUtilities.writeMoveToFiles(Table.this.getMoveLog());
                 System.exit(0);
             }
         });
 
-        if (!new File(new File(System.getProperty("user.dir") + File.separator + ".DO_NOT_DELETE.txt").getAbsolutePath()).exists()) { loadGameMenuItem.setVisible(false); }
+        if (!FenUtilities.file.exists()) { loadGameMenuItem.setVisible(false); }
 
         gameMenu.add(newGameMenuItem);
         gameMenu.add(saveGameMenuItem);

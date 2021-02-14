@@ -6,6 +6,7 @@ import chess.engine.player.BlackPlayer;
 import chess.engine.player.Player;
 import chess.engine.player.WhitePlayer;
 
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Collection;
@@ -14,7 +15,9 @@ import java.util.stream.Stream;
 
 import static chess.engine.board.Move.MoveFactory;
 
-public final class Board{
+public final class Board implements Serializable {
+
+    private final static long serialVersionUID = 1L;
 
     private final List<Tile> gameBoard;
     private final Collection<Piece> whitePieces, blackPieces;

@@ -3,13 +3,16 @@ package chess.engine.FEN;
 import chess.engine.League;
 import chess.engine.board.Board;
 import chess.engine.board.BoardUtils;
+import chess.engine.board.MoveLog;
 import chess.engine.pieces.*;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.FileWriter;
 
-import java.util.Scanner;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 
 import static chess.engine.board.Board.*;
 
@@ -19,60 +22,25 @@ public class FenUtilities {
         throw new RuntimeException("Non instantiable");
     }
 
-    private static final String filepath = System.getProperty("user.home") + System.getProperty("file.separator") + "chess_data.txt" ;
+    public static final File file = new File(System.getProperty("user.home") + System.getProperty("file.separator") + "chess_data.txt");
 
-    private static String createFENFromFile() {
+    public static void writeMoveToFiles(final MoveLog moveLog) {
         try {
-            final Scanner scanner = new Scanner(new File(System.getProperty("user.home") + File.separator + "..DO_NOT_DELETE.txt").getAbsolutePath());
-            return scanner.nextLine();
-        } catch (final NullPointerException ignored) { }
-        throw new RuntimeException("Path for FEN file is invalid");
+            final ObjectOutputStream objectOutputStream = new ObjectOutputStream(new FileOutputStream(file));
+            objectOutputStream.writeObject(moveLog);
+            objectOutputStream.close();
+        } catch (final IOException e) { e.printStackTrace(); }
     }
 
-    public static void writeFENToFile(final Board board) {
+    public static MoveLog readFile() {
         try {
-            final FileWriter myWriter = new FileWriter(new File(System.getProperty("user.home") + File.separator + ".DO_NOT_DELETE.txt").getAbsolutePath());
-            myWriter.write(createFENFromGame(board));
-            myWriter.close();
-        } catch (final NullPointerException | IOException ignored) {}
-    }
-
-    public static Board createGameFromFEN() {
-        return parseFEN(createFENFromFile());
-    }
-
-    public static String createFENFromGame(final Board board) {
-        return calculateBoardText(board) + " " +
-                calculateCurrentPlayerText(board) + " " +
-                calculateCastleText(board) + " " +
-                calculateEnPassantSquare(board) + " " +
-                "0 " + board.getMoveCount();
-    }
-
-    private static String calculateBoardText(final Board board) {
-        final StringBuilder builder = new StringBuilder();
-
-        for (int i = 0; i < BoardUtils.NUM_TILES; i++) {
-            builder.append(board.getTile(i).toString());
+            final ObjectInputStream objectInputStream = new ObjectInputStream(new FileInputStream(file));
+            final MoveLog moveLog = (MoveLog)objectInputStream.readObject();
+            objectInputStream.close();
+            return moveLog;
+        } catch (final IOException | ClassNotFoundException e) {
+            throw new RuntimeException("error");
         }
-        builder.insert(8, "/");
-        builder.insert(17, "/");
-        builder.insert(26, "/");
-        builder.insert(35, "/");
-        builder.insert(44, "/");
-        builder.insert(53, "/");
-        builder.insert(62, "/");
-
-        return builder.toString()
-                .replaceAll("--------", "8")
-                .replaceAll("-------", "7")
-                .replaceAll("------", "6")
-                .replaceAll("-----", "5")
-                .replaceAll("----", "4")
-                .replaceAll("---", "3")
-                .replaceAll("--", "2")
-                .replaceAll("-", "1");
-
     }
 
     private static boolean kingSideCastle(final String fenCastleString, final boolean isWhite) { return isWhite ? fenCastleString.contains("K") : fenCastleString.contains("k"); }
@@ -177,37 +145,5 @@ public class FenUtilities {
             return League.BLACK;
         }
         throw new RuntimeException("Invalid FEN String " + moveMakerString);
-    }
-
-    private static String calculateEnPassantSquare(final Board board) {
-        final Pawn enPassantPawn = board.getEnPassantPawn();
-        if(enPassantPawn != null) {
-            return BoardUtils.getPositionAtCoordinate(enPassantPawn.getPiecePosition() - (8) * enPassantPawn.getLeague().getDirection());
-        }
-        return "-";
-    }
-
-    private static String calculateCurrentPlayerText(final Board board) { return board.currentPlayer().toString().substring(0, 1).toLowerCase(); }
-
-    private static String calculateCastleText(final Board board) {
-        final StringBuilder builder = new StringBuilder();
-
-        if (board.whitePlayer().isKingSideCastleCapable()) {
-            builder.append("K");
-        }
-        if (board.whitePlayer().isQueenSideCastleCapable()) {
-            builder.append("Q");
-        }
-
-        if (board.blackPlayer().isKingSideCastleCapable()) {
-            builder.append("k");
-        }
-        if (board.blackPlayer().isQueenSideCastleCapable()) {
-            builder.append("q");
-        }
-
-        final String result = builder.toString();
-
-        return result.isEmpty() ? "-" : result;
     }
 }

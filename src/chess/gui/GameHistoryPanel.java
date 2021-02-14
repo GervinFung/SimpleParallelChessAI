@@ -2,6 +2,7 @@ package chess.gui;
 
 import chess.engine.board.Board;
 import chess.engine.board.Move;
+import chess.engine.board.MoveLog;
 
 
 import javax.swing.JPanel;
@@ -12,12 +13,9 @@ import javax.swing.table.DefaultTableModel;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;
-import java.awt.Color;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import static chess.gui.Table.*;
 
 public final class GameHistoryPanel extends JPanel {
 

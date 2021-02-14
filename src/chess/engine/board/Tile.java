@@ -2,7 +2,11 @@ package chess.engine.board;
 
 import chess.engine.pieces.Piece;
 
-public abstract class Tile {
+import java.io.Serializable;
+
+public abstract class Tile implements Serializable {
+
+    private final static long serialVersionUID = 4L;
 
     protected final int tileCoordinate;
 
