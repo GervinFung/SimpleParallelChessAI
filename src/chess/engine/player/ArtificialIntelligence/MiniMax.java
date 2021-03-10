@@ -26,7 +26,7 @@ public class MiniMax {
     private final int searchDepth, nThreads;
     private int quiescenceCount, moveCount;
     private static final int MAX_QUIESCENCE = 5000 * 5;
-    private volatile boolean gameEndDueToTimeOut;
+    private volatile boolean gameEnd;
 
     private enum MoveSorter {
 
@@ -64,7 +64,7 @@ public class MiniMax {
         }
         this.moveCount = 0;
         this.quiescenceCount = 0;
-        this.gameEndDueToTimeOut = false;
+        this.gameEnd = false;
     }
 
     public Move execute(final Board board) {
@@ -94,7 +94,7 @@ public class MiniMax {
                             max(moveTransition.getLatestBoard(), this.searchDepth - 1, highestSeenValue.get(), lowestSeenValue.get());
 
                     currentValue.set(currentVal);
-                    if (this.gameEndDueToTimeOut) {
+                    if (this.gameEnd) {
                         //immediately set move to null after time out for AI
                         bestMove.set(Move.MoveFactory.getNullMove());
                     }
@@ -128,11 +128,11 @@ public class MiniMax {
 
     public int getMoveCount() { return this.moveCount; }
 
-    public void gamEndTimeOut() { this.gameEndDueToTimeOut = true; }
+    public void gamEndTimeOut() { this.gameEnd = true; }
 
     private int max(final Board board, final int depth, final int highest, final int lowest) {
         //immediately terminate the max function after time out
-        if (this.gameEndDueToTimeOut) {
+        if (this.gameEnd) {
             return highest;
         }
         if (depth == 0 || BoardUtils.isEndGameScenario(board)) {
@@ -154,7 +154,7 @@ public class MiniMax {
 
     private int min(final Board board, final int depth, final int highest, final int lowest) {
         //immediately terminate the max function after time out
-        if (this.gameEndDueToTimeOut) {
+        if (this.gameEnd) {
             return lowest;
         }
         if (depth == 0 || BoardUtils.isEndGameScenario(board)) {

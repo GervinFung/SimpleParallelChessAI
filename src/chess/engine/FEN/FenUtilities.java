@@ -22,11 +22,11 @@ public class FenUtilities {
         throw new RuntimeException("Non instantiable");
     }
 
-    public static final File file = new File(System.getProperty("user.home") + System.getProperty("file.separator") + "chess_data.txt");
+    public static final File FILE = new File(System.getProperty("user.home") + System.getProperty("file.separator") + "chess_data.txt");
 
     public static void writeMoveToFiles(final MoveLog moveLog) {
         try {
-            final ObjectOutputStream objectOutputStream = new ObjectOutputStream(new FileOutputStream(file));
+            final ObjectOutputStream objectOutputStream = new ObjectOutputStream(new FileOutputStream(FILE));
             objectOutputStream.writeObject(moveLog);
             objectOutputStream.close();
         } catch (final IOException e) { e.printStackTrace(); }
@@ -34,7 +34,7 @@ public class FenUtilities {
 
     public static MoveLog readFile() {
         try {
-            final ObjectInputStream objectInputStream = new ObjectInputStream(new FileInputStream(file));
+            final ObjectInputStream objectInputStream = new ObjectInputStream(new FileInputStream(FILE));
             final MoveLog moveLog = (MoveLog)objectInputStream.readObject();
             objectInputStream.close();
             return moveLog;

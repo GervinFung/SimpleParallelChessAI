@@ -8,6 +8,7 @@ import chess.engine.board.MoveLog;
 import chess.engine.pieces.Piece;
 import chess.engine.board.MoveTransition;
 import chess.engine.player.ArtificialIntelligence.MiniMax;
+import com.google.common.collect.Lists;
 
 import javax.imageio.ImageIO;
 
@@ -67,6 +68,7 @@ public final class Table {
 
     private boolean highlightLegalMoves, showAIThinking, AIThinking, gameEnded, includeTimer;
     private boolean mouseEnteredHighlightMoves, showHumanMove, showAIMove, mouseClicked;
+    private volatile boolean stopAI;
     private final GameHistoryPanel gameHistoryPanel;
     private final TakenPiecePanel takenPiecePanel;
 
@@ -124,22 +126,25 @@ public final class Table {
         this.includeTimer = true;
         this.gameFrame.setCursor(MOVE_CURSOR);
         this.boardDirection = BoardDirection.NORMAL;
+        this.stopAI = false;
         //a property change listener for AI, as Observable is deprecated
         final PropertyChangeListener gameSetupPropertyChangeListener = propertyChangeEvent -> {
-            if (Table.this.getGameSetup().isAIPlayer(Table.this.getGameBoard().currentPlayer()) &&
-                    !Table.this.getGameBoard().currentPlayer().isInCheckmate() &&
-                    !Table.this.getGameBoard().currentPlayer().isInStalemate()) {
-                new AIThinkTank(this).execute();
+            if (this.getGameSetup().isAIPlayer(this.getGameBoard().currentPlayer()) &&
+                    !this.getGameBoard().currentPlayer().isInCheckmate() &&
+                    !this.getGameBoard().currentPlayer().isInStalemate()) {
+                if (!this.AIThinking) {
+                    new AIThinkTank(this).execute();
+                }
             }
-            Table.this.displayEndGameMessage();
+            this.displayEndGameMessage();
         };
 
         //a property change listener for Timer, as Observable is deprecated
         final PropertyChangeListener timerSetupPropertyChangeListener = propertyChangeEvent -> {
-            if (Table.this.isIncludeTimer() && Table.this.getTimerSetup().changeTimer()) {
-                Table.this.setGameEnded(false);
-                final int minute = Table.this.getTimerSetup().getMinute();
-                final int second = Table.this.getTimerSetup().getSecond();
+            if (this.isIncludeTimer() && this.getTimerSetup().changeTimer()) {
+                this.setGameEnded(false);
+                final int minute = this.getTimerSetup().getMinute();
+                final int second = this.getTimerSetup().getSecond();
                 final Board.Builder builder = new Board.Builder(this.getGameBoard().getMoveCount(), this.getGameBoard().currentPlayer().getLeague(), this.getGameBoard().getEnPassantPawn())
                                             .updateWhiteTimer(minute, second).updateBlackTimer(minute, second);
                 this.getGameBoard().getAllPieces().forEach(builder::setPiece);
@@ -276,12 +281,10 @@ public final class Table {
         private final JProgressBar bar;
         private final int max;
         private final Table table;
-        private final boolean showProgressbar;
 
         private AIThinkTank(final Table table) {
             this.table = table;
-            this.showProgressbar = this.table.getShowAIThinking();
-            if (this.showProgressbar) {
+            if (this.table.getShowAIThinking() && this.shouldShowProgressBar(this.table)) {
                 this.dialog = new JDialog();
                 this.dialog.setTitle("AI Thinking...");
                 this.bar = new JProgressBar(0, 100);
@@ -290,7 +293,6 @@ public final class Table {
                 this.dialog.add(this.bar);
                 this.dialog.setSize(300, 60);
                 this.dialog.setLocationRelativeTo(this.table.getGameFrame());
-                this.dialog.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
                 this.dialog.setVisible(true);
                 this.dialog.setResizable(false);
                 this.max = this.table.getGameBoard().currentPlayer().getLegalMoves().size();
@@ -305,28 +307,37 @@ public final class Table {
         @Override
         protected void process(final List<Integer> chunks) { this.bar.setValue(chunks.get(chunks.size() - 1)); }
 
+        private boolean shouldShowProgressBar(final Table table) {
+            return table.getGameSetup().isAIPlayer(table.getGameBoard().currentPlayer())
+                    && table.getGameSetup().isAIPlayer(table.getGameBoard().currentPlayer())
+                    && table.getGameSetup().getSearchDepth() > 2;
+        }
+
         @Override
         protected Move doInBackground(){
             try {
                 final AtomicBoolean running = new AtomicBoolean(true);
                 final MiniMax miniMax = new MiniMax(this.table.getGameSetup().getSearchDepth());
-                if (this.showProgressbar) {
+                if (this.dialog != null) {
 
                     //progress is shown based on move count / total available moves ratio
                     new Thread(() -> {
-                        AIThinkTank.this.table.getBoardPanel().updateBoardPanelCursor(Table.WAIT_CURSOR);
-                        AIThinkTank.this.dialog.setCursor(Table.WAIT_CURSOR);
-                        while(running.get()) {
+                        AIThinkTank.this.table.getBoardPanel().updateBoardPanelCursor(WAIT_CURSOR);
+                        AIThinkTank.this.dialog.setCursor(WAIT_CURSOR);
+                        while(running.get() && !this.table.stopAI) {
                             if (this.table.getGameBoard().currentPlayer().isTimeOut()) {
                                 miniMax.gamEndTimeOut();
                             }
                             AIThinkTank.this.publish((int)(((float)miniMax.getMoveCount() / AIThinkTank.this.max) * 100));//publish the progress
                         }
+                        if (this.table.stopAI) {
+                            this.table.setAIThinking(false);
+                        }
                         //so 100% progress is shown
                         try {
                             sleep(100);
                             AIThinkTank.this.dialog.dispose();
-                            AIThinkTank.this.table.getBoardPanel().updateBoardPanelCursor(Table.MOVE_CURSOR);
+                            AIThinkTank.this.table.getBoardPanel().updateBoardPanelCursor(MOVE_CURSOR);
                         } catch (final InterruptedException e) {
                             e.printStackTrace();
                         }
@@ -346,10 +357,13 @@ public final class Table {
         public void done() {
             try {
                 final Move bestMove = this.get();
-                if (bestMove.equals(MoveFactory.getNullMove())) {
+                if (bestMove.equals(MoveFactory.getNullMove()) || this.table.stopAI) {
+                    this.table.stopAI = false;
                     this.table.setAIThinking(false);
+                    this.table.updateComputerMove(null);
                     return ;
                 }
+                this.table.setAIThinking(false);
                 this.table.updateComputerMove(bestMove);
                 this.table.updateHumanMove(null);
                 this.table.updateGameBoard(this.table.getGameBoard().currentPlayer().makeMove(bestMove).getLatestBoard());
@@ -358,7 +372,6 @@ public final class Table {
                 this.table.getTakenPiecesPanel().redo(this.table.getMoveLog());
                 this.table.getBoardPanel().drawBoard(this.table.getGameBoard());
                 this.table.moveMadeUpdate();
-                this.table.setAIThinking(false);
             } catch (final ExecutionException | InterruptedException e) { e.printStackTrace(); }
         }
     }
@@ -377,6 +390,21 @@ public final class Table {
         this.getGameHistoryPanel().redo(this.getGameBoard(), this.getMoveLog());
         this.getTakenPiecesPanel().redo(this.getMoveLog());
         this.getBoardPanel().drawBoard(this.getGameBoard());
+    }
+
+    private void undoPlayerMove() {
+        if (this.getGameSetup().isAIPlayer(this.getGameBoard().currentPlayer())
+                && !this.getGameSetup().isAIPlayer(this.getGameBoard().currentPlayer().getOpponent())) {
+            this.stopAI = true;
+            this.undoLastMove();
+        } else if (!this.getGameSetup().isAIPlayer(this.getGameBoard().currentPlayer())
+                && this.getGameSetup().isAIPlayer(this.getGameBoard().currentPlayer().getOpponent())) {
+            this.getMoveLog().removeMove();
+            this.undoLastMove();
+        } else if (!this.getGameSetup().isAIPlayer(this.getGameBoard().currentPlayer())
+                && !this.getGameSetup().isAIPlayer(this.getGameBoard().currentPlayer().getOpponent())) {
+            this.undoLastMove();
+        }
     }
 
     private void undoAllMoves() {
@@ -402,13 +430,13 @@ public final class Table {
         showAIMoveCheckBox.setState(true);
         includeTimerCheckBox.setState(true);
 
-        legalMoveHighlighterCheckBox.addActionListener(e -> Table.this.enableHighLightMoves(legalMoveHighlighterCheckBox.isSelected()));
-        AIThinkingProgressBarCheckBox.addActionListener(e -> Table.this.setShowAIThinking(AIThinkingProgressBarCheckBox.isSelected()));
-        showAIMoveCheckBox.addActionListener(e -> Table.this.setShowAIMove(showAIMoveCheckBox.isSelected()));
-        showHumanMoveCheckBox.addActionListener(e -> Table.this.setShowHumanMove(showHumanMoveCheckBox.isSelected()));
+        legalMoveHighlighterCheckBox.addActionListener(e -> this.enableHighLightMoves(legalMoveHighlighterCheckBox.isSelected()));
+        AIThinkingProgressBarCheckBox.addActionListener(e -> this.setShowAIThinking(AIThinkingProgressBarCheckBox.isSelected()));
+        showAIMoveCheckBox.addActionListener(e -> this.setShowAIMove(showAIMoveCheckBox.isSelected()));
+        showHumanMoveCheckBox.addActionListener(e -> this.setShowHumanMove(showHumanMoveCheckBox.isSelected()));
         includeTimerCheckBox.addActionListener(e -> {
-            Table.this.getGameTimerPanel().setIncludeTimer(includeTimerCheckBox.isSelected());
-            Table.this.includeTimer(includeTimerCheckBox.isSelected());
+            this.getGameTimerPanel().setIncludeTimer(includeTimerCheckBox.isSelected());
+            this.includeTimer(includeTimerCheckBox.isSelected());
         });
 
         preferenceMenu.add(legalMoveHighlighterCheckBox);
@@ -430,19 +458,22 @@ public final class Table {
         final JMenuItem flipBoardMenuItem = new JMenuItem("Flip board");
 
         setupGameMenuItem.addActionListener(e -> {
-            Table.this.getGameSetup().promptUser();
-            Table.this.setupUpdate();
+            this.getGameSetup().promptUser();
+            if (!this.getGameSetup().isAIPlayer(this.getGameBoard().currentPlayer()) && !this.stopAI) {
+                this.stopAI = true;
+            }
+            this.setupUpdate();
         });
         setupTimerMenuItem.addActionListener(e -> {
-            Table.this.getTimerSetup().promptUser();
-            Table.this.timerSetupUpdate();
+            this.getTimerSetup().promptUser();
+            this.timerSetupUpdate();
         });
         undoMoveMenuItem.addActionListener(e -> {
-            if(Table.this.getMoveLog().size() > 0) { Table.this.undoLastMove(); }
+            if(this.getMoveLog().size() > 0) { this.undoPlayerMove(); }
         });
         flipBoardMenuItem.addActionListener(e -> {
-            Table.this.setBoardDirection(Table.this.getBoardDirection().opposite());
-            Table.this.getBoardPanel().drawBoard(Table.this.getGameBoard());
+            this.setBoardDirection(this.getBoardDirection().opposite());
+            this.getBoardPanel().drawBoard(this.getGameBoard());
         });
 
         optionMenu.add(undoMoveMenuItem);
@@ -522,9 +553,9 @@ public final class Table {
 
     private void reInitTimerPanel() {
         this.getGameTimerPanel().setTerminateTimer(false);
-        this.getGameFrame().remove(Table.this.getGameTimerPanel());
+        this.getGameFrame().remove(this.getGameTimerPanel());
         this.renewTimerPanel(new GameTimerPanel(this));
-        this.getGameFrame().add(Table.this.getGameTimerPanel(), BorderLayout.SOUTH);
+        this.getGameFrame().add(this.getGameTimerPanel(), BorderLayout.SOUTH);
         this.startCountDownTimer();
     }
 
@@ -533,28 +564,28 @@ public final class Table {
 
         final JMenuItem newGameMenuItem = new JMenuItem("New Game");
         newGameMenuItem.addActionListener(e -> {
-            Table.this.AIThinking = false;
-            final int confirmedRestart = JOptionPane.showConfirmDialog(Table.this.getBoardPanel(), "Are you sure you want to restart game without saving?", "Restart Game", JOptionPane.YES_NO_CANCEL_OPTION);
+            this.AIThinking = false;
+            final int confirmedRestart = JOptionPane.showConfirmDialog(this.getBoardPanel(), "Are you sure you want to restart game without saving?", "Restart Game", JOptionPane.YES_NO_CANCEL_OPTION);
             if (confirmedRestart == JOptionPane.YES_OPTION) {
-                Table.this.getGameTimerPanel().setResumeEnabled(false);
-                Table.this.restartGame(Board.createStandardBoard(BoardUtils.DEFAULT_TIMER_MINUTE, BoardUtils.DEFAULT_TIMER_SECOND));
-                Table.this.getGameTimerPanel().setResumeEnabled(true);
+                this.getGameTimerPanel().setResumeEnabled(false);
+                this.restartGame(Board.createStandardBoard(BoardUtils.DEFAULT_TIMER_MINUTE, BoardUtils.DEFAULT_TIMER_SECOND));
+                this.getGameTimerPanel().setResumeEnabled(true);
                 this.reInitTimerPanel();
             } else if (confirmedRestart == JOptionPane.NO_OPTION) {
-                Table.this.getGameTimerPanel().setResumeEnabled(false);
-                FenUtilities.writeMoveToFiles(Table.this.getMoveLog());
-                Table.this.restartGame(Board.createStandardBoard(BoardUtils.DEFAULT_TIMER_MINUTE, BoardUtils.DEFAULT_TIMER_SECOND));
-                Table.this.getGameTimerPanel().setResumeEnabled(true);
+                this.getGameTimerPanel().setResumeEnabled(false);
+                FenUtilities.writeMoveToFiles(this.getMoveLog());
+                this.restartGame(Board.createStandardBoard(BoardUtils.DEFAULT_TIMER_MINUTE, BoardUtils.DEFAULT_TIMER_SECOND));
+                this.getGameTimerPanel().setResumeEnabled(true);
                 this.reInitTimerPanel();
             }
         });
 
         final JMenuItem loadGameMenuItem = new JMenuItem("Load Saved Game");
         loadGameMenuItem.addActionListener(e -> {
-            final int confirmLoadGame = JOptionPane.showConfirmDialog(Table.this.getBoardPanel(), "Confirm to load previous game?", "Load Game", JOptionPane.YES_NO_CANCEL_OPTION);
+            final int confirmLoadGame = JOptionPane.showConfirmDialog(this.getBoardPanel(), "Confirm to load previous game?", "Load Game", JOptionPane.YES_NO_CANCEL_OPTION);
 
             if(confirmLoadGame == JOptionPane.YES_OPTION) {
-                Table.this.getGameTimerPanel().setResumeEnabled(false);
+                this.getGameTimerPanel().setResumeEnabled(false);
                 this.undoAllMoves();
                 this.getMoveLog().addAll(FenUtilities.readFile());
                 this.getGameTimerPanel().setTerminateTimer(true);
@@ -567,38 +598,38 @@ public final class Table {
                 this.getGameHistoryPanel().redo(this.getGameBoard(), this.getMoveLog());
                 this.getTakenPiecesPanel().redo(this.getMoveLog());
                 this.setGameEnded(false);
-                if (Table.this.getGameBoard().currentPlayer().getLeague().isBlack()) {
-                    JOptionPane.showConfirmDialog(Table.this.getBoardPanel(), "Black to move", "Welcome", JOptionPane.YES_NO_CANCEL_OPTION);
+                if (this.getGameBoard().currentPlayer().getLeague().isBlack()) {
+                    JOptionPane.showConfirmDialog(this.getBoardPanel(), "Black to move", "Welcome", JOptionPane.YES_NO_CANCEL_OPTION);
                 } else {
-                    JOptionPane.showConfirmDialog(Table.this.getBoardPanel(), "White to move", "Welcome", JOptionPane.YES_NO_CANCEL_OPTION);
+                    JOptionPane.showConfirmDialog(this.getBoardPanel(), "White to move", "Welcome", JOptionPane.YES_NO_CANCEL_OPTION);
                 }
-                Table.this.getGameTimerPanel().setResumeEnabled(true);
+                this.getGameTimerPanel().setResumeEnabled(true);
                 this.reInitTimerPanel();
             }
         });
 
         final JMenuItem saveGameMenuItem = new JMenuItem("Save Game");
         saveGameMenuItem.addActionListener(e -> {
-            final int confirmSave = JOptionPane.showConfirmDialog(Table.this.getBoardPanel(), "Confirm to save this game?", "Save Game", JOptionPane.YES_NO_CANCEL_OPTION);
+            final int confirmSave = JOptionPane.showConfirmDialog(this.getBoardPanel(), "Confirm to save this game?", "Save Game", JOptionPane.YES_NO_CANCEL_OPTION);
             if (confirmSave == JOptionPane.YES_OPTION) {
-                FenUtilities.writeMoveToFiles(Table.this.getMoveLog());
-                JOptionPane.showMessageDialog(Table.this.getGameFrame(), "Game Saved!");
+                FenUtilities.writeMoveToFiles(this.getMoveLog());
+                JOptionPane.showMessageDialog(this.getGameFrame(), "Game Saved!");
                 loadGameMenuItem.setVisible(true);
             }
         });
 
         final JMenuItem exitMenuItem = new JMenuItem("Exit game");
         exitMenuItem.addActionListener(e -> {
-            final int confirmedExit = JOptionPane.showConfirmDialog(Table.this.getBoardPanel(), "Are you sure you want to quit game without saving?","Exit Game", JOptionPane.YES_NO_CANCEL_OPTION);
+            final int confirmedExit = JOptionPane.showConfirmDialog(this.getBoardPanel(), "Are you sure you want to quit game without saving?","Exit Game", JOptionPane.YES_NO_CANCEL_OPTION);
             if (confirmedExit == JOptionPane.YES_OPTION) {
                 System.exit(0);
             } else if (confirmedExit == JOptionPane.NO_OPTION) {
-                FenUtilities.writeMoveToFiles(Table.this.getMoveLog());
+                FenUtilities.writeMoveToFiles(this.getMoveLog());
                 System.exit(0);
             }
         });
 
-        if (!FenUtilities.file.exists()) { loadGameMenuItem.setVisible(false); }
+        if (!FenUtilities.FILE.exists()) { loadGameMenuItem.setVisible(false); }
 
         gameMenu.add(newGameMenuItem);
         gameMenu.add(saveGameMenuItem);
@@ -644,22 +675,14 @@ public final class Table {
             List<TilePanel> traverse(final List<TilePanel> boardTiles) { return Collections.unmodifiableList(boardTiles); }
 
             @Override
-            BoardDirection opposite() {
-                return FLIPPED;
-            }
+            BoardDirection opposite() { return FLIPPED; }
         },
         FLIPPED {
             @Override
-            List<TilePanel> traverse(final List<TilePanel> boardTiles) {
-                final List<TilePanel> reversePanel = new ArrayList<>(boardTiles);
-                Collections.reverse(reversePanel);
-                return Collections.unmodifiableList(reversePanel);
-            }
+            List<TilePanel> traverse(final List<TilePanel> boardTiles) { return Lists.reverse(boardTiles); }
 
             @Override
-            BoardDirection opposite() {
-                return NORMAL;
-            }
+            BoardDirection opposite() { return NORMAL; }
         };
 
         abstract List<TilePanel> traverse(final List<TilePanel> boardTiles);
@@ -702,7 +725,7 @@ public final class Table {
 
                                 Table.this.updateGameBoard(transition.getLatestBoard());
                                 if (move instanceof PawnPromotion) {
-                                    TilePanel.this.boardPanel.updateBoardPanelCursor(Table.MOVE_CURSOR);
+                                    TilePanel.this.boardPanel.updateBoardPanelCursor(MOVE_CURSOR);
                                     //display pawn promotion interface
                                     Table.this.updateGameBoard(((PawnPromotion)move).promotePawn(Table.this.getGameBoard()));
                                 }
@@ -719,10 +742,11 @@ public final class Table {
                                     Table.this.displayEndGameMessage();
                                 }
                                 else if (Table.this.getGameSetup().isAIPlayer(Table.this.getGameBoard().currentPlayer())) {
+                                    Table.this.stopAI = false;
                                     Table.this.moveMadeUpdate();
                                 }
                             });
-                            TilePanel.this.boardPanel.updateBoardPanelCursor(Table.MOVE_CURSOR);
+                            TilePanel.this.boardPanel.updateBoardPanelCursor(MOVE_CURSOR);
                             Table.this.humanMovePiece = null;
                             Table.this.setMouseEnteredHighlightMoves(true);
                         }
@@ -779,7 +803,7 @@ public final class Table {
                             if (transition.getMoveStatus().isDone()) {
                                 Table.this.updateGameBoard(transition.getLatestBoard());
                                 if (move instanceof PawnPromotion) {
-                                    TilePanel.this.boardPanel.updateBoardPanelCursor(Table.MOVE_CURSOR);
+                                    TilePanel.this.boardPanel.updateBoardPanelCursor(MOVE_CURSOR);
                                     //display pawn promotion interface
                                     Table.this.updateGameBoard(((PawnPromotion)move).promotePawn(Table.this.getGameBoard()));
                                 }
@@ -795,11 +819,12 @@ public final class Table {
                                     Table.this.displayEndGameMessage();
                                 }
                                 else if (Table.this.getGameSetup().isAIPlayer(Table.this.getGameBoard().currentPlayer())) {
+                                    Table.this.stopAI = false;
                                     Table.this.moveMadeUpdate();
                                 }
                             });
                         }
-                        TilePanel.this.boardPanel.updateBoardPanelCursor(Table.MOVE_CURSOR);
+                        TilePanel.this.boardPanel.updateBoardPanelCursor(MOVE_CURSOR);
                         Table.this.humanMovePiece = null;
                     }
                     Table.this.setMouseEnteredHighlightMoves(true);
