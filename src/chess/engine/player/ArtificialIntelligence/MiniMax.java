@@ -20,7 +20,7 @@ import java.util.concurrent.TimeUnit;
 
 import static chess.engine.board.BoardUtils.mostValuableVictimLeastValuableAggressor;
 
-public class MiniMax {
+public final class MiniMax {
 
     private final StandardBoardEvaluation evaluator;
     private final int searchDepth, nThreads;

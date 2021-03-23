@@ -1,3 +1,8 @@
+## NOTE: **Archived this repo, for latest code, check out the link below** 
+
+https://github.com/GervinFung/LibGDX-Chess-Game
+
+
 A simple 2 player chess AI that implemented minimax & alpha-beta pruning & move-ordering & pawn structure analysis to fully optimise the AI with a proper FEN file format
 
 I screwed up my previous chess game with bad design and without planning ahead

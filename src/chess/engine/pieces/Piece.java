@@ -36,7 +36,6 @@ public abstract class Piece implements Serializable {
         return result;
     }
 
-    //prior to JDK 7, a manual hashCode is needed
     @Override
     public int hashCode() { return this.hashCode; }
 

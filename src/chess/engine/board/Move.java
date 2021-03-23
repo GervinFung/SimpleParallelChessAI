@@ -4,15 +4,7 @@ import chess.engine.pieces.Pawn;
 import chess.engine.pieces.Piece;
 import chess.engine.pieces.Rook;
 
-import javax.imageio.ImageIO;
-import javax.swing.ImageIcon;
-import javax.swing.JOptionPane;
-
-import java.awt.Image;
-import java.io.IOException;
 import java.io.Serializable;
-import java.util.List;
-import java.util.Objects;
 
 import static chess.engine.board.Board.*;
 
@@ -73,6 +65,8 @@ public abstract class Move implements Serializable {
     public boolean isAttack() { return false; }
 
     public boolean isCastlingMove() { return false; }
+
+    public boolean isPromotionMove() { return false; }
 
     public Piece getAttackedPiece() { return null; }
 
@@ -243,22 +237,14 @@ public abstract class Move implements Serializable {
             this.MinimaxPromotionPiece = MinimaxPromotionPiece;
         }
 
+        public void setPromotedPiece(final Piece piece) { this.promotedPiece = piece; }
+
         public Move getDecoratedMove() { return this.decoratedMove; }
+        public Piece getPromotedPiece() { return this.promotedPiece; }
+        public Pawn getPromotedPawn() { return this.promotedPawn; }
 
-        public Board promotePawn(final Board board) {
-            //promotion take a move, which the move flips player turn after executed, so this should not flip again
-            final Builder builder = new Builder(this.board.getMoveCount() + 1, board.currentPlayer().getLeague(), null)
-                            .updateWhiteTimer(this.board.whitePlayer().getMinute(), this.board.whitePlayer().getSecond())
-                            .updateBlackTimer(this.board.blackPlayer().getMinute(), this.board.blackPlayer().getSecond());
-
-            board.currentPlayer().getActivePieces().stream().filter(piece -> !this.promotedPawn.equals(piece)).forEach(builder::setPiece);
-            board.currentPlayer().getOpponent().getActivePieces().forEach(builder::setPiece);
-
-            this.promotedPiece = startPromotion();
-            builder.setPiece(this.promotedPiece.movedPiece(this));
-            builder.setTransitionMove(this);
-            return builder.build();
-        }
+        @Override
+        public boolean isPromotionMove() { return true; }
 
         @Override
         public Board execute() {
@@ -274,32 +260,6 @@ public abstract class Move implements Serializable {
             this.promotedPiece = this.MinimaxPromotionPiece;
             builder.setPiece(this.MinimaxPromotionPiece.movedPiece(this));
             return builder.build();
-        }
-
-        private ImageIcon[] pawnPromotionInterface(final List<Piece> getPromotionPieces) {
-            final ImageIcon[] icons = new ImageIcon[4];
-            for (int i = 0; i < 4; i++) {
-
-                try {
-                    final Image image = ImageIO.read(Objects.requireNonNull(getClass().getClassLoader().getResource(BoardUtils.imagePath(getPromotionPieces.get(i)))));
-                    icons[i] = new ImageIcon(image);
-                } catch (final IOException | NullPointerException e) { System.err.println("Invalid Path"); }
-
-            }
-            return icons;
-        }
-
-        private Piece startPromotion() {
-            final List<Piece> getPromotionPieces = this.promotedPawn.getPromotionPieces(this.destinationCoordinate);
-            final ImageIcon[] icons = pawnPromotionInterface(getPromotionPieces);
-            JOptionPane.showMessageDialog(null, "You only have 1 chance to promote your pawn\nChoose wisely");
-            while (true) {
-                final int promoteOption = JOptionPane.showOptionDialog(null, null, "Pawn Promotion", JOptionPane.DEFAULT_OPTION, JOptionPane.PLAIN_MESSAGE, null, icons, null);
-                if (promoteOption >= 0 && promoteOption <= 3) {
-                    return getPromotionPieces.get(promoteOption);
-                }
-                JOptionPane.showMessageDialog(null, "You must promote your pawn");
-            }
         }
 
         @Override

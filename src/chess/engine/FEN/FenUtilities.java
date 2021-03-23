@@ -16,7 +16,7 @@ import java.io.ObjectOutputStream;
 
 import static chess.engine.board.Board.*;
 
-public class FenUtilities {
+public final class FenUtilities {
 
     private FenUtilities() {
         throw new RuntimeException("Non instantiable");

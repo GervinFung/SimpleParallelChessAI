@@ -175,7 +175,7 @@ public final class Table {
 
     private void enableHighLightMoves(final boolean highlightLegalMoves) { this.highlightLegalMoves = highlightLegalMoves; }
 
-    private void updateGameBoard(final Board board) { this.chessBoard = board; }
+    protected void updateGameBoard(final Board board) { this.chessBoard = board; }
 
     private void startCountDownTimer() { this.gameTimerPanel.getTimer().start(); }
 
@@ -724,10 +724,10 @@ public final class Table {
                             if (transition.getMoveStatus().isDone()) {
 
                                 Table.this.updateGameBoard(transition.getLatestBoard());
-                                if (move instanceof PawnPromotion) {
+                                if (move.isPromotionMove()) {
                                     TilePanel.this.boardPanel.updateBoardPanelCursor(MOVE_CURSOR);
                                     //display pawn promotion interface
-                                    Table.this.updateGameBoard(((PawnPromotion)move).promotePawn(Table.this.getGameBoard()));
+                                    new PawnPromotionPane().promotePawn(Table.this, (PawnPromotion)move);
                                 }
                                 Table.this.getMoveLog().addMove(move);
                                 Table.this.updateHumanMove(move);
@@ -802,10 +802,10 @@ public final class Table {
                             final MoveTransition transition = Table.this.getGameBoard().currentPlayer().makeMove(move);
                             if (transition.getMoveStatus().isDone()) {
                                 Table.this.updateGameBoard(transition.getLatestBoard());
-                                if (move instanceof PawnPromotion) {
+                                if (move.isPromotionMove()) {
                                     TilePanel.this.boardPanel.updateBoardPanelCursor(MOVE_CURSOR);
-                                    //display pawn promotion interface
-                                    Table.this.updateGameBoard(((PawnPromotion)move).promotePawn(Table.this.getGameBoard()));
+                                    //display pawn promotion interfacez
+                                    new PawnPromotionPane().promotePawn(Table.this, (PawnPromotion)move);
                                 }
                                 Table.this.getMoveLog().addMove(move);
                                 Table.this.updateHumanMove(move);
@@ -889,7 +889,7 @@ public final class Table {
 
                     final int coordinate = move.getDestinationCoordinate();
                     Color tileColor;
-                    if (move.isAttack() || move instanceof PawnPromotion && ((PawnPromotion)move).getDecoratedMove().isAttack()) {
+                    if (move.isAttack() || move.isPromotionMove() && ((PawnPromotion)move).getDecoratedMove().isAttack()) {
                         //dark red
                         this.boardPanel.getBoardTiles().get(coordinate).setBackground(new Color(204, 0, 0));
                     } else {

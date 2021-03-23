@@ -7,7 +7,7 @@ import chess.engine.player.Player;
 import java.util.Collection;
 import java.util.stream.Collectors;
 
-public class PawnStructureAnalyse {
+public final class PawnStructureAnalyse {
 
     public static final int ISOLATED_PAWN_PENALTY = -10;
     public static final int DOUBLED_PAWN_PENALTY = -10;
