@@ -23,6 +23,8 @@ import java.awt.GridBagLayout;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.io.IOException;
@@ -94,6 +96,21 @@ public final class Table {
 
     private Table() {
         this.gameFrame = new JFrame("Simple Chess");
+        this.gameFrame.addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(final WindowEvent e) {
+                final int option = JOptionPane.showConfirmDialog(
+                        Table.this.gameFrame,
+                        "Are you sure you want to quit?",
+                        "Confirmation to Quit Game",
+                        JOptionPane.YES_NO_CANCEL_OPTION);
+                if (option == JOptionPane.YES_OPTION) {
+                    Table.this.gameFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+                } else {
+                    Table.this.gameFrame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+                }
+            }
+        });
         this.gameFrame.setResizable(false);
         this.gameFrame.setLayout(new BorderLayout());
         this.chessBoard = Board.createStandardBoard(BoardUtils.DEFAULT_TIMER_MINUTE, BoardUtils.DEFAULT_TIMER_SECOND);
@@ -112,7 +129,6 @@ public final class Table {
         this.gameFrame.add(this.gameHistoryPanel, BorderLayout.WEST);
         this.gameFrame.setJMenuBar(tableMenuBar);
         this.gameFrame.setSize(OUTER_FRAME_DIMENSION);
-        this.gameFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         this.gameFrame.setLocationRelativeTo(null);
         this.gameFrame.setResizable(false);
         this.gameFrame.setVisible(true);
@@ -146,7 +162,7 @@ public final class Table {
                 final int minute = this.getTimerSetup().getMinute();
                 final int second = this.getTimerSetup().getSecond();
                 final Board.Builder builder = new Board.Builder(this.getGameBoard().getMoveCount(), this.getGameBoard().currentPlayer().getLeague(), this.getGameBoard().getEnPassantPawn())
-                                            .updateWhiteTimer(minute, second).updateBlackTimer(minute, second);
+                        .updateWhiteTimer(minute, second).updateBlackTimer(minute, second);
                 this.getGameBoard().getAllPieces().forEach(builder::setPiece);
                 this.updateGameBoard(builder.build());
                 this.reInitTimerPanel();
@@ -270,7 +286,7 @@ public final class Table {
         this.getGameHistoryPanel().redo(this.getGameBoard(), this.getMoveLog());
         this.getTakenPiecesPanel().redo(this.getMoveLog());
         this.getBoardPanel().drawBoard(this.getGameBoard());
-        JOptionPane.showConfirmDialog(this.gameFrame, "1. Left press and release to move the piece\n2. Right click to move the piece from one tile to another");
+        JOptionPane.showConfirmDialog(this.gameFrame, "1. Left press and release to move the piece\n2. Right click to move the piece from one tile to another", "First things first", JOptionPane.DEFAULT_OPTION);
         this.updateGameBoard(this.getGameBoard());
         this.startCountDownTimer();
     }
