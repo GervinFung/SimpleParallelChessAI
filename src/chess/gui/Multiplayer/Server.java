@@ -77,7 +77,6 @@ public class Server extends JFrame {
 
         setVisible(true);
         // Start Server
-        System.out.println("Started port at : "+port);
         startServer(port);
     }
 
