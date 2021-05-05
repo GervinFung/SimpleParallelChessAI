@@ -9,6 +9,7 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.GridLayout;
+import java.io.IOException;
 
 public final class GameTimerPanel extends JPanel implements Runnable{
 
@@ -66,7 +67,7 @@ public final class GameTimerPanel extends JPanel implements Runnable{
         }
     }
 
-    protected void setTerminateTimer(final boolean terminate) { this.terminate = terminate; }
+    public void setTerminateTimer(final boolean terminate) { this.terminate = terminate; }
 
     @Override
     public void run() {
@@ -94,7 +95,13 @@ public final class GameTimerPanel extends JPanel implements Runnable{
                 } catch (final InterruptedException e) { e.printStackTrace(); }
             }
         }
-        if (isGameEnd() && !this.terminate && this.table.getGameSetup().isAIPlayer(this.table.getGameBoard().currentPlayer())) { this.table.displayEndGameMessage(); }
+        if (isGameEnd() && !this.terminate && this.table.getGameSetup().isAIPlayer(this.table.getGameBoard().currentPlayer())) {
+            try {
+                this.table.displayEndGameMessage();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     private static final class TimerPanel extends JPanel {
