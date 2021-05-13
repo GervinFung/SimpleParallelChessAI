@@ -8,7 +8,6 @@ import chess.engine.board.MoveLog;
 import chess.engine.pieces.Piece;
 import chess.engine.board.MoveTransition;
 import chess.engine.player.ArtificialIntelligence.MiniMax;
-import chess.gui.Multiplayer.MultiServerThread;
 import com.google.common.collect.Lists;
 
 import javax.imageio.ImageIO;
@@ -22,10 +21,12 @@ import java.awt.Image;
 import java.awt.Toolkit;
 import java.awt.GridBagLayout;
 import java.awt.GridLayout;
-import java.awt.event.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
-import java.io.BufferedReader;
 import java.io.IOException;
 
 import javax.swing.JPanel;
@@ -42,8 +43,9 @@ import javax.swing.ImageIcon;
 import javax.swing.JProgressBar;
 import javax.swing.JDialog;
 
-import java.io.InputStreamReader;
-import java.net.Socket;
+import java.awt.event.MouseListener;
+import java.awt.event.MouseEvent;
+
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -65,18 +67,13 @@ public final class Table {
     private final MoveLog moveLog;
     private final GameSetup gameSetup;
     private final TimerSetup timerSetup;
-    public JMenu gameMenu;
-    public JMenu preferenceMenu;
-    public JMenu optionMenu;
-    private Socket socket;
-    private MultiServerThread multiServerThread;
-    private BufferedReader in;
 
-    private boolean highlightLegalMoves, showAIThinking, AIThinking, gameEnded, includeTimer, mouseEnabled, isOnline;
+    private boolean highlightLegalMoves, showAIThinking, AIThinking, gameEnded, includeTimer;
     private boolean mouseEnteredHighlightMoves, showHumanMove, showAIMove, mouseClicked;
     private volatile boolean stopAI;
     private final GameHistoryPanel gameHistoryPanel;
     private final TakenPiecePanel takenPiecePanel;
+
     private int mousePressedX, mousePressedY, mouseClickedID;
 
     private Piece humanMovePiece;
@@ -97,8 +94,23 @@ public final class Table {
 
     private GameTimerPanel gameTimerPanel;
 
-    public Table() {
+    private Table() {
         this.gameFrame = new JFrame("Simple Chess");
+        this.gameFrame.addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(final WindowEvent e) {
+                final int option = JOptionPane.showConfirmDialog(
+                        Table.this.gameFrame,
+                        "Are you sure you want to quit?",
+                        "Confirmation to Quit Game",
+                        JOptionPane.YES_NO_CANCEL_OPTION);
+                if (option == JOptionPane.YES_OPTION) {
+                    Table.this.gameFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+                } else {
+                    Table.this.gameFrame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+                }
+            }
+        });
         this.gameFrame.setResizable(false);
         this.gameFrame.setLayout(new BorderLayout());
         this.chessBoard = Board.createStandardBoard(BoardUtils.DEFAULT_TIMER_MINUTE, BoardUtils.DEFAULT_TIMER_SECOND);
@@ -117,7 +129,6 @@ public final class Table {
         this.gameFrame.add(this.gameHistoryPanel, BorderLayout.WEST);
         this.gameFrame.setJMenuBar(tableMenuBar);
         this.gameFrame.setSize(OUTER_FRAME_DIMENSION);
-        this.gameFrame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
         this.gameFrame.setLocationRelativeTo(null);
         this.gameFrame.setResizable(false);
         this.gameFrame.setVisible(true);
@@ -132,9 +143,6 @@ public final class Table {
         this.gameFrame.setCursor(MOVE_CURSOR);
         this.boardDirection = BoardDirection.NORMAL;
         this.stopAI = false;
-        this.in = null;
-        this.socket = null;
-        this.mouseEnabled = true;
         //a property change listener for AI, as Observable is deprecated
         final PropertyChangeListener gameSetupPropertyChangeListener = propertyChangeEvent -> {
             if (this.getGameSetup().isAIPlayer(this.getGameBoard().currentPlayer()) &&
@@ -144,11 +152,7 @@ public final class Table {
                     new AIThinkTank(this).execute();
                 }
             }
-            try {
-                this.displayEndGameMessage();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+            this.displayEndGameMessage();
         };
 
         //a property change listener for Timer, as Observable is deprecated
@@ -176,69 +180,26 @@ public final class Table {
 
         this.lightTileColor = new Color(240, 217, 181);
         this.darkTileColor = new Color(181, 136, 99);
-
-
-        this.gameFrame.addWindowListener(new WindowAdapter() {
-            @Override
-            public void windowClosing(final WindowEvent e) {
-                final int option = JOptionPane.showConfirmDialog(
-                        Table.this.gameFrame,
-                        "Are you sure you want to quit?",
-                        "Confirmation to Quit Game",
-                        JOptionPane.YES_NO_CANCEL_OPTION);
-                if (option == JOptionPane.YES_OPTION) {
-                    // If player is online, close connection
-                    if (isOnline) {
-                        try {
-                            multiServerThread.exit(true);
-                        } catch (IOException ioException) {
-                            ioException.printStackTrace();
-                        }
-                    } else {
-                        System.exit(0);
-                    }
-                }
-            }
-        });
     }
-
 
     //setter
-    private void setAIThinking(final boolean AIThinking) {
-        this.AIThinking = AIThinking;
-    }
+    private void setAIThinking(final boolean AIThinking) { this.AIThinking = AIThinking; }
 
-    private void setMouseEnteredHighlightMoves(final boolean mouseEnteredHighlightMoves) {
-        this.mouseEnteredHighlightMoves = mouseEnteredHighlightMoves;
-    }
+    private void setMouseEnteredHighlightMoves(final boolean mouseEnteredHighlightMoves) { this.mouseEnteredHighlightMoves = mouseEnteredHighlightMoves; }
 
-    private void setShowAIThinking(final boolean showAIThinking) {
-        this.showAIThinking = showAIThinking;
-    }
+    private void setShowAIThinking(final boolean showAIThinking) { this.showAIThinking = showAIThinking; }
 
-    private void enableHighLightMoves(final boolean highlightLegalMoves) {
-        this.highlightLegalMoves = highlightLegalMoves;
-    }
+    private void enableHighLightMoves(final boolean highlightLegalMoves) { this.highlightLegalMoves = highlightLegalMoves; }
 
-    public void updateGameBoard(final Board board) {
-        this.chessBoard = board;
-    }
+    protected void updateGameBoard(final Board board) { this.chessBoard = board; }
 
-    private void startCountDownTimer() {
-        this.gameTimerPanel.getTimer().start();
-    }
+    private void startCountDownTimer() { this.gameTimerPanel.getTimer().start(); }
 
-    public void setBoardDirection(final BoardDirection boardDirection) {
-        this.boardDirection = boardDirection;
-    }
+    private void setBoardDirection(final BoardDirection boardDirection) { this.boardDirection = boardDirection; }
 
-    private void updateComputerMove(final Move move) {
-        this.computerMove = move;
-    }
+    private void updateComputerMove(final Move move) { this.computerMove = move; }
 
-    private void updateHumanMove(final Move move) {
-        this.humanMove = move;
-    }
+    private void updateHumanMove(final Move move) { this.humanMove = move; }
 
     private void setShowHumanMove(final boolean showHumanMove) {
         this.showHumanMove = showHumanMove;
@@ -250,118 +211,55 @@ public final class Table {
         this.getBoardPanel().drawBoard(this.chessBoard);
     }
 
-    private void renewTimerPanel(final GameTimerPanel gameTimerPanel) {
-        this.gameTimerPanel = gameTimerPanel;
-    }
+    private void renewTimerPanel(final GameTimerPanel gameTimerPanel) { this.gameTimerPanel = gameTimerPanel; }
 
-    private void includeTimer(final boolean renewTimer) {
-        this.includeTimer = renewTimer;
-    }
+    private void includeTimer(final boolean renewTimer) { this.includeTimer = renewTimer; }
 
-    private void setGameEnded(final boolean gameEnded) {
-        this.gameEnded = gameEnded;
-    }
-
-    public void setStatus(boolean isOnline) {
-        this.isOnline = isOnline;
-    }
-
-    public void setMultiServerThread(MultiServerThread multiServerThread) {
-        this.multiServerThread = multiServerThread;
-    }
-
-    public void setMouseEnabled(boolean mouseEnabled) {
-        this.mouseEnabled = mouseEnabled;
-    }
+    private void setGameEnded(final boolean gameEnded) { this.gameEnded = gameEnded; }
 
     //getter
-    private boolean getAIThinking() {
-        return this.AIThinking;
-    }
+    private boolean getAIThinking() { return this.AIThinking; }
 
-    private boolean getMouseEnteredHighlightMoves() {
-        return this.mouseEnteredHighlightMoves;
-    }
+    private boolean getMouseEnteredHighlightMoves() { return this.mouseEnteredHighlightMoves; }
 
-    private boolean getShowAIThinking() {
-        return this.showAIThinking;
-    }
+    private boolean getShowAIThinking() { return this.showAIThinking; }
 
-    private boolean getHighLightMovesEnabled() {
-        return this.highlightLegalMoves;
-    }
+    private boolean getHighLightMovesEnabled() { return this.highlightLegalMoves; }
 
-    private boolean isGameEnded() {
-        return this.gameEnded;
-    }
+    private boolean isGameEnded() { return this.gameEnded; }
 
-    protected GameSetup getGameSetup() {
-        return this.gameSetup;
-    }
+    protected GameSetup getGameSetup() { return this.gameSetup; }
 
-    private TimerSetup getTimerSetup() {
-        return this.timerSetup;
-    }
+    private TimerSetup getTimerSetup() { return this.timerSetup; }
 
-    public Board getGameBoard() {
-        return this.chessBoard;
-    }
+    protected Board getGameBoard() { return this.chessBoard; }
 
-    public JFrame getGameFrame() {
-        return this.gameFrame;
-    }
+    private JFrame getGameFrame() { return this.gameFrame; }
 
-    public BoardPanel getBoardPanel() {
-        return this.boardPanel;
-    }
+    private BoardPanel getBoardPanel() { return this.boardPanel; }
 
-    private MoveLog getMoveLog() {
-        return this.moveLog;
-    }
+    private MoveLog getMoveLog() { return this.moveLog; }
 
-    private GameHistoryPanel getGameHistoryPanel() {
-        return this.gameHistoryPanel;
-    }
+    private GameHistoryPanel getGameHistoryPanel() { return this.gameHistoryPanel; }
 
-    private TakenPiecePanel getTakenPiecesPanel() {
-        return this.takenPiecePanel;
-    }
+    private TakenPiecePanel getTakenPiecesPanel() { return this.takenPiecePanel; }
 
-    public BoardDirection getBoardDirection() {
-        return this.boardDirection;
-    }
+    private BoardDirection getBoardDirection() { return this.boardDirection; }
 
-    private boolean getShowHumanMove() {
-        return this.showHumanMove;
-    }
+    private boolean getShowHumanMove() { return this.showHumanMove; }
 
-    private boolean getShowAIMove() {
-        return this.showAIMove;
-    }
+    private boolean getShowAIMove() { return this.showAIMove; }
 
-    public GameTimerPanel getGameTimerPanel() {
-        return this.gameTimerPanel;
-    }
+    private GameTimerPanel getGameTimerPanel() { return this.gameTimerPanel; }
 
-    private boolean isIncludeTimer() {
-        return this.includeTimer;
-    }
-
-    public boolean getStatus() {
-        return this.isOnline;
-    }
+    private boolean isIncludeTimer() { return this.includeTimer; }
 
     //singleton
-    public static Table getSingletonInstance() {
-        return SingleTon.INSTANCE;
-    }
+    public static Table getSingletonInstance() { return SingleTon.INSTANCE; }
 
+    private static final class SingleTon { private static final Table INSTANCE = new Table();}
 
-    protected static final class SingleTon {
-        private static final Table INSTANCE = new Table();
-    }
-
-    protected void displayEndGameMessage() throws IOException {
+    protected void displayEndGameMessage() {
         if (this.getGameBoard().currentPlayer().isInCheckmate()) {
             JOptionPane.showMessageDialog(this.getBoardPanel(), "Game Over: Player " + this.getGameBoard().currentPlayer() + " is in checkmate!", "Game Over", JOptionPane.INFORMATION_MESSAGE);
             this.setGameEnded(true);
@@ -381,16 +279,6 @@ public final class Table {
             this.getGameTimerPanel().setTerminateTimer(true);
             JOptionPane.showMessageDialog(this.getBoardPanel(), "From Game Menu\n1. New Game to start a new game\n2. Exit Game to exit this game", "Game Over", JOptionPane.INFORMATION_MESSAGE);
         }
-
-        // If the game has ended and the player is online
-        if (this.isGameEnded() && isOnline) {
-            multiServerThread.getOpponent().getTable().updateGameBoard(multiServerThread.getTable().getGameBoard());
-            multiServerThread.getOpponent().getTable().setMouseEnabled(true);
-            multiServerThread.getOpponent().getTable().setStatus(false);
-            multiServerThread.exit(true);
-        }
-
-
     }
 
     public void start() {
@@ -433,9 +321,7 @@ public final class Table {
         }
 
         @Override
-        protected void process(final List<Integer> chunks) {
-            this.bar.setValue(chunks.get(chunks.size() - 1));
-        }
+        protected void process(final List<Integer> chunks) { this.bar.setValue(chunks.get(chunks.size() - 1)); }
 
         private boolean shouldShowProgressBar(final Table table) {
             return table.getGameSetup().isAIPlayer(table.getGameBoard().currentPlayer())
@@ -444,7 +330,7 @@ public final class Table {
         }
 
         @Override
-        protected Move doInBackground() {
+        protected Move doInBackground(){
             try {
                 final AtomicBoolean running = new AtomicBoolean(true);
                 final MiniMax miniMax = new MiniMax(this.table.getGameSetup().getSearchDepth());
@@ -454,11 +340,11 @@ public final class Table {
                     new Thread(() -> {
                         AIThinkTank.this.table.getBoardPanel().updateBoardPanelCursor(WAIT_CURSOR);
                         AIThinkTank.this.dialog.setCursor(WAIT_CURSOR);
-                        while (running.get() && !this.table.stopAI) {
+                        while(running.get() && !this.table.stopAI) {
                             if (this.table.getGameBoard().currentPlayer().isTimeOut()) {
                                 miniMax.gamEndTimeOut();
                             }
-                            AIThinkTank.this.publish((int) (((float) miniMax.getMoveCount() / AIThinkTank.this.max) * 100));//publish the progress
+                            AIThinkTank.this.publish((int)(((float)miniMax.getMoveCount() / AIThinkTank.this.max) * 100));//publish the progress
                         }
                         if (this.table.stopAI) {
                             this.table.setAIThinking(false);
@@ -479,9 +365,7 @@ public final class Table {
                 running.lazySet(false);
                 return bestMove;
 
-            } catch (final Exception e) {
-                e.printStackTrace();
-            }
+            } catch (final Exception e) { e.printStackTrace(); }
             return null;
         }
 
@@ -493,7 +377,7 @@ public final class Table {
                     this.table.stopAI = false;
                     this.table.setAIThinking(false);
                     this.table.updateComputerMove(null);
-                    return;
+                    return ;
                 }
                 this.table.setAIThinking(false);
                 this.table.updateComputerMove(bestMove);
@@ -504,23 +388,15 @@ public final class Table {
                 this.table.getTakenPiecesPanel().redo(this.table.getMoveLog());
                 this.table.getBoardPanel().drawBoard(this.table.getGameBoard());
                 this.table.moveMadeUpdate();
-            } catch (final ExecutionException | InterruptedException e) {
-                e.printStackTrace();
-            }
+            } catch (final ExecutionException | InterruptedException e) { e.printStackTrace(); }
         }
     }
 
-    private void moveMadeUpdate() {
-        this.gameSetupPropertyChangeSupport.firePropertyChange("moveMadeUpdate", PlayerType.COMPUTER, PlayerType.HUMAN);
-    }
+    private void moveMadeUpdate() { this.gameSetupPropertyChangeSupport.firePropertyChange("moveMadeUpdate", PlayerType.COMPUTER, PlayerType.HUMAN); }
 
-    private void setupUpdate() {
-        this.gameSetupPropertyChangeSupport.firePropertyChange("setupUpdate", null, null);
-    }
+    private void setupUpdate() { this.gameSetupPropertyChangeSupport.firePropertyChange("setupUpdate", null, null); }
 
-    private void timerSetupUpdate() {
-        this.timerSetupPropertyChangeSupport.firePropertyChange("timerSetup", null, null);
-    }
+    private void timerSetupUpdate() { this.timerSetupPropertyChangeSupport.firePropertyChange("timerSetup", null, null); }
 
     private void undoLastMove() {
         final Move lastMove = this.getMoveLog().removeMove();
@@ -548,13 +424,13 @@ public final class Table {
     }
 
     private void undoAllMoves() {
-        for (int i = this.getMoveLog().size() - 1; i >= 0; i--) {
+        for(int i = this.getMoveLog().size() - 1; i >= 0; i--) {
             this.undoLastMove();
         }
     }
 
     private JMenu createPreferencesMenu() {
-        preferenceMenu = new JMenu("Preferences");
+        final JMenu preferenceMenu = new JMenu("Preferences");
 
         preferenceMenu.addSeparator();
 
@@ -590,7 +466,7 @@ public final class Table {
 
     private JMenu createOptionMenu() {
 
-        optionMenu = new JMenu("Options");
+        final JMenu optionMenu = new JMenu("Options");
 
         final JMenuItem setupGameMenuItem = new JMenuItem("Setup Game");
         final JMenuItem setupTimerMenuItem = new JMenuItem("Setup Timer");
@@ -609,9 +485,7 @@ public final class Table {
             this.timerSetupUpdate();
         });
         undoMoveMenuItem.addActionListener(e -> {
-            if (this.getMoveLog().size() > 0) {
-                this.undoPlayerMove();
-            }
+            if(this.getMoveLog().size() > 0) { this.undoPlayerMove(); }
         });
         flipBoardMenuItem.addActionListener(e -> {
             this.setBoardDirection(this.getBoardDirection().opposite());
@@ -676,7 +550,7 @@ public final class Table {
         final JMenuItem lightGreyWhiteMenuItem = new JMenuItem("Light Grey & White");
         final JMenuItem lightBlueWhiteMenuItem = new JMenuItem("Light Blue & White");
 
-        blueWhiteMenuItem.addActionListener(new BoardColor(this, new Color(29, 61, 99), Color.white, new Color(169, 169, 169), new Color(105, 105, 105)));
+        blueWhiteMenuItem.addActionListener(new BoardColor(this, new Color(29 ,61 ,99), Color.white, new Color(169, 169, 169), new Color(105, 105, 105)));
         greyWhiteMenuItem.addActionListener(new BoardColor(this, new Color(105, 105, 105), Color.white, new Color(255, 253, 156), new Color(255, 252, 84)));
         classicMenuItem.addActionListener(new BoardColor(this, new Color(240, 217, 181), new Color(181, 136, 99), new Color(169, 169, 169), new Color(105, 105, 105)));
         lightGreyWhiteMenuItem.addActionListener(new BoardColor(this, new Color(177, 179, 179), Color.white, new Color(255, 253, 156), new Color(255, 252, 84)));
@@ -702,7 +576,7 @@ public final class Table {
     }
 
     private JMenu createFileMenu() {
-        gameMenu = new JMenu("Game");
+        final JMenu gameMenu = new JMenu("Game");
 
         final JMenuItem newGameMenuItem = new JMenuItem("New Game");
         newGameMenuItem.addActionListener(e -> {
@@ -726,7 +600,7 @@ public final class Table {
         loadGameMenuItem.addActionListener(e -> {
             final int confirmLoadGame = JOptionPane.showConfirmDialog(this.getBoardPanel(), "Confirm to load previous game?", "Load Game", JOptionPane.YES_NO_CANCEL_OPTION);
 
-            if (confirmLoadGame == JOptionPane.YES_OPTION) {
+            if(confirmLoadGame == JOptionPane.YES_OPTION) {
                 this.getGameTimerPanel().setResumeEnabled(false);
                 this.undoAllMoves();
                 this.getMoveLog().addAll(FenUtilities.readFile());
@@ -762,7 +636,7 @@ public final class Table {
 
         final JMenuItem exitMenuItem = new JMenuItem("Exit game");
         exitMenuItem.addActionListener(e -> {
-            final int confirmedExit = JOptionPane.showConfirmDialog(this.getBoardPanel(), "Are you sure you want to quit game without saving?", "Exit Game", JOptionPane.YES_NO_CANCEL_OPTION);
+            final int confirmedExit = JOptionPane.showConfirmDialog(this.getBoardPanel(), "Are you sure you want to quit game without saving?","Exit Game", JOptionPane.YES_NO_CANCEL_OPTION);
             if (confirmedExit == JOptionPane.YES_OPTION) {
                 System.exit(0);
             } else if (confirmedExit == JOptionPane.NO_OPTION) {
@@ -771,57 +645,17 @@ public final class Table {
             }
         });
 
-        //Added a multiplayer section
-        final JMenuItem multiplayerMenuItem = new JMenuItem("Multiplayer");
-        multiplayerMenuItem.addActionListener(e -> {
-            final int confirmedExit = JOptionPane.showConfirmDialog(this.getBoardPanel(), "Are you sure you want go online?", "Multiplayer", JOptionPane.YES_NO_CANCEL_OPTION);
-            if (confirmedExit == JOptionPane.YES_OPTION) {
-                try {
-                    // Try to connect player
-                    socket = new Socket("127.0.0.1", 8080);
-                    in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-                    this.gameFrame.dispose();
-                    this.getGameTimerPanel().setTerminateTimer(true);
-
-                    // Waiting for player to exit multiplayer
-                    try {
-                        String word = in.readLine();
-                        if (word.equals("exit")) {
-                            socket = null;
-                            in = null;
-                            Table table = new Table();
-                            table.start();
-                        }
-
-                    } catch (IOException exception) {
-                        System.err.println("Error trying to exit multiplayer");
-                    }
-
-
-                } catch (IOException exception) {
-                    socket = null;
-                    JOptionPane.showMessageDialog(null, "Could not connect to server...");
-
-                }
-
-            }
-
-        });
-
-        if (!FenUtilities.FILE.exists()) {
-            loadGameMenuItem.setVisible(false);
-        }
+        if (!FenUtilities.FILE.exists()) { loadGameMenuItem.setVisible(false); }
 
         gameMenu.add(newGameMenuItem);
         gameMenu.add(saveGameMenuItem);
         gameMenu.add(loadGameMenuItem);
         gameMenu.add(exitMenuItem);
-        gameMenu.add(multiplayerMenuItem);
 
         return gameMenu;
     }
 
-    public final class BoardPanel extends JPanel {
+    private final class BoardPanel extends JPanel {
 
         final List<TilePanel> boardTiles;
 
@@ -836,10 +670,7 @@ public final class Table {
             this.validate();
         }
 
-        public List<TilePanel> getBoardTiles() {
-            return Collections.unmodifiableList(this.boardTiles);
-        }
-
+        public List<TilePanel> getBoardTiles() { return Collections.unmodifiableList(this.boardTiles); }
         public void drawBoard(final Board board) {
             this.removeAll();
             for (final TilePanel tilePanel : boardDirection.traverse(boardTiles)) {
@@ -849,40 +680,28 @@ public final class Table {
             this.validate();
             this.repaint();
         }
-
-        public void updateBoardPanelCursor(final Cursor cursor) {
-            this.setCursor(cursor);
-        }
+        public void updateBoardPanelCursor(final Cursor cursor) { this.setCursor(cursor); }
     }
 
     enum PlayerType {HUMAN, COMPUTER}
 
-    public enum BoardDirection {
+    enum BoardDirection {
         NORMAL {
             @Override
-            List<TilePanel> traverse(final List<TilePanel> boardTiles) {
-                return Collections.unmodifiableList(boardTiles);
-            }
+            List<TilePanel> traverse(final List<TilePanel> boardTiles) { return Collections.unmodifiableList(boardTiles); }
 
             @Override
-            BoardDirection opposite() {
-                return FLIPPED;
-            }
+            BoardDirection opposite() { return FLIPPED; }
         },
         FLIPPED {
             @Override
-            List<TilePanel> traverse(final List<TilePanel> boardTiles) {
-                return Lists.reverse(boardTiles);
-            }
+            List<TilePanel> traverse(final List<TilePanel> boardTiles) { return Lists.reverse(boardTiles); }
 
             @Override
-            BoardDirection opposite() {
-                return NORMAL;
-            }
+            BoardDirection opposite() { return NORMAL; }
         };
 
         abstract List<TilePanel> traverse(final List<TilePanel> boardTiles);
-
         abstract BoardDirection opposite();
 
     }
@@ -891,7 +710,6 @@ public final class Table {
 
         private final int tileID;
         private final BoardPanel boardPanel;
-
         private TilePanel(final BoardPanel boardPanel, final int tileID) {
             super(new GridBagLayout());
             this.tileID = tileID;
@@ -902,172 +720,130 @@ public final class Table {
             this.addMouseListener(new MouseListener() {
                 @Override
                 public void mouseClicked(final MouseEvent mouseEvent) {
-                    // If the player is allowed to play (used in multiplayer)
-                    if (mouseEnabled) {
-                        if (Table.this.isGameEnded() || Table.this.getAIThinking()) {
-                            return;
-                        }
-                        if (isRightMouseButton(mouseEvent)) {
-                            if (!Table.this.mouseClicked && Table.this.humanMovePiece != null && Table.this.humanMovePiece.getLeague() == Table.this.getGameBoard().currentPlayer().getLeague()) {
-                                Table.this.setMouseEnteredHighlightMoves(false);
-                                Table.this.mouseClickedID = TilePanel.this.tileID;
-                                Table.this.humanMovePiece = Table.this.getGameBoard().getTile(TilePanel.this.tileID).getPiece();
-                                final Image image = ((ImageIcon) ((JLabel) TilePanel.this.boardPanel.getBoardTiles().get(TilePanel.this.tileID).getComponent(0)).getIcon()).getImage();
-                                try {
-                                    TilePanel.this.boardPanel.updateBoardPanelCursor(Toolkit.getDefaultToolkit().createCustomCursor(image, new Point(mouseEvent.getX(), mouseEvent.getY()), null));
-                                    TilePanel.this.boardPanel.getBoardTiles().get(TilePanel.this.tileID).remove(0);
-                                } catch (final IndexOutOfBoundsException ignored) {
-                                }
-                                TilePanel.this.validate();
-                                TilePanel.this.repaint();
-                                Table.this.mouseClicked = true;
-                            } else if (Table.this.mouseClicked && Table.this.humanMovePiece != null && Table.this.humanMovePiece.getLeague() == Table.this.getGameBoard().currentPlayer().getLeague()) {
-                                final Move move = MoveFactory.createMove(Table.this.getGameBoard(), Table.this.humanMovePiece, Table.this.mouseClickedID, TilePanel.this.tileID);
-                                final MoveTransition transition = Table.this.getGameBoard().currentPlayer().makeMove(move);
-                                if (transition.getMoveStatus().isDone()) {
+                    if (Table.this.isGameEnded() || Table.this.getAIThinking()) { return; }
+                    if (isRightMouseButton(mouseEvent)) {
+                        if (!Table.this.mouseClicked && Table.this.humanMovePiece != null && Table.this.humanMovePiece.getLeague() == Table.this.getGameBoard().currentPlayer().getLeague()) {
+                            Table.this.setMouseEnteredHighlightMoves(false);
+                            Table.this.mouseClickedID = TilePanel.this.tileID;
+                            Table.this.humanMovePiece = Table.this.getGameBoard().getTile(TilePanel.this.tileID).getPiece();
+                            final Image image = ((ImageIcon)((JLabel) TilePanel.this.boardPanel.getBoardTiles().get(TilePanel.this.tileID).getComponent(0)).getIcon()).getImage();
+                            try {
+                                TilePanel.this.boardPanel.updateBoardPanelCursor(Toolkit.getDefaultToolkit().createCustomCursor(image, new Point(mouseEvent.getX(), mouseEvent.getY()), null));
+                                TilePanel.this.boardPanel.getBoardTiles().get(TilePanel.this.tileID).remove(0);
+                            } catch (final IndexOutOfBoundsException ignored) {}
+                            TilePanel.this.validate();
+                            TilePanel.this.repaint();
+                            Table.this.mouseClicked = true;
+                        } else if (Table.this.mouseClicked && Table.this.humanMovePiece != null && Table.this.humanMovePiece.getLeague() == Table.this.getGameBoard().currentPlayer().getLeague()) {
+                            final Move move = MoveFactory.createMove(Table.this.getGameBoard(), Table.this.humanMovePiece, Table.this.mouseClickedID, TilePanel.this.tileID);
+                            final MoveTransition transition = Table.this.getGameBoard().currentPlayer().makeMove(move);
+                            if (transition.getMoveStatus().isDone()) {
 
-                                    Table.this.updateGameBoard(transition.getLatestBoard());
-                                    if (move.isPromotionMove()) {
-                                        TilePanel.this.boardPanel.updateBoardPanelCursor(MOVE_CURSOR);
-                                        //display pawn promotion interface
-                                        new PawnPromotionPane().promotePawn(Table.this, (PawnPromotion) move);
-                                    }
-                                    Table.this.getMoveLog().addMove(move);
-                                    Table.this.updateHumanMove(move);
+                                Table.this.updateGameBoard(transition.getLatestBoard());
+                                if (move.isPromotionMove()) {
+                                    TilePanel.this.boardPanel.updateBoardPanelCursor(MOVE_CURSOR);
+                                    //display pawn promotion interface
+                                    new PawnPromotionPane().promotePawn(Table.this, (PawnPromotion)move);
                                 }
-                                TilePanel.this.boardPanel.drawBoard(Table.this.getGameBoard());
-                                Table.this.mouseClicked = false;
-                                SwingUtilities.invokeLater(() -> {
-                                    Table.this.getGameHistoryPanel().redo(Table.this.getGameBoard(), Table.this.getMoveLog());
-                                    Table.this.getTakenPiecesPanel().redo(Table.this.getMoveLog());
-
-                                    if (!Table.this.getGameSetup().isAIPlayer(Table.this.getGameBoard().currentPlayer())) {
-                                        try {
-                                            Table.this.displayEndGameMessage();
-                                        } catch (IOException e) {
-                                            e.printStackTrace();
-                                        }
-                                    } else if (Table.this.getGameSetup().isAIPlayer(Table.this.getGameBoard().currentPlayer())) {
-                                        Table.this.stopAI = false;
-                                        Table.this.moveMadeUpdate();
-                                    }
-                                });
-                                TilePanel.this.boardPanel.updateBoardPanelCursor(MOVE_CURSOR);
-                                Table.this.humanMovePiece = null;
-                                Table.this.setMouseEnteredHighlightMoves(true);
+                                Table.this.getMoveLog().addMove(move);
+                                Table.this.updateHumanMove(move);
                             }
+                            TilePanel.this.boardPanel.drawBoard(Table.this.getGameBoard());
+                            Table.this.mouseClicked = false;
+                            SwingUtilities.invokeLater(() -> {
+                                Table.this.getGameHistoryPanel().redo(Table.this.getGameBoard(), Table.this.getMoveLog());
+                                Table.this.getTakenPiecesPanel().redo(Table.this.getMoveLog());
+
+                                if (!Table.this.getGameSetup().isAIPlayer(Table.this.getGameBoard().currentPlayer())) {
+                                    Table.this.displayEndGameMessage();
+                                }
+                                else if (Table.this.getGameSetup().isAIPlayer(Table.this.getGameBoard().currentPlayer())) {
+                                    Table.this.stopAI = false;
+                                    Table.this.moveMadeUpdate();
+                                }
+                            });
+                            TilePanel.this.boardPanel.updateBoardPanelCursor(MOVE_CURSOR);
+                            Table.this.humanMovePiece = null;
+                            Table.this.setMouseEnteredHighlightMoves(true);
                         }
                     }
-
                 }
-
                 @Override
                 public void mouseEntered(final MouseEvent mouseEvent) {
-                    if (mouseEnabled) {
-                        if (!Table.this.getAIThinking() && Table.this.getMouseEnteredHighlightMoves() && !Table.this.isGameEnded()) {
-                            Table.this.humanMovePiece = Table.this.getGameBoard().getTile(TilePanel.this.tileID).getPiece();
-                            highlightLegals(Table.this.getGameBoard());
-                        }
+                    if (!Table.this.getAIThinking() && Table.this.getMouseEnteredHighlightMoves() && !Table.this.isGameEnded()) {
+                        Table.this.humanMovePiece = Table.this.getGameBoard().getTile(TilePanel.this.tileID).getPiece();
+                        highlightLegals(Table.this.getGameBoard());
                     }
-
                 }
-
                 @Override
                 public void mouseExited(final MouseEvent mouseEvent) {
-                    if (mouseEnabled) {
-                        if (!Table.this.getAIThinking() && Table.this.getMouseEnteredHighlightMoves() && Table.this.humanMovePiece != null && !Table.this.isGameEnded()) {
-                            Table.this.humanMovePiece = null;
-                            Table.this.getBoardPanel().drawBoard(Table.this.getGameBoard());
-                        }
+                    if (!Table.this.getAIThinking() && Table.this.getMouseEnteredHighlightMoves() && Table.this.humanMovePiece != null && !Table.this.isGameEnded()) {
+                        Table.this.humanMovePiece = null;
+                        Table.this.getBoardPanel().drawBoard(Table.this.getGameBoard());
                     }
-
                 }
 
                 @Override
                 public void mousePressed(final MouseEvent mouseEvent) {
-                    if (mouseEnabled) {
-                        if (Table.this.isGameEnded() || Table.this.getAIThinking()) {
-                            return;
-                        }
-                        if (isLeftMouseButton(mouseEvent)) {
-                            if (Table.this.humanMovePiece != null && Table.this.humanMovePiece.getLeague() == Table.this.getGameBoard().currentPlayer().getLeague()) {
-                                Table.this.mousePressedY = (int) Math.ceil(mouseEvent.getY() / TilePanel.this.getSize().getHeight());
-                                Table.this.mousePressedX = (int) Math.ceil(mouseEvent.getX() / TilePanel.this.getSize().getWidth());
+                    if (Table.this.isGameEnded() || Table.this.getAIThinking()) { return; }
+                    if (isLeftMouseButton(mouseEvent)) {
+                        if (Table.this.humanMovePiece != null && Table.this.humanMovePiece.getLeague() == Table.this.getGameBoard().currentPlayer().getLeague()) {
+                            Table.this.mousePressedY = (int) Math.ceil(mouseEvent.getY() / TilePanel.this.getSize().getHeight());
+                            Table.this.mousePressedX = (int) Math.ceil(mouseEvent.getX() / TilePanel.this.getSize().getWidth());
 
-                                Table.this.setMouseEnteredHighlightMoves(false);
-                                Table.this.humanMovePiece = Table.this.getGameBoard().getTile(TilePanel.this.tileID).getPiece();
-                                final Image image = ((ImageIcon) ((JLabel) TilePanel.this.boardPanel.getBoardTiles().get(TilePanel.this.tileID).getComponent(0)).getIcon()).getImage();
-                                try {
-                                    TilePanel.this.boardPanel.updateBoardPanelCursor(Toolkit.getDefaultToolkit().createCustomCursor(image, new Point(mouseEvent.getX(), mouseEvent.getY()), null));
-                                    TilePanel.this.boardPanel.getBoardTiles().get(TilePanel.this.tileID).remove(0);
-                                } catch (final IndexOutOfBoundsException ignored) {
-                                }
-                                TilePanel.this.validate();
-                                TilePanel.this.repaint();
-                            }
+                            Table.this.setMouseEnteredHighlightMoves(false);
+                            Table.this.humanMovePiece = Table.this.getGameBoard().getTile(TilePanel.this.tileID).getPiece();
+                            final Image image = ((ImageIcon)((JLabel) TilePanel.this.boardPanel.getBoardTiles().get(TilePanel.this.tileID).getComponent(0)).getIcon()).getImage();
+                            try {
+                                TilePanel.this.boardPanel.updateBoardPanelCursor(Toolkit.getDefaultToolkit().createCustomCursor(image, new Point(mouseEvent.getX(), mouseEvent.getY()), null));
+                                TilePanel.this.boardPanel.getBoardTiles().get(TilePanel.this.tileID).remove(0);
+                            } catch (final IndexOutOfBoundsException ignored) {}
+                            TilePanel.this.validate();
+                            TilePanel.this.repaint();
                         }
                     }
-
                 }
 
                 @Override
                 public void mouseReleased(final MouseEvent mouseEvent) {
-                    if (mouseEnabled) {
-                        if (!Table.this.getAIThinking() && isLeftMouseButton(mouseEvent)) {
+                    if (!Table.this.getAIThinking() && isLeftMouseButton(mouseEvent)) {
 
-                            if (Table.this.humanMovePiece != null && Table.this.humanMovePiece.getLeague() == Table.this.getGameBoard().currentPlayer().getLeague()) {
+                        if (Table.this.humanMovePiece != null && Table.this.humanMovePiece.getLeague() == Table.this.getGameBoard().currentPlayer().getLeague()) {
 
-                                final int releasedX = (int) Math.ceil(mouseEvent.getX() / TilePanel.this.getSize().getHeight()) - Table.this.mousePressedX;
-                                final int releasedY = ((int) Math.ceil(mouseEvent.getY() / TilePanel.this.getSize().getWidth()) - Table.this.mousePressedY) * 8;
+                            final int releasedX = (int) Math.ceil(mouseEvent.getX() / TilePanel.this.getSize().getHeight()) - Table.this.mousePressedX;
+                            final int releasedY = ((int) Math.ceil(mouseEvent.getY() / TilePanel.this.getSize().getWidth()) - Table.this.mousePressedY) * 8;
 
-                                final int direction = Table.this.getBoardDirection() == BoardDirection.NORMAL ? 1 : -1;
-                                final Move move = MoveFactory.createMove(Table.this.getGameBoard(), Table.this.humanMovePiece, TilePanel.this.tileID, TilePanel.this.tileID + (direction) * (releasedY + releasedX));
-                                final MoveTransition transition = Table.this.getGameBoard().currentPlayer().makeMove(move);
-
-                                if (transition.getMoveStatus().isDone()) {
-
-                                    Table.this.updateGameBoard(transition.getLatestBoard());
-                                    if (move.isPromotionMove()) {
-                                        TilePanel.this.boardPanel.updateBoardPanelCursor(MOVE_CURSOR);
-                                        //display pawn promotion interface
-                                        new PawnPromotionPane().promotePawn(Table.this, (PawnPromotion) move);
-                                    }
-
-                                    Table.this.getMoveLog().addMove(move);
-                                    Table.this.updateHumanMove(move);
-
-                                    // Updating opponents board - allowing him to play
-                                    if (isOnline) {
-                                        multiServerThread.getOpponent().getTable().updateGameBoard(multiServerThread.getTable().getGameBoard());
-                                        multiServerThread.getOpponent().getTable().setMouseEnabled(true);
-                                        multiServerThread.getTable().setMouseEnabled(false);
-                                    }
+                            final int direction = Table.this.getBoardDirection() == BoardDirection.NORMAL ? 1 : -1;
+                            final Move move = MoveFactory.createMove(Table.this.getGameBoard(), Table.this.humanMovePiece, TilePanel.this.tileID, TilePanel.this.tileID + (direction)*(releasedY + releasedX));
+                            final MoveTransition transition = Table.this.getGameBoard().currentPlayer().makeMove(move);
+                            if (transition.getMoveStatus().isDone()) {
+                                Table.this.updateGameBoard(transition.getLatestBoard());
+                                if (move.isPromotionMove()) {
+                                    TilePanel.this.boardPanel.updateBoardPanelCursor(MOVE_CURSOR);
+                                    //display pawn promotion interfacez
+                                    new PawnPromotionPane().promotePawn(Table.this, (PawnPromotion)move);
                                 }
-                                TilePanel.this.boardPanel.drawBoard(Table.this.getGameBoard());
-                                SwingUtilities.invokeLater(() -> {
-                                    Table.this.getGameHistoryPanel().redo(Table.this.getGameBoard(), Table.this.getMoveLog());
-                                    Table.this.getTakenPiecesPanel().redo(Table.this.getMoveLog());
-
-                                    if (!Table.this.getGameSetup().isAIPlayer(Table.this.getGameBoard().currentPlayer())) {
-                                        try {
-                                            Table.this.displayEndGameMessage();
-                                        } catch (IOException e) {
-                                            e.printStackTrace();
-                                        }
-                                    } else if (Table.this.getGameSetup().isAIPlayer(Table.this.getGameBoard().currentPlayer())) {
-                                        Table.this.stopAI = false;
-                                        Table.this.moveMadeUpdate();
-                                    }
-                                });
+                                Table.this.getMoveLog().addMove(move);
+                                Table.this.updateHumanMove(move);
                             }
-                            TilePanel.this.boardPanel.updateBoardPanelCursor(MOVE_CURSOR);
-                            Table.this.humanMovePiece = null;
+                            TilePanel.this.boardPanel.drawBoard(Table.this.getGameBoard());
+                            SwingUtilities.invokeLater(() -> {
+                                Table.this.getGameHistoryPanel().redo(Table.this.getGameBoard(), Table.this.getMoveLog());
+                                Table.this.getTakenPiecesPanel().redo(Table.this.getMoveLog());
 
+                                if (!Table.this.getGameSetup().isAIPlayer(Table.this.getGameBoard().currentPlayer())) {
+                                    Table.this.displayEndGameMessage();
+                                }
+                                else if (Table.this.getGameSetup().isAIPlayer(Table.this.getGameBoard().currentPlayer())) {
+                                    Table.this.stopAI = false;
+                                    Table.this.moveMadeUpdate();
+                                }
+                            });
                         }
-                        Table.this.setMouseEnteredHighlightMoves(true);
-
+                        TilePanel.this.boardPanel.updateBoardPanelCursor(MOVE_CURSOR);
+                        Table.this.humanMovePiece = null;
                     }
-
+                    Table.this.setMouseEnteredHighlightMoves(true);
                 }
             });
         }
@@ -1084,15 +860,12 @@ public final class Table {
             this.repaint();
         }
 
-
         private void assignTilePieceIcon(final Board board) {
             this.removeAll();
             if (board.getTile(this.tileID).isTileOccupied()) {
                 try {
                     this.add(new JLabel(new ImageIcon(ImageIO.read(Objects.requireNonNull(this.getClass().getClassLoader().getResource(BoardUtils.imagePath(board.getTile(this.tileID).getPiece())))))));
-                } catch (final IOException | NullPointerException e) {
-                    System.err.println("Invalid Path");
-                }
+                } catch (final IOException | NullPointerException e) { System.err.println("Invalid Path"); }
             }
         }
 
@@ -1103,10 +876,10 @@ public final class Table {
         }
 
         private void highlightAIMove() {
-            if (Table.this.computerMove != null && Table.this.getShowAIMove()) {
-                if (this.tileID == Table.this.computerMove.getCurrentCoordinate()) {
+            if(Table.this.computerMove != null && Table.this.getShowAIMove()) {
+                if(this.tileID == Table.this.computerMove.getCurrentCoordinate()) {
                     this.setBackground(Color.PINK);
-                } else if (this.tileID == Table.this.computerMove.getDestinationCoordinate()) {
+                } else if(this.tileID == Table.this.computerMove.getDestinationCoordinate()) {
                     this.setBackground(new Color(255, 51, 51));
                 }
             }
@@ -1114,9 +887,9 @@ public final class Table {
 
         private void highlightHumanMove() {
             if (Table.this.humanMove != null && Table.this.getShowHumanMove()) {
-                if (this.tileID == Table.this.humanMove.getCurrentCoordinate()) {
+                if(this.tileID == Table.this.humanMove.getCurrentCoordinate()) {
                     this.setBackground(new Color(102, 255, 102));
-                } else if (this.tileID == Table.this.humanMove.getDestinationCoordinate()) {
+                } else if(this.tileID == Table.this.humanMove.getDestinationCoordinate()) {
                     this.setBackground(new Color(50, 205, 50));
                 }
             }
@@ -1132,7 +905,7 @@ public final class Table {
 
                     final int coordinate = move.getDestinationCoordinate();
                     Color tileColor;
-                    if (move.isAttack() || move.isPromotionMove() && ((PawnPromotion) move).getDecoratedMove().isAttack()) {
+                    if (move.isAttack() || move.isPromotionMove() && ((PawnPromotion)move).getDecoratedMove().isAttack()) {
                         //dark red
                         this.boardPanel.getBoardTiles().get(coordinate).setBackground(new Color(204, 0, 0));
                     } else {
@@ -1148,7 +921,7 @@ public final class Table {
         }
 
         private Collection<Move> pieceLegalMoves(final Board board) {
-            if (Table.this.humanMovePiece != null && Table.this.humanMovePiece.getLeague() == board.currentPlayer().getLeague()) {
+            if (Table.this.humanMovePiece != null && Table.this.humanMovePiece.getLeague() == board.currentPlayer().getLeague()){
                 return Collections.unmodifiableCollection(Table.this.humanMovePiece.calculateLegalMoves(board));
             }
             return Collections.emptyList();
@@ -1157,7 +930,8 @@ public final class Table {
         private void assignTileColor() {
             if (BoardUtils.FIRST_ROW.get(this.tileID) || BoardUtils.THIRD_ROW.get(this.tileID) || BoardUtils.FIFTH_ROW.get(this.tileID) || BoardUtils.SEVENTH_ROW.get(this.tileID)) {
                 this.setBackground(this.tileID % 2 == 0 ? Table.this.lightTileColor : Table.this.darkTileColor);
-            } else {
+            }
+            else {
                 this.setBackground(this.tileID % 2 != 0 ? Table.this.lightTileColor : Table.this.darkTileColor);
             }
         }
