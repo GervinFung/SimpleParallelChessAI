@@ -7,7 +7,7 @@ A simple 2 player chess AI that implemented minimax & alpha-beta pruning & move-
 
 I screwed up my previous chess game with bad design and without planning ahead
 
-I decided to make a chess game, but my pc do not have one, so I decided to make one for myself
+I decided to make a chess game because my pc do not have one
 
 NOTE: **Credit to Christos-Kouros for timer function**
 
