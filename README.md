@@ -7,6 +7,8 @@ A simple 2 player chess AI that implemented minimax & alpha-beta pruning & move-
 
 I screwed up my previous chess game with bad design and without planning ahead
 
+I decided to make a chess game, but my pc do not have one, so I decided to make one for myself
+
 NOTE: **Credit to Christos-Kouros for timer function**
 
 ## Folder Structure
@@ -14,6 +16,8 @@ NOTE: **Credit to Christos-Kouros for timer function**
 The workspace contains two folders by default, where:
 
 - `src`: the folder to maintain sources
+- `res`: the folder to maintain resources like the images
+- `lib`: the folder to maintain external libraries like Guava
 
 ## To play the Game
 NOTE: **The image dragged is a bit low quality as image of piece is added to cursor**
@@ -49,3 +53,4 @@ No. | Features
 12.| Enabled/disable a timer **(Credit to Christos-Kouros)**
 
 ![Chess sample](chess.png)
+[SimpleParallelChessAI.jar](out/artifacts/Intellij_Project_jar/Intellij%20Project.jar)

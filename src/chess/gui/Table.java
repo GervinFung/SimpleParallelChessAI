@@ -42,6 +42,8 @@ import javax.swing.JLabel;
 import javax.swing.ImageIcon;
 import javax.swing.JProgressBar;
 import javax.swing.JDialog;
+import javax.swing.UIManager;
+import javax.swing.UnsupportedLookAndFeelException;
 
 import java.awt.event.MouseListener;
 import java.awt.event.MouseEvent;
@@ -99,18 +101,19 @@ public final class Table {
         this.gameFrame.addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosing(final WindowEvent e) {
-                final int option = JOptionPane.showConfirmDialog(
-                        Table.this.gameFrame,
-                        "Are you sure you want to quit?",
-                        "Confirmation to Quit Game",
-                        JOptionPane.YES_NO_CANCEL_OPTION);
-                if (option == JOptionPane.YES_OPTION) {
-                    Table.this.gameFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-                } else {
-                    Table.this.gameFrame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+                final int confirmedExit = JOptionPane.showConfirmDialog(Table.this.gameFrame, "Are you sure you want to quit game without saving?","Exit Game", JOptionPane.YES_NO_CANCEL_OPTION);
+                if (confirmedExit == JOptionPane.YES_OPTION) {
+                    System.exit(0);
+                } else if (confirmedExit == JOptionPane.NO_OPTION) {
+                    FenUtilities.writeMoveToFiles(Table.this.getMoveLog());
+                    System.exit(0);
                 }
             }
         });
+        try {
+            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+            SwingUtilities.updateComponentTreeUI(this.gameFrame);
+        } catch (final ClassNotFoundException | InstantiationException | IllegalAccessException | UnsupportedLookAndFeelException ignored) { }
         this.gameFrame.setResizable(false);
         this.gameFrame.setLayout(new BorderLayout());
         this.chessBoard = Board.createStandardBoard(BoardUtils.DEFAULT_TIMER_MINUTE, BoardUtils.DEFAULT_TIMER_SECOND);
@@ -123,11 +126,10 @@ public final class Table {
         this.timerSetup = new TimerSetup(this.gameFrame, true);
         this.highlightLegalMoves = true;
         this.gameFrame.add(this.boardPanel, BorderLayout.CENTER);
-        final JMenuBar tableMenuBar = createTableMenuBar();
         this.gameFrame.add(this.gameTimerPanel, BorderLayout.SOUTH);
         this.gameFrame.add(this.takenPiecePanel, BorderLayout.EAST);
         this.gameFrame.add(this.gameHistoryPanel, BorderLayout.WEST);
-        this.gameFrame.setJMenuBar(tableMenuBar);
+        this.gameFrame.setJMenuBar(createTableMenuBar());
         this.gameFrame.setSize(OUTER_FRAME_DIMENSION);
         this.gameFrame.setLocationRelativeTo(null);
         this.gameFrame.setResizable(false);
@@ -147,10 +149,8 @@ public final class Table {
         final PropertyChangeListener gameSetupPropertyChangeListener = propertyChangeEvent -> {
             if (this.getGameSetup().isAIPlayer(this.getGameBoard().currentPlayer()) &&
                     !this.getGameBoard().currentPlayer().isInCheckmate() &&
-                    !this.getGameBoard().currentPlayer().isInStalemate()) {
-                if (!this.AIThinking) {
-                    new AIThinkTank(this).execute();
-                }
+                    !this.getGameBoard().currentPlayer().isInStalemate() && !this.AIThinking) {
+                new AIThinkTank(this).execute();
             }
             this.displayEndGameMessage();
         };
